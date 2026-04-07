@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIF Maker Pro — SoraVer2</title>
+    <meta name="description" content="Chuyển đổi video thành GIF chuyên nghiệp: 1:1 crop, auto-trim, smart compress dưới 5MB.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root { --c: #06b6d4; --cl: rgba(6,182,212,.15); --cb: rgba(6,182,212,.25); }
+        .gw { padding:1.5rem; max-width:1300px; margin:0 auto; }
+        .ph { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
+        .ph-left { display:flex; align-items:center; gap:1rem; }
+        .ph-icon { width:48px; height:48px; border-radius:12px; background:var(--cl); display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:var(--c); }
+        .ph h1 { font-size:1.5rem; font-weight:700; margin:0; }
+        .ph p { font-size:.85rem; color:var(--text-2); margin:0; }
+        .how { background:linear-gradient(135deg,rgba(6,182,212,.1),rgba(8,145,178,.05)); border:1px solid rgba(6,182,212,.2); border-radius:16px; padding:1.1rem 1.4rem; margin-bottom:1.5rem; display:flex; align-items:flex-start; gap:1rem; }
+        .how-ic { font-size:1.4rem; color:var(--c); flex-shrink:0; margin-top:.1rem; }
+        .how h3 { font-size:.9rem; font-weight:600; margin:0 0 .3rem; color:var(--c); }
+        .how p { font-size:.8rem; color:var(--text-2); margin:0; line-height:1.6; }
+        .layout { display:grid; grid-template-columns:360px 1fr; gap:1.5rem; }
+        @media(max-width:960px){ .layout{ grid-template-columns:1fr; } }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.25rem; margin-bottom:1rem; }
+        .ch { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; }
+        .ch i { color:var(--c); }
+        .ch h3 { font-size:.9rem; font-weight:600; margin:0; }
+        .drop-zone { border:2px dashed var(--border); border-radius:12px; padding:1.75rem 1rem; text-align:center; cursor:pointer; transition:all .25s; }
+        .drop-zone:hover,.drop-zone.drag-over { border-color:var(--c); background:var(--cl); }
+        .drop-ic { font-size:2rem; color:var(--c); margin-bottom:.5rem; }
+        .fl { display:flex; flex-direction:column; gap:.5rem; margin-top:.875rem; }
+        .fi { display:flex; align-items:center; gap:.75rem; background:var(--cl); border:1px solid var(--cb); border-radius:10px; padding:.625rem .875rem; }
+        .ft { width:56px; height:38px; object-fit:cover; border-radius:6px; background:#000; flex-shrink:0; }
+        .fn { font-size:.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .fm { font-size:.7rem; color:var(--text-3); display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.1rem; }
+        .fm span { background:rgba(255,255,255,.07); padding:1px 5px; border-radius:3px; }
+        .frm { width:20px;height:20px;border-radius:50%;background:#ef4444;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.58rem;flex-shrink:0; }
+        .sbadge { background:linear-gradient(135deg,var(--c),#0891b2); color:#fff; font-size:.7rem; font-weight:700; padding:2px 10px; border-radius:20px; display:inline-block; margin-bottom:.5rem; }
+        .fl2 { display:flex; flex-direction:column; gap:.5rem; }
+        .fg { margin-bottom:.875rem; }
+        .fg label { display:block; font-size:.78rem; font-weight:600; color:var(--text-2); margin-bottom:.35rem; }
+        .fi2,.fs { width:100%; padding:.5rem .7rem; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.83rem; font-family:inherit; box-sizing:border-box; }
+        .fi2:focus,.fs:focus { outline:none; border-color:var(--c); }
+        .fh { font-size:.7rem; color:var(--text-3); margin:.25rem 0 0; display:block; }
+        .rr { display:flex; align-items:center; gap:.75rem; }
+        .rr input[type=range] { flex:1; accent-color:var(--c); }
+        .rv { font-size:.81rem; font-weight:700; color:var(--c); min-width:32px; text-align:right; }
+        .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.625rem; }
+        .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.6rem 1.1rem; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; border:none; transition:all .2s; font-family:inherit; }
+        .btn-c { background:linear-gradient(135deg,var(--c),#0891b2); color:#fff; }
+        .btn-c:hover { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 4px 14px var(--cb); }
+        .btn-c:disabled { opacity:.5; cursor:not-allowed; transform:none; filter:none; box-shadow:none; }
+        .btn-g { background:rgba(255,255,255,.07); color:var(--text); border:1px solid var(--border); }
+        .btn-g:hover { background:rgba(255,255,255,.12); }
+        .btn-full { width:100%; justify-content:center; }
+        .btn-lg { padding:.75rem 1.25rem; font-size:.9rem; }
+        .btn-sm { padding:.35rem .7rem; font-size:.76rem; }
+        .progress-bar { height:6px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; margin:.5rem 0; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,var(--c),#22d3ee); border-radius:99px; transition:width .3s ease; }
+        .spinner { width:18px; height:18px; border:2.5px solid rgba(6,182,212,.3); border-top-color:var(--c); border-radius:50%; animation:spin .8s linear infinite; flex-shrink:0; }
+        @keyframes spin { to{ transform:rotate(360deg); } }
+        .plog { background:rgba(0,0,0,.35); border:1px solid var(--border); border-radius:10px; padding:.75rem; font-size:.72rem; font-family:monospace; color:#22d3ee; max-height:140px; overflow-y:auto; line-height:1.7; margin-top:.625rem; }
+        .log-ok { color:#34d399; } .log-warn { color:#f59e0b; } .log-err { color:#ef4444; }
+        .proc-card { border:1px solid rgba(6,182,212,.3); background:rgba(6,182,212,.04); }
+        @keyframes pulse-border { 0%,100%{border-color:rgba(6,182,212,.2)} 50%{border-color:rgba(6,182,212,.7)} }
+        .pulsing { animation:pulse-border 1.5s ease infinite; }
+        .preview-box { background:#000; border-radius:10px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; max-height:340px; }
+        .preview-box canvas { max-width:100%; max-height:100%; display:block; }
+        .preview-placeholder { text-align:center; color:var(--text-3); }
+        .preview-placeholder i { font-size:3rem; opacity:.2; display:block; margin-bottom:.75rem; color:var(--c); }
+        .result-box { text-align:center; }
+        .gif-preview { max-width:100%; border-radius:10px; display:block; margin:0 auto; box-shadow:0 8px 32px rgba(0,0,0,.4); }
+        .stat-row { display:flex; gap:.5rem; flex-wrap:wrap; margin:.875rem 0; }
+        .sc { flex:1; min-width:65px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; padding:.45rem .7rem; text-align:center; }
+        .sc strong { display:block; font-size:1rem; font-weight:700; color:var(--c); }
+        .sc span { font-size:.65rem; color:var(--text-3); }
+        .attempts-log { display:flex; flex-direction:column; gap:.375rem; margin-top:.875rem; }
+        .attempt-item { display:flex; align-items:center; justify-content:space-between; font-size:.75rem; padding:.4rem .75rem; border-radius:8px; background:rgba(255,255,255,.04); border:1px solid var(--border); }
+        .attempt-item.success { border-color:rgba(52,211,153,.3); background:rgba(52,211,153,.05); }
+        .attempt-item.fail { border-color:rgba(239,68,68,.2); opacity:.75; }
+        .attempt-item.active { border-color:rgba(6,182,212,.4); background:rgba(6,182,212,.07); }
+        .a-badge { font-size:.65rem; font-weight:700; padding:1px 6px; border-radius:4px; }
+        .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:.5rem 0; }
+        .toggle-row label { font-size:.8rem; font-weight:600; color:var(--text-2); }
+        .toggle { position:relative; display:inline-block; width:36px; height:20px; flex-shrink:0; }
+        .toggle input { opacity:0; width:0; height:0; }
+        .toggle-sl { position:absolute; inset:0; background:rgba(255,255,255,.15); border-radius:10px; cursor:pointer; transition:.2s; }
+        .toggle input:checked + .toggle-sl { background:var(--c); }
+        .toggle-sl:before { content:''; position:absolute; width:14px; height:14px; border-radius:50%; background:#fff; bottom:3px; left:3px; transition:.2s; }
+        .toggle input:checked + .toggle-sl:before { transform:translateX(16px); }
+        .empty-state { text-align:center; padding:3rem 2rem; color:var(--text-3); }
+        .empty-state i { font-size:3rem; opacity:.2; display:block; margin-bottom:.75rem; color:var(--c); }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation:fadeIn .3s ease forwards; }
+    </style>
+</head>
+<body data-theme="dark">
+<div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <div class="logo-text"><span class="logo-name">SoraVer2</span><span class="logo-tagline">AI Workspace</span></div>
+            </div>
+        </div>
+        <div class="sidebar-search"><i class="fa-solid fa-search"></i><input type="text" placeholder="Tìm công cụ..." id="tool-search"></div>
+        <div class="nav-section">
+            <p class="nav-label">Công cụ chính</p>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item"><div class="nav-icon" style="background:rgba(250,204,21,.15)"><i class="fa-solid fa-house" style="color:#facc15"></i></div><span>Dashboard</span></a>
+                <a href="video.html" class="nav-item"><div class="nav-icon" style="background:rgba(139,92,246,.15)"><i class="fa-solid fa-film" style="color:#8b5cf6"></i></div><span>Video Dubbing</span><span class="nav-badge">New</span></a>
+                <a href="shuffler.html" class="nav-item"><div class="nav-icon" style="background:rgba(16,185,129,.15)"><i class="fa-solid fa-shuffle" style="color:#10b981"></i></div><span>Video Shuffler</span><span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span></a>
+                <a href="mashup.html" class="nav-item"><div class="nav-icon" style="background:rgba(249,115,22,.15)"><i class="fa-solid fa-layer-group" style="color:#f97316"></i></div><span>Video Mashup</span><span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span></a>
+                <a href="gif-maker.html" class="nav-item active"><div class="nav-icon" style="background:rgba(6,182,212,.15)"><i class="fa-solid fa-film" style="color:#06b6d4"></i></div><span>GIF Maker Pro</span><span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span></a>
+                <a href="ads-automation.html" class="nav-item"><div class="nav-icon" style="background:rgba(24,119,242,.15)"><i class="fa-brands fa-facebook" style="color:#4d9cf5"></i></div><span>Ads Automation</span><span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span></a>
+            </nav>
+        </div>
+        <div class="sidebar-footer">
+            <div class="theme-toggle" id="theme-toggle"><i class="fa-solid fa-sun"></i><span>Chế độ Sáng</span></div>
+            <div class="sidebar-version">v2.0.0</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="mobile-header">
+            <div class="logo"><div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div><span class="logo-name">SoraVer2</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <div class="workspace gw">
+            <div class="ph">
+                <div class="ph-left">
+                    <div class="ph-icon"><i class="fa-solid fa-film"></i></div>
+                    <div><h1>GIF Maker Pro</h1><p>Video → GIF 1:1, Auto-Trim, Smart Compress &lt; 5MB</p></div>
+                </div>
+                <button class="btn btn-g btn-sm" id="btn-reset" style="display:none"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+            </div>
+
+            <div class="how">
+                <div class="how-ic"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <div>
+                    <h3>Cách hoạt động — Smart GIF Engine</h3>
+                    <p>Upload video → Tự động lấy đoạn giữa hay nhất → <strong>Center crop 1:1</strong> → Extract frames → Encode GIF → Nếu &gt; 5MB, tự động <strong>giảm dần FPS/độ phân giải/quality</strong> qua tối đa 6 lần thử cho đến khi đạt chuẩn.</p>
+                </div>
+            </div>
+
+            <div class="layout">
+                <!-- LEFT -->
+                <div>
+                    <div class="card">
+                        <span class="sbadge">Bước 1</span>
+                        <div class="ch"><i class="fa-solid fa-cloud-arrow-up"></i><h3>Upload Video</h3></div>
+                        <div class="drop-zone" id="drop-zone">
+                            <input type="file" id="video-input" accept="video/*" hidden>
+                            <div class="drop-ic"><i class="fa-solid fa-photo-film"></i></div>
+                            <p style="font-weight:600;font-size:.88rem;margin:0 0 .2rem">Kéo & thả video vào đây</p>
+                            <p style="font-size:.76rem;color:var(--text-3);margin:0 0 .5rem">hoặc</p>
+                            <button class="btn btn-c" id="btn-browse"><i class="fa-solid fa-folder-open"></i> Chọn video</button>
+                            <p style="font-size:.7rem;color:var(--text-3);margin:.35rem 0 0">MP4, MOV, AVI, MKV</p>
+                        </div>
+                        <div class="fl" id="file-list"></div>
+                    </div>
+
+                    <div class="card">
+                        <span class="sbadge">Bước 2</span>
+                        <div class="ch"><i class="fa-solid fa-sliders"></i><h3>Cấu hình GIF</h3></div>
+
+                        <div class="fg">
+                            <label>Thời lượng GIF (giây)</label>
+                            <div class="rr">
+                                <input type="range" id="dur-range" min="1" max="10" step="0.5" value="3.5">
+                                <span class="rv" id="dur-val">3.5s</span>
+                            </div>
+                            <span class="fh">Khuyến nghị: 3–5s để có dung lượng tối ưu</span>
+                        </div>
+
+                        <div class="fg">
+                            <label>Điểm bắt đầu</label>
+                            <select class="fs" id="start-mode">
+                                <option value="center">🎯 Auto — Lấy đoạn giữa video (tốt nhất)</option>
+                                <option value="beginning">⏮ Từ đầu video</option>
+                                <option value="custom">✏️ Tùy chỉnh (giây)</option>
+                            </select>
+                        </div>
+                        <div class="fg" id="custom-start-wrap" style="display:none">
+                            <label>Bắt đầu từ giây thứ</label>
+                            <input type="number" class="fi2" id="custom-start" value="0" min="0" step="0.5">
+                        </div>
+
+                        <div class="fg">
+                            <label>Kích thước (cạnh GIF vuông)</label>
+                            <select class="fs" id="width-select">
+                                <option value="480" selected>480 × 480 px (Mặc định)</option>
+                                <option value="400">400 × 400 px (Nhỏ hơn)</option>
+                                <option value="320">320 × 320 px (Nhỏ nhất)</option>
+                                <option value="600">600 × 600 px (Lớn hơn)</option>
+                            </select>
+                        </div>
+
+                        <div class="fg">
+                            <label>FPS (khung hình / giây)</label>
+                            <select class="fs" id="fps-select">
+                                <option value="15" selected>15 FPS (Mượt — Mặc định)</option>
+                                <option value="12">12 FPS (Cân bằng)</option>
+                                <option value="10">10 FPS (Nhỏ gọn)</option>
+                                <option value="20">20 FPS (Rất mượt)</option>
+                            </select>
+                        </div>
+
+                        <div style="border:1px solid var(--border);border-radius:10px;padding:.75rem;margin-bottom:.875rem">
+                            <div class="toggle-row">
+                                <label><i class="fa-solid fa-crop" style="color:var(--c);margin-right:.35rem"></i> Crop 1:1 (Center Square)</label>
+                                <label class="toggle"><input type="checkbox" id="square-crop" checked><span class="toggle-sl"></span></label>
+                            </div>
+                            <div class="toggle-row">
+                                <label><i class="fa-solid fa-compress" style="color:var(--c);margin-right:.35rem"></i> Smart Compress (Auto &lt; 5MB)</label>
+                                <label class="toggle"><input type="checkbox" id="smart-compress" checked><span class="toggle-sl"></span></label>
+                            </div>
+                            <div class="fg" id="target-mb-wrap" style="margin-top:.5rem;margin-bottom:0">
+                                <div class="grid2">
+                                    <div>
+                                        <label style="font-size:.73rem">Giới hạn dung lượng (MB)</label>
+                                        <input type="number" class="fi2" id="target-mb" value="5" min="1" max="50" step="0.5">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:.73rem">Số lần thử tối đa</label>
+                                        <input type="number" class="fi2" id="max-iter" value="6" min="1" max="10">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-c btn-full btn-lg" id="btn-generate" disabled>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo GIF ngay
+                        </button>
+                        <p class="fh" id="gen-hint" style="text-align:center;margin-top:.4rem">Upload video để bắt đầu</p>
+                    </div>
+                </div>
+
+                <!-- RIGHT -->
+                <div>
+                    <div class="card">
+                        <div class="ch"><i class="fa-solid fa-eye"></i><h3>Preview vùng crop</h3></div>
+                        <div class="preview-box" id="preview-box">
+                            <div class="preview-placeholder" id="prev-placeholder">
+                                <i class="fa-solid fa-film"></i>
+                                <p style="font-size:.85rem">Upload video để xem preview</p>
+                            </div>
+                            <canvas id="preview-canvas" style="display:none"></canvas>
+                        </div>
+                        <p id="prev-label" style="font-size:.7rem;color:var(--text-3);text-align:center;margin-top:.4rem"></p>
+                    </div>
+
+                    <div class="card proc-card pulsing" id="proc-panel" style="display:none">
+                        <div class="ch" style="margin-bottom:.625rem">
+                            <div class="spinner"></div>
+                            <h3 id="proc-title">Đang xử lý...</h3>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill" id="proc-progress" style="width:0%"></div></div>
+                        <p style="font-size:.74rem;color:var(--text-3);margin:.25rem 0" id="proc-sub">Khởi tạo...</p>
+                        <div class="plog" id="proc-log"></div>
+                        <div class="attempts-log" id="attempts-wrap"></div>
+                    </div>
+
+                    <div id="result-section">
+                        <div class="empty-state" id="empty-state">
+                            <i class="fa-solid fa-film"></i>
+                            <p>GIF output sẽ xuất hiện ở đây</p>
+                            <p style="font-size:.78rem;margin-top:.35rem">Cấu hình và nhấn "Tạo GIF"</p>
+                        </div>
+                        <div id="result-wrap" style="display:none">
+                            <div class="card fade-in">
+                                <div class="ch"><i class="fa-solid fa-check-circle" style="color:#34d399"></i><h3 id="result-title">GIF đã hoàn tất!</h3></div>
+                                <div class="result-box">
+                                    <img id="gif-preview" class="gif-preview" src="" alt="GIF output">
+                                </div>
+                                <div class="stat-row" id="result-stats"></div>
+                                <div style="display:flex;gap:.5rem;margin-top:.5rem">
+                                    <button class="btn btn-c btn-full" id="btn-download"><i class="fa-solid fa-download"></i> Tải GIF xuống</button>
+                                    <button class="btn btn-g" id="btn-retry"><i class="fa-solid fa-rotate-left"></i> Tạo lại</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<video id="work-video" style="display:none" preload="auto"></video>
+
+<script src="script.js"></script>
+<script>
+// =====================================================
+//  GIF MAKER PRO — SoraVer2
+//  Browser port of Python AntigravityVideoEngine GIF tool
+//  Uses gif.js (Web Workers) for encoding
+// =====================================================
+
+const GIF_JS_CDN  = 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js';
+const GIF_WORKER  = 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js';
+
+// Compression ladder (mirrors Python params strategy)
+const COMPRESS_LADDER = [
+    { width: 480, fps: 15, quality: 5  },  // Attempt 1: Best quality
+    { width: 480, fps: 15, quality: 8  },  // Attempt 2: fuzz=15 equiv
+    { width: 480, fps: 12, quality: 8  },  // Attempt 3: fps=12
+    { width: 400, fps: 12, quality: 10 },  // Attempt 4: width=400
+    { width: 400, fps: 10, quality: 10 },  // Attempt 5: fps=10
+    { width: 320, fps: 10, quality: 12 },  // Attempt 6: width=320 (min)
+];
+
+const S = { file: null, url: null, duration: 0, width: 0, height: 0, processing: false, gifUrl: null, gifBlob: null };
+
+const $ = id => document.getElementById(id);
+const workVid = $('work-video');
+
+// ---- Upload ----
+$('btn-browse').addEventListener('click', () => $('video-input').click());
+$('video-input').addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); e.target.value=''; });
+const dz = $('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('video/')) loadVideo(f); });
+
+function fmtSize(b){ return b>1e6?(b/1e6).toFixed(2)+'MB':(b/1e3).toFixed(0)+'KB'; }
+function fmtDur(s){ return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
+
+function loadVideo(file) {
+    if (S.url) URL.revokeObjectURL(S.url);
+    S.file = file; S.url = URL.createObjectURL(file); S.duration=0;
+    workVid.src = S.url;
+    workVid.addEventListener('loadedmetadata', () => {
+        S.duration = workVid.duration; S.width = workVid.videoWidth; S.height = workVid.videoHeight;
+        renderFileItem(); updatePreview(); updateBtn();
+    }, {once:true});
+}
+
+function renderFileItem() {
+    const fl = $('file-list');
+    const url = S.url;
+    fl.innerHTML = `
+    <div class="fi">
+        <video class="ft" src="${url}" preload="metadata" muted></video>
+        <div style="flex:1;min-width:0">
+            <div class="fn">${S.file.name}</div>
+            <div class="fm"><span>${fmtSize(S.file.size)}</span><span>${fmtDur(S.duration)}</span><span>${S.width}×${S.height}</span></div>
+        </div>
+        <button class="frm" id="btn-rm"><i class="fa-solid fa-xmark"></i></button>
+    </div>`;
+    $('btn-rm').addEventListener('click', clearVideo);
+    $('btn-reset').style.display = '';
+}
+
+function clearVideo() {
+    if (S.url) URL.revokeObjectURL(S.url);
+    if (S.gifUrl) URL.revokeObjectURL(S.gifUrl);
+    S.file=null; S.url=null; S.duration=0; S.gifUrl=null; S.gifBlob=null;
+    workVid.src=''; $('file-list').innerHTML='';
+    $('preview-canvas').style.display='none'; $('prev-placeholder').style.display='block'; $('prev-label').textContent='';
+    $('result-wrap').style.display='none'; $('empty-state').style.display='block';
+    $('proc-panel').style.display='none'; $('btn-reset').style.display='none';
+    updateBtn();
+}
+
+$('btn-reset').addEventListener('click', clearVideo);
+
+// ---- Settings ----
+$('dur-range').addEventListener('input', function(){ $('dur-val').textContent=this.value+'s'; updatePreview(); });
+$('start-mode').addEventListener('change', function(){ $('custom-start-wrap').style.display=this.value==='custom'?'block':'none'; updatePreview(); });
+$('custom-start').addEventListener('input', updatePreview);
+$('smart-compress').addEventListener('change', function(){ $('target-mb-wrap').style.display=this.checked?'block':'none'; });
+$('square-crop').addEventListener('change', updatePreview);
+
+function getStartTime() {
+    const mode = $('start-mode').value;
+    const dur = parseFloat($('dur-range').value)||3.5;
+    if (mode==='center') return Math.max(0,(S.duration/2)-(dur/2));
+    if (mode==='beginning') return 0;
+    return Math.max(0, Math.min(parseFloat($('custom-start').value)||0, S.duration - dur));
+}
+
+// ---- Preview Canvas ----
+async function updatePreview() {
+    if (!S.duration) return;
+    const dur = parseFloat($('dur-range').value)||3.5;
+    const startT = getStartTime();
+    const midT = startT + dur/2;
+    const canvas = $('preview-canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 340;
+    canvas.width = size; canvas.height = size;
+
+    workVid.currentTime = Math.min(midT, S.duration - 0.05);
+    await new Promise(r => workVid.addEventListener('seeked', r, {once:true}));
+
+    const doCrop = $('square-crop').checked;
+    if (doCrop) {
+        const vw=workVid.videoWidth, vh=workVid.videoHeight;
+        const ms=Math.min(vw,vh), sx=(vw-ms)/2, sy=(vh-ms)/2;
+        ctx.drawImage(workVid, sx, sy, ms, ms, 0, 0, size, size);
+    } else {
+        ctx.drawImage(workVid, 0, 0, size, size*(workVid.videoHeight/workVid.videoWidth)||size);
+    }
+
+    $('preview-canvas').style.display='block'; $('prev-placeholder').style.display='none';
+    $('prev-label').textContent=`Preview tại giây ${midT.toFixed(1)}s | Độ dài GIF: ${dur}s | Bắt đầu: ${startT.toFixed(1)}s`;
+}
+
+function updateBtn() {
+    const ok = !!S.file && S.duration>0 && !S.processing;
+    $('btn-generate').disabled=!ok;
+    $('gen-hint').textContent = ok ? `Sẵn sàng tạo GIF từ "${S.file.name}"` : 'Upload video để bắt đầu';
+}
+
+// ---- GIF Generation ----
+$('btn-generate').addEventListener('click', runGIF);
+$('btn-retry').addEventListener('click', runGIF);
+
+function log(msg, cls='') {
+    const el=$('proc-log'); const d=document.createElement('div');
+    d.textContent='▶ '+msg; if(cls) d.className=cls;
+    el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+function setProg(pct,title='',sub='') {
+    $('proc-progress').style.width=pct+'%';
+    if(title) $('proc-title').textContent=title;
+    if(sub) $('proc-sub').textContent=sub;
+}
+
+function addAttemptRow(id, text) {
+    const el=$('attempts-wrap');
+    const d=document.createElement('div'); d.className='attempt-item active'; d.id='att-'+id;
+    d.innerHTML=`<span>${text}</span><span class="a-badge" style="background:rgba(6,182,212,.15);color:#06b6d4">Đang xử lý...</span>`;
+    el.appendChild(d); return d;
+}
+function updateAttemptRow(id, success, sizeTxt) {
+    const d=$('att-'+id); if(!d) return;
+    d.className='attempt-item '+(success?'success':'fail');
+    const badge=d.querySelector('.a-badge');
+    badge.style=success?'background:rgba(52,211,153,.15);color:#34d399':'background:rgba(239,68,68,.1);color:#ef4444';
+    badge.textContent=success?'✅ '+sizeTxt:'❌ '+sizeTxt;
+}
+
+async function loadGifLib() {
+    if (window.GIF) return;
+    await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=GIF_JS_CDN; s.onload=res; s.onerror=()=>rej(new Error('Không tải được gif.js')); document.head.appendChild(s); });
+}
+
+// Fix CORS: Worker script phải cùng origin → fetch rồi tạo Blob URL
+let _workerBlobUrl = null;
+async function getWorkerBlobUrl() {
+    if (_workerBlobUrl) return _workerBlobUrl;
+    log('Tải GIF Worker script...');
+    const res = await fetch(GIF_WORKER);
+    if (!res.ok) throw new Error(`Không tải được worker: ${res.status}`);
+    const blob = await res.blob();
+    _workerBlobUrl = URL.createObjectURL(blob);
+    return _workerBlobUrl;
+}
+
+async function waitSeeked(vid) { return new Promise(r=>vid.addEventListener('seeked',r,{once:true})); }
+
+async function extractFrames(startT, gifDur, fps, size, doCrop) {
+    const totalFrames = Math.ceil(gifDur * fps);
+    const frames = [];
+    log(`Extracting ${totalFrames} frames @ ${fps}fps, ${size}px${doCrop?' (1:1 crop)':''}`);
+
+    for (let i=0; i<totalFrames; i++) {
+        const t = startT + (i/fps);
+        workVid.currentTime = Math.min(t, S.duration-0.05);
+        await waitSeeked(workVid);
+
+        const fc = document.createElement('canvas');
+        fc.width=size; fc.height=size;
+        const fctx=fc.getContext('2d');
+        if (doCrop) {
+            const vw=workVid.videoWidth,vh=workVid.videoHeight;
+            const ms=Math.min(vw,vh),sx=(vw-ms)/2,sy=(vh-ms)/2;
+            fctx.drawImage(workVid,sx,sy,ms,ms,0,0,size,size);
+        } else {
+            fctx.drawImage(workVid,0,0,size,size);
+        }
+        frames.push(fc);
+        setProg(10+(i/totalFrames)*40, 'Trích xuất frames...', `Frame ${i+1}/${totalFrames}`);
+    }
+    return frames;
+}
+
+async function encodeGIF(frames, fps, quality, onProgress) {
+    const workerUrl = await getWorkerBlobUrl();
+    return new Promise((resolve,reject)=>{
+        const gif = new GIF({
+            workers: 2, quality, repeat: 0,
+            workerScript: workerUrl,
+            width: frames[0].width, height: frames[0].height
+        });
+        const delay = Math.round(1000/fps);
+        frames.forEach(f=>gif.addFrame(f,{delay,copy:true}));
+        gif.on('progress', p=>onProgress&&onProgress(p));
+        gif.on('finished', blob=>resolve(blob));
+        gif.on('error', reject);
+        gif.render();
+    });
+}
+
+async function runGIF() {
+    if (S.processing) return;
+    S.processing=true;
+
+    if (S.gifUrl) { URL.revokeObjectURL(S.gifUrl); S.gifUrl=null; }
+    $('result-wrap').style.display='none'; $('empty-state').style.display='none';
+    $('proc-panel').style.display='block'; $('proc-log').innerHTML=''; $('attempts-wrap').innerHTML='';
+    $('btn-generate').disabled=true;
+    setProg(0,'Khởi tạo...','');
+
+    try {
+        // Load gif.js
+        log('Tải thư viện gif.js...');
+        setProg(2,'Tải thư viện...','');
+        await loadGifLib();
+        log('✓ gif.js sẵn sàng','log-ok');
+
+        const gifDur    = parseFloat($('dur-range').value)||3.5;
+        const startT    = getStartTime();
+        const doCrop    = $('square-crop').checked;
+        const doCompress= $('smart-compress').checked;
+        const targetMB  = parseFloat($('target-mb').value)||5;
+        const maxIter   = parseInt($('max-iter').value)||6;
+        const initWidth = parseInt($('width-select').value)||480;
+        const initFps   = parseInt($('fps-select').value)||15;
+
+        log(`Video: ${S.file.name} | Duration: ${fmtDur(S.duration)}`);
+        log(`GIF: ${gifDur}s từ giây ${startT.toFixed(1)} | ${initWidth}px | ${initFps}fps`);
+
+        // Build effective ladder from user settings
+        const ladder = doCompress
+            ? COMPRESS_LADDER.map((l,i)=>({ ...l, width: i===0?initWidth:l.width, fps: i===0?initFps:l.fps })).slice(0, maxIter)
+            : [{ width: initWidth, fps: initFps, quality: 5 }];
+
+        let resultBlob = null;
+        let bestBlob = null;
+        let attemptsCount = 0;
+
+        for (let i=0; i<ladder.length; i++) {
+            const {width, fps, quality} = ladder[i];
+            attemptsCount++;
+            const attLabel = `Lần ${i+1}: ${width}px — ${fps}fps — quality=${quality}`;
+            const attRow = addAttemptRow(i, attLabel);
+            setProg(5, `Lần ${i+1}/${ladder.length}`, attLabel);
+            log(`\n[Lần ${i+1}] ${attLabel}`);
+
+            // Extract frames
+            const frames = await extractFrames(startT, gifDur, fps, width, doCrop);
+            setProg(55, `Encoding GIF (Lần ${i+1})...`, '');
+
+            // Encode
+            const blob = await encodeGIF(frames, fps, quality, p=>{
+                setProg(55+p*40, `Encoding... ${(p*100).toFixed(0)}%`, attLabel);
+            });
+
+            const sizeMB = blob.size/1024/1024;
+            const sizeTxt = sizeMB.toFixed(2)+'MB';
+            log(`==> Kết quả: ${sizeTxt}`);
+
+            if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
+
+            if (!doCompress || sizeMB <= targetMB) {
+                resultBlob = blob;
+                updateAttemptRow(i,'success',sizeTxt);
+                log(`✅ Đạt chuẩn ${sizeTxt} ≤ ${targetMB}MB`,'log-ok');
+                break;
+            } else {
+                updateAttemptRow(i,false,sizeTxt+' > '+targetMB+'MB');
+                log(`⚠ ${sizeTxt} > ${targetMB}MB, thử lần tiếp...`,'log-warn');
+                if (i===ladder.length-1) {
+                    resultBlob = bestBlob;
+                    log('⚠ Đã hết lần thử, dùng kết quả nhỏ nhất có được.','log-warn');
+                }
+            }
+        }
+
+        if (!resultBlob) resultBlob = bestBlob;
+        setProg(100,'Hoàn tất!','');
+
+        // Show result
+        S.gifBlob = resultBlob;
+        S.gifUrl = URL.createObjectURL(resultBlob);
+        const finalMB = (resultBlob.size/1024/1024).toFixed(2);
+        const gifImg = $('gif-preview');
+        gifImg.src = S.gifUrl;
+        $('result-title').textContent = `GIF hoàn tất — ${finalMB}MB`;
+        $('result-stats').innerHTML = `
+            <div class="sc"><strong>${finalMB}MB</strong><span>Dung lượng</span></div>
+            <div class="sc"><strong>${gifDur}s</strong><span>Thời lượng</span></div>
+            <div class="sc"><strong>${attemptsCount}</strong><span>Lần thử</span></div>
+            <div class="sc"><strong>${doCrop?'1:1':'Gốc'}</strong><span>Tỉ lệ</span></div>`;
+
+        setTimeout(()=>{ $('proc-panel').style.display='none'; $('result-wrap').style.display='block'; },500);
+
+    } catch(err) {
+        log('❌ Lỗi: '+err.message,'log-err');
+        setProg(0,'Có lỗi xảy ra','');
+    }
+
+    S.processing=false; updateBtn();
+}
+
+$('btn-download').addEventListener('click', ()=>{
+    if(!S.gifUrl) return;
+    const a=document.createElement('a');
+    a.href=S.gifUrl; a.download=(S.file?.name.replace(/\.[^.]+$/,'')||'output')+'.gif'; a.click();
+});
+</script>
+</body>
+</html>

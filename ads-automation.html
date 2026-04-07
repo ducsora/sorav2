@@ -1,0 +1,4081 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ads Automation — SoraVer2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --bg-deep: #0a0f1a;
+            --bg-card: #111827;
+            --bg-input: #1a2332;
+            --border: rgba(255, 255, 255, .06);
+            --border-hover: rgba(255, 255, 255, .12);
+            --text: #e5e7eb;
+            --text-dim: #6b7280;
+            --text-muted: #4b5563;
+            --accent: #f97316;
+            --accent-glow: rgba(249, 115, 22, .15);
+            --green: #10b981;
+            --green-bg: rgba(16, 185, 129, .1);
+            --yellow: #f59e0b;
+            --yellow-bg: rgba(245, 158, 11, .1);
+            --red: #ef4444;
+            --red-bg: rgba(239, 68, 68, .08);
+            --blue: #3b82f6;
+            --indigo: #818cf8;
+            --orange: #f97316;
+            --purple: #8b5cf6;
+            --radius: 12px;
+            --radius-sm: 8px
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .08);
+            border-radius: 10px
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .5
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn .4s ease both
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color .2s
+        }
+
+        .card:hover {
+            border-color: var(--border-hover)
+        }
+
+        .inp {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--text);
+            font-size: 14px;
+            width: 100%;
+            transition: border-color .2s, box-shadow .2s;
+            outline: none;
+            font-family: inherit
+        }
+
+        .inp:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow)
+        }
+
+        .inp::placeholder {
+            color: var(--text-muted)
+        }
+
+        textarea.inp {
+            resize: vertical;
+            min-height: 60px
+        }
+
+        select.inp {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: inherit
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: #fff;
+            box-shadow: 0 4px 15px var(--accent-glow)
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, .25)
+        }
+
+        .btn-primary:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        .btn-ghost {
+            background: var(--bg-input);
+            color: var(--text);
+            border: 1px solid var(--border)
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--border-hover);
+            background: rgba(255, 255, 255, .04)
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 11px;
+            border-radius: 6px
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, .15)
+        }
+
+        .btn-green:hover {
+            transform: translateY(-1px)
+        }
+
+        .btn-green:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .3px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 2px;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(17, 24, 39, .6)
+        }
+
+        .tab {
+            padding: 14px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all .2s;
+            white-space: nowrap;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none
+        }
+
+        .tab:hover {
+            color: var(--text)
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            font-weight: 700
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 15, 26, .85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border)
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .logo h1 {
+            font-size: 17px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .logo .ver {
+            font-size: 9px;
+            background: var(--green-bg);
+            color: var(--green);
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-weight: 700
+        }
+
+        .page {
+            padding: 20px 24px;
+            display: none
+        }
+
+        .page.show {
+            display: block
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 6px
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: var(--bg-input)
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(249, 115, 22, .03)
+        }
+
+        .drop-zone .icon {
+            font-size: 36px;
+            margin-bottom: 8px
+        }
+
+        .drop-zone .text {
+            font-size: 13px;
+            color: var(--text-dim)
+        }
+
+        .drop-zone .text strong {
+            color: var(--accent)
+        }
+
+        .video-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .video-item {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            animation: fadeIn .3s ease
+        }
+
+        .video-item .name {
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .video-item .size {
+            color: var(--text-muted);
+            font-size: 10px
+        }
+
+        .video-item .remove {
+            color: var(--red);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 14px;
+            padding: 2px 6px
+        }
+
+        .step-flow {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px
+        }
+
+        .step {
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            background: var(--bg-input);
+            transition: all .3s
+        }
+
+        .step.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(249, 115, 22, .08);
+            box-shadow: 0 0 12px var(--accent-glow)
+        }
+
+        .step.done {
+            border-color: var(--green);
+            color: var(--green);
+            background: var(--green-bg)
+        }
+
+        .step-arrow {
+            color: var(--text-muted);
+            font-size: 10px
+        }
+
+        .log-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            line-height: 1.8
+        }
+
+        .log-item {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start
+        }
+
+        .log-item .time {
+            color: var(--text-muted);
+            white-space: nowrap
+        }
+
+        .log-item .msg {
+            color: var(--text)
+        }
+
+        .log-item.success .msg {
+            color: var(--green)
+        }
+
+        .log-item.error .msg {
+            color: var(--red)
+        }
+
+        .log-item.info .msg {
+            color: var(--blue)
+        }
+
+        .log-item.warn .msg {
+            color: var(--yellow)
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, .2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .6s linear infinite
+        }
+
+        .preview-card {
+            padding: 12px 16px;
+            border-left: 3px solid var(--accent);
+            margin-bottom: 8px
+        }
+
+        .preview-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 2px
+        }
+
+        .preview-value {
+            font-size: 13px;
+            font-weight: 600
+        }
+
+        .structure-diagram {
+            padding: 16px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+            font-size: 12px
+        }
+
+        .structure-camp {
+            padding: 10px;
+            border: 2px solid var(--accent);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px
+        }
+
+        .structure-adset {
+            padding: 8px 12px;
+            border: 1px dashed var(--blue);
+            border-radius: 6px;
+            margin: 6px 0 6px 20px;
+            font-size: 11px;
+            color: var(--blue)
+        }
+
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .history-item:last-child {
+            border-bottom: none
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: var(--bg-input);
+            border-radius: 99px;
+            overflow: hidden;
+            margin: 8px 0
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 99px;
+            transition: width .3s;
+            background: linear-gradient(90deg, var(--accent), var(--green))
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 40px
+        }
+
+        .footer .hl {
+            color: var(--accent);
+            font-weight: 700
+        }
+
+        .toast-box {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .toast {
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            animation: slideDown .3s ease;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .3)
+        }
+
+        .toast-success {
+            background: #065f46;
+            color: #6ee7b7
+        }
+
+        .toast-error {
+            background: #7f1d1d;
+            color: #fca5a5
+        }
+
+        .toast-warning {
+            background: #78350f;
+            color: #fcd34d
+        }
+
+        @media(max-width:640px) {
+            .header {
+                padding: 10px 16px
+            }
+
+            .tabs {
+                padding: 0 16px
+            }
+
+            .page {
+                padding: 16px
+            }
+
+            .tab {
+                padding: 12px 14px;
+                font-size: 12px
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .btn-fb {
+            background: linear-gradient(135deg, #1877F2, #0d65d9);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(24, 119, 242, .2);
+            font-weight: 700
+        }
+
+        .btn-fb:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(24, 119, 242, .3)
+        }
+
+        .btn-fb:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none
+        }
+
+        .btn-disconnect {
+            background: rgba(239, 68, 68, .1);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, .2);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit
+        }
+
+        .btn-disconnect:hover {
+            background: rgba(239, 68, 68, .2)
+        }
+
+        .fb-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600
+        }
+
+        .fb-profile img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(24, 119, 242, .4)
+        }
+
+        .fb-connect-card {
+            padding: 16px;
+            border: 1px dashed rgba(24, 119, 242, .3);
+            border-radius: var(--radius-sm);
+            background: rgba(24, 119, 242, .03);
+            margin-bottom: 16px;
+            text-align: center
+        }
+
+        .fb-connect-card.connected {
+            border-style: solid;
+            border-color: rgba(16, 185, 129, .3);
+            background: rgba(16, 185, 129, .03);
+            text-align: left
+        }
+
+        .fb-select-group {
+            margin-top: 12px
+        }
+
+        .fb-select-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 6px
+        }
+
+        .fb-select-group select {
+            width: 100%
+        }
+
+        .fb-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px
+        }
+
+        .fb-status img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--green)
+        }
+
+        .fb-status .name {
+            font-weight: 700;
+            font-size: 14px
+        }
+
+        .fb-status .email {
+            font-size: 11px;
+            color: var(--text-dim)
+        }
+
+        .manual-toggle {
+            font-size: 11px;
+            color: var(--text-dim);
+            cursor: pointer;
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .manual-toggle:hover {
+            color: var(--text)
+        }
+
+        /* Searchable Dropdown */
+        .search-dropdown {
+            position: relative
+        }
+
+        .search-dropdown .sd-input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            padding-right: 32px;
+            color: var(--text);
+            font-size: 13px;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color .2s, box-shadow .2s;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden
+        }
+
+        .search-dropdown .sd-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            cursor: text
+        }
+
+        .search-dropdown .sd-input::placeholder {
+            color: var(--text-muted);
+            font-size: 12px
+        }
+
+        .search-dropdown .sd-arrow {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-muted);
+            font-size: 10px;
+            transition: transform .2s
+        }
+
+        .search-dropdown.open .sd-arrow {
+            transform: translateY(-50%) rotate(180deg)
+        }
+
+        .search-dropdown .sd-list {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-sm);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .4);
+            animation: slideDown .15s ease
+        }
+
+        .search-dropdown.open .sd-list {
+            display: block
+        }
+
+        .search-dropdown .sd-item {
+            padding: 9px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background .15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .search-dropdown .sd-item:last-child {
+            border-bottom: none
+        }
+
+        .search-dropdown .sd-item:hover {
+            background: rgba(249, 115, 22, .06)
+        }
+
+        .search-dropdown .sd-item.selected {
+            background: rgba(249, 115, 22, .1);
+            color: var(--accent);
+            font-weight: 600
+        }
+
+        .search-dropdown .sd-item .sd-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .search-dropdown .sd-item .sd-id {
+            font-size: 10px;
+            color: var(--text-muted);
+            white-space: nowrap
+        }
+
+        .search-dropdown .sd-empty {
+            padding: 12px 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center
+        }
+
+        .search-dropdown .sd-count {
+            padding: 4px 14px;
+            font-size: 10px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, .02);
+            border-bottom: 1px solid var(--border)
+        }
+
+        /* Schedule Toggle */
+        .schedule-section {
+            margin-top: 12px;
+            padding: 14px 16px;
+            background: rgba(139, 92, 246, .04);
+            border: 1px dashed rgba(139, 92, 246, .2);
+            border-radius: var(--radius-sm);
+            transition: all .3s
+        }
+
+        .schedule-section.active {
+            border-style: solid;
+            border-color: rgba(139, 92, 246, .3);
+            background: rgba(139, 92, 246, .06)
+        }
+
+        .schedule-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none
+        }
+
+        .schedule-toggle .switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            background: var(--bg-input);
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            transition: all .2s;
+            flex-shrink: 0
+        }
+
+        .schedule-toggle .switch::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            top: 2px;
+            left: 2px;
+            transition: all .2s
+        }
+
+        .schedule-toggle.on .switch {
+            background: rgba(139, 92, 246, .2);
+            border-color: var(--purple)
+        }
+
+        .schedule-toggle.on .switch::after {
+            background: var(--purple);
+            left: 20px
+        }
+
+        .schedule-toggle .label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim)
+        }
+
+        .schedule-toggle.on .label {
+            color: var(--purple)
+        }
+
+        .schedule-fields {
+            display: none;
+            margin-top: 12px;
+            gap: 12px
+        }
+
+        .schedule-fields.show {
+            display: block;
+            animation: fadeIn .3s ease
+        }
+
+        .schedule-fields .form-group label {
+            color: var(--purple)
+        }
+
+        .schedule-hint {
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.5
+        }
+
+        /* ── Win Content Library ── */
+        .win-library-section {
+            margin-top: 12px;
+            border: 1px solid rgba(245, 158, 11, .2);
+            border-radius: var(--radius-sm);
+            background: rgba(245, 158, 11, .03);
+            overflow: hidden;
+            transition: border-color .2s
+        }
+
+        .win-library-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+            gap: 8px
+        }
+
+        .win-library-header:hover { background: rgba(245,158,11,.04) }
+
+        .win-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .win-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: var(--bg-input);
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            transition: all .2s;
+            flex-shrink: 0;
+            cursor: pointer
+        }
+
+        .win-switch::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            top: 2px;
+            left: 2px;
+            transition: all .2s
+        }
+
+        .win-switch.on {
+            background: rgba(245, 158, 11, .25);
+            border-color: var(--yellow)
+        }
+
+        .win-switch.on::after {
+            background: var(--yellow);
+            left: 18px
+        }
+
+        .win-badge {
+            background: rgba(245, 158, 11, .15);
+            color: var(--yellow);
+            border: 1px solid rgba(245, 158, 11, .2);
+            padding: 1px 8px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 700
+        }
+
+        .win-panel {
+            display: none;
+            padding: 0 14px 14px;
+            border-top: 1px solid rgba(245, 158, 11, .1)
+        }
+
+        .win-panel.open { display: block }
+
+        .win-add-box {
+            background: rgba(255, 255, 255, .02);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin-top: 12px
+        }
+
+        .win-item {
+            background: rgba(245, 158, 11, .05);
+            border: 1px solid rgba(245, 158, 11, .12);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            margin-top: 8px;
+            position: relative;
+            animation: fadeIn .25s ease
+        }
+
+        .win-item-text {
+            font-size: 12px;
+            color: var(--text);
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-height: 56px;
+            overflow: hidden
+        }
+
+        .win-item-text.expanded { max-height: none }
+
+        .win-item-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px
+        }
+
+        .win-del {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            transition: all .15s
+        }
+
+        .win-del:hover { background: rgba(239,68,68,.15); color: var(--red) }
+
+        .win-expand {
+            font-size: 10px;
+            color: var(--yellow);
+            cursor: pointer;
+            margin-top: 3px;
+            display: inline-block
+        }
+
+        /* ==================== FB AD PREVIEW ==================== */
+        .fb-preview-toggle {
+            display: inline-flex;
+            background: var(--bg-input);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .fb-preview-toggle button {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: inherit;
+        }
+        .fb-preview-toggle button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .fb-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-top: 12px;
+        }
+        @media (max-width: 1400px) { .fb-preview-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 1100px) { .fb-preview-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 800px) { .fb-preview-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .fb-preview-grid { grid-template-columns: 1fr; } }
+
+        .fb-ad-card {
+            background: #242526;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,.08);
+            transition: transform .2s, box-shadow .2s;
+            animation: fadeIn .3s ease;
+        }
+        .fb-ad-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,.3);
+        }
+        .fb-ad-card .fb-remove {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(0,0,0,.65);
+            border: none;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity .2s, background .2s;
+        }
+        .fb-ad-card:hover .fb-remove { opacity: 1; }
+        .fb-ad-card .fb-remove:hover { background: var(--red); }
+
+        .fb-ad-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px 6px;
+        }
+        .fb-ad-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .fb-ad-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .fb-ad-page-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #e4e6eb;
+            line-height: 1.2;
+        }
+        .fb-ad-sponsored {
+            font-size: 10px;
+            color: #b0b3b8;
+        }
+
+        .fb-ad-body {
+            padding: 4px 12px 8px;
+            font-size: 12px;
+            color: #e4e6eb;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 140px;
+            overflow: auto;
+        }
+
+        .fb-ad-body-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .fb-ad-body .fb-see-more {
+            color: #b0b3b8;
+            cursor: pointer;
+        }
+
+        .fb-ad-body .fb-see-less {
+            color: #b0b3b8;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 4px;
+            display: inline-block;
+            padding: 2px 0;
+        }
+
+        .fb-ad-body .fb-see-less:hover {
+            text-decoration: underline;
+        }
+
+        .fb-ad-media {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #18191a;
+            position: relative;
+            overflow: hidden;
+        }
+        .fb-ad-media video,
+        .fb-ad-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .fb-ad-media .fb-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            background: rgba(0,0,0,.55);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .fb-ad-media .fb-play-btn::after {
+            content: '';
+            border-style: solid;
+            border-width: 10px 0 10px 18px;
+            border-color: transparent transparent transparent #fff;
+            margin-left: 3px;
+        }
+        .fb-ad-media .fb-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,.7);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .fb-ad-link-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #3a3b3c;
+        }
+        .fb-ad-link-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .fb-ad-domain {
+            font-size: 10px;
+            color: #b0b3b8;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+        .fb-ad-headline {
+            font-size: 12px;
+            font-weight: 700;
+            color: #e4e6eb;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .fb-ad-desc {
+            font-size: 10px;
+            color: #b0b3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .fb-ad-cta {
+            background: rgba(255,255,255,.1);
+            color: #e4e6eb;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: default;
+            white-space: nowrap;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+
+        .fb-ad-actions {
+            display: flex;
+            justify-content: space-around;
+            padding: 4px 8px 6px;
+            border-top: 1px solid rgba(255,255,255,.08);
+        }
+        .fb-ad-actions span {
+            font-size: 11px;
+            color: #b0b3b8;
+            cursor: default;
+            padding: 5px 0;
+        }
+
+        .fb-ad-inline-editor {
+            border-top: 1px solid rgba(255,255,255,.08);
+            padding: 8px 10px;
+            background: rgba(0,0,0,.12);
+        }
+
+        .fb-ad-inline-editor details {
+            width: 100%;
+        }
+
+        .fb-ad-inline-editor summary {
+            cursor: pointer;
+            font-size: 11px;
+            color: #b0b3b8;
+            font-weight: 700;
+            list-style: none;
+            user-select: none;
+        }
+
+        .fb-ad-inline-editor summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .fb-ad-inline-editor summary::after {
+            content: ' ▾';
+            color: #9ca3af;
+            font-weight: 600;
+        }
+
+        .fb-ad-inline-editor details[open] summary::after {
+            content: ' ▴';
+        }
+
+        .fb-edit-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .fb-edit-field label {
+            display: block;
+            font-size: 10px;
+            color: #9ca3af;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .fb-edit-field .inp {
+            font-size: 12px;
+            padding: 7px 10px;
+            background: rgba(17,24,39,.75);
+            border-color: rgba(255,255,255,.14);
+        }
+
+        .fb-edit-field textarea.inp {
+            min-height: 68px;
+            max-height: 180px;
+            resize: vertical;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .txt-pr {
+            min-height: 88px;
+            max-height: 240px;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .fb-preview-counter {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+        .fb-preview-counter .count {
+            color: var(--green);
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="fb-root"></div>
+    <div class="header">
+        <div class="logo">
+            <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#9ca3af;font-size:11px;font-weight:600;text-decoration:none;transition:all .2s;margin-right:8px" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">← Home</a>
+            <span style="font-size:22px">🚀</span>
+            <h1>Ads Automation</h1><span class="ver">v3.1</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+            <div id="header-fb-disconnected">
+                <button class="btn btn-fb btn-sm" onclick="fbLogin()">🔗 Connect Facebook</button>
+            </div>
+            <div id="header-fb-connected" style="display:none">
+                <div class="fb-profile">
+                    <img id="header-fb-avatar" src="" alt="">
+                    <span id="header-fb-name"></span>
+                    <button class="btn-disconnect" onclick="fbLogout()">Disconnect</button>
+                </div>
+            </div>
+            <span style="color:var(--green);font-size:11px;font-weight:600">● SoraVer2</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('create')">🚀 Tạo Campaign</button>
+        <button class="tab" onclick="switchTab('config')">⚙️ Cấu hình</button>
+        <button class="tab" onclick="switchTab('history')">📋 Lịch sử</button>
+    </div>
+
+    <!-- CREATE -->
+    <div id="page-create" class="page show">
+        <div class="step-flow" id="step-flow">
+            <span class="step active" id="s1">1. Upload Videos</span><span class="step-arrow">→</span>
+            <span class="step" id="s2">2. AI Generate Text</span><span class="step-arrow">→</span>
+            <span class="step" id="s3">3. Preview</span><span class="step-arrow">→</span>
+            <span class="step" id="s4">4. Launch 🚀</span>
+        </div>
+
+        <!-- STEP 1: Multi Upload -->
+        <div id="step-upload" class="card fade-in" style="padding:20px;margin-bottom:16px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px">🎬 Step 1 — Upload Videos</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">Mỗi video = 1 Ad Set riêng trong cùng 1
+                Campaign</div>
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <div class="icon">🎬</div>
+                <div class="text">Kéo thả <strong>nhiều videos</strong> vào đây hoặc click để chọn</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:4px">MP4, MOV — mỗi file tối đa 4GB (Facebook limit)<br>💡 Video lớn >500MB có thể cần thời gian upload lâu</div>
+            </div>
+            <input type="file" id="file-input" accept="video/*" multiple style="display:none"
+                onchange="onFilesSelect(event)">
+            <div class="video-list" id="video-list"></div>
+            <div style="margin-top:12px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:150px"><label>👤 Mã MKT</label><input type="text"
+                        id="inp-mkt" class="inp" placeholder="vd: mktminh" oninput="updateCampPreview()"></div>
+                <div class="form-group" style="flex:1;min-width:150px"><label>📦 Mã hàng</label><input type="text"
+                        id="inp-product-code" class="inp" placeholder="vd: carwiper" oninput="updateCampPreview()">
+                </div>
+                <div class="form-group" style="flex:1;min-width:150px"><label>✏️ Tuỳ chỉnh</label><input type="text"
+                        id="inp-custom-name" class="inp" placeholder="vd: ngày 11/03" oninput="updateCampPreview()">
+                </div>
+            </div>
+            <div id="camp-name-preview"
+                style="margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:8px;font-size:12px;color:var(--text-dim);border:1px dashed rgba(255,255,255,0.1)">
+                📋 Tên Campaign: <span id="camp-name-value" style="color:var(--accent);font-weight:600">---</span>
+            </div>
+            <!-- Schedule Section -->
+            <div class="schedule-section" id="schedule-section">
+                <div class="schedule-toggle" id="schedule-toggle" onclick="toggleSchedule()">
+                    <div class="switch"></div>
+                    <div class="label">⏰ Hẹn ngày bắt đầu chạy</div>
+                </div>
+                <div class="schedule-fields" id="schedule-fields">
+                    <div class="form-group" style="max-width:300px">
+                        <label>📅 Ngày bắt đầu</label>
+                        <input type="date" id="inp-start-date" class="inp">
+                    </div>
+                    <div style="margin-top:6px;font-size:10px;color:var(--purple);font-weight:600">💡 Campaign sẽ bắt
+                        đầu chạy từ 00:00 ngày đã chọn</div>
+                </div>
+                <div class="schedule-hint" id="schedule-hint">💡 Tắt = Lên camp chạy luôn ngay lập tức</div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:200px"><label>📄 Page</label>
+                    <div class="search-dropdown" id="sd-page-create">
+                        <input class="sd-input" placeholder="🔍 Tìm Page..." onclick="sdToggle('sd-page-create')"
+                            oninput="sdFilter('sd-page-create')">
+                        <span class="sd-arrow">▼</span>
+                        <div class="sd-list"></div>
+                        <input type="hidden" id="inp-page" value="">
+                    </div>
+                </div>
+                <div class="form-group" style="flex:1;min-width:200px"><label>🔗 Link (Landing Page)</label><input
+                        type="text" id="inp-link" class="inp" placeholder="https://yoursite.com"></div>
+            </div>
+            <div style="margin-top:12px" class="form-group">
+                <label>📦 Mô tả sản phẩm (AI sẽ dựa vào đây để viết ad text)</label>
+                <textarea id="inp-product" class="inp" rows="3"
+                    placeholder="Nhập mô tả sản phẩm hoặc bấm nút bên dưới để AI tự đọc từ Landing Page..."></textarea>
+            </div>
+            <!-- ── Content Formula ── -->
+            <div class="card" style="padding:14px;margin-top:12px;border:1px solid rgba(168,85,247,.15);background:rgba(168,85,247,.03)">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                    <span style="font-size:14px">📐</span>
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">Content Formula (Cấu trúc content AI viết)</div>
+                </div>
+                <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px">Chọn template có sẵn hoặc tự viết công thức. AI sẽ viết content ĐÚNG theo cấu trúc này.</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="formula-presets">
+                    <button class="btn btn-sm" onclick="selectFormulaPreset('longform_ph')" id="fp-longform_ph" style="font-size:11px;padding:5px 10px;border:1px solid rgba(168,85,247,.3);background:rgba(168,85,247,.15);color:#c084fc;font-weight:600">📱 Long-form FB (PH)</button>
+                    <button class="btn btn-sm" onclick="selectFormulaPreset('shortform')" id="fp-shortform" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-dim)">⚡ Short-form</button>
+                    <button class="btn btn-sm" onclick="selectFormulaPreset('review')" id="fp-review" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-dim)">⭐ Review Style</button>
+                    <button class="btn btn-sm" onclick="selectFormulaPreset('problem')" id="fp-problem" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-dim)">🔧 Problem/Solution</button>
+                    <button class="btn btn-sm" onclick="selectFormulaPreset('custom')" id="fp-custom" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-dim)">✏️ Custom</button>
+                </div>
+                <textarea id="formula-text" class="inp" rows="4" style="font-size:11px;line-height:1.6;border-color:rgba(168,85,247,.2)" onchange="saveFormula()" placeholder="Viết cấu trúc content ở đây..."></textarea>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:6px">💡 AI sẽ viết primary_text theo đúng cấu trúc trên. Headline và Description vẫn tự động tối ưu.</div>
+            </div>
+            <!-- ── Win Content Library ── -->
+            <div class="win-library-section" id="win-library-section">
+                <div class="win-library-header" onclick="winTogglePanel()">
+                    <div class="win-toggle-row">
+                        <div class="win-switch" id="win-switch" onclick="event.stopPropagation();winToggleContext()"></div>
+                        <span style="font-size:13px">🏆</span>
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:var(--text)">Học từ Win Content</div>
+                            <div style="font-size:10px;color:var(--text-dim)" id="win-sub">Bật để AI học theo mẫu ads đã win</div>
+                        </div>
+                        <span class="win-badge" id="win-count-badge">0 mẫu</span>
+                    </div>
+                    <span id="win-arrow" style="color:var(--text-muted);font-size:12px;transition:transform .3s">▼</span>
+                </div>
+
+                <div class="win-panel" id="win-panel">
+
+                    <!-- AUTO: Kéo từ Meta Ads -->
+                    <div style="margin-top:12px;padding:12px 14px;background:rgba(24,119,242,.05);border:1px solid rgba(24,119,242,.15);border-radius:var(--radius-sm)">
+                        <div style="font-size:11px;font-weight:700;color:#4d9cf5;margin-bottom:8px">🔗 Tự động kéo Win Ads từ tài khoản Meta</div>
+                        <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px">Kết nối Facebook trước, chọn TKQC → bấm Sync để tự động lấy các ads có CTR cao nhất về Win Library.</div>
+                        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+                            <div>
+                                <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">CTR tối thiểu (%)</div>
+                                <input type="number" id="win-min-ctr" class="inp" value="1.5" step="0.1" min="0" style="width:90px;font-size:12px;padding:7px 10px">
+                            </div>
+                            <div>
+                                <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">Lấy tối đa</div>
+                                <select id="win-meta-limit" class="inp" style="width:80px;font-size:12px;padding:7px 10px">
+                                    <option value="10">10 ads</option>
+                                    <option value="20" selected>20 ads</option>
+                                    <option value="50">50 ads</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-ghost btn-sm" id="btn-win-sync" onclick="winSyncFromMeta()" style="white-space:nowrap;border-color:rgba(24,119,242,.4);color:#4d9cf5;font-weight:700">
+                                🔗 Sync Win Ads từ Meta
+                            </button>
+                        </div>
+                        <div id="win-sync-status" style="margin-top:8px;font-size:11px;color:var(--text-dim);display:none"></div>
+                    </div>
+
+                    <!-- MANUAL: Thêm tay -->
+                    <div class="win-add-box">
+                        <div style="font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:8px">✏️ Hoặc thêm thủ công</div>
+                        <textarea id="win-input" class="inp" rows="2"
+                            placeholder="Paste nội dung ads đã chạy tốt vào đây..."></textarea>
+                        <div style="display:flex;gap:8px;margin-top:8px;align-items:flex-end">
+                            <div style="flex:1">
+                                <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">CTR (%)</div>
+                                <input type="number" id="win-ctr" class="inp" placeholder="vd: 3.5" step="0.1" min="0" style="font-size:12px;padding:7px 10px">
+                            </div>
+                            <button class="btn btn-ghost btn-sm" onclick="winAddItem()" style="white-space:nowrap;border-color:rgba(245,158,11,.3);color:var(--yellow)">💾 Lưu</button>
+                        </div>
+                    </div>
+
+                    <!-- List -->
+                    <div id="win-list" style="margin-top:4px"></div>
+                    <div id="win-empty" style="text-align:center;padding:16px;font-size:11px;color:var(--text-muted)">Chưa có mẫu win nào.<br>Bấm <strong style="color:#4d9cf5">Sync từ Meta</strong> để tự động kéo về! 🔗</div>
+                </div>
+            </div>
+
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                <button class="btn btn-ghost btn-sm" id="btn-read-page" onclick="readLandingPage()"
+                    style="white-space:nowrap">🔍 AI đọc Landing Page</button>
+                <div style="display:flex;align-items:flex-end;gap:6px">
+                    <div>
+                        <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">🔢 Số biến thể text</div>
+                        <input type="number" id="inp-variations" class="inp" value="0" min="0" max="50" step="1" style="width:70px;font-size:12px;padding:7px 10px;text-align:center" title="0 = theo số video. Nhập số lớn hơn để AI tạo nhiều biến thể">
+                    </div>
+                    <button class="btn btn-primary" id="btn-generate" onclick="generateAllTexts()" disabled
+                        style="white-space:nowrap">🤖 Generate Ad Text (AI)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: AI Text per video -->
+        <div id="step-text" style="display:none">
+            <div class="card fade-in" style="padding:20px;margin-bottom:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+                    <div>
+                        <div style="font-weight:700;font-size:13px;margin-bottom:2px">🤖 Step 2 — Ad Preview</div>
+                        <div style="font-size:11px;color:var(--text-dim)">Xem demo & loại bỏ bài ads không cần thiết</div>
+                        <div style="font-size:10px;color:var(--yellow);margin-top:4px">💡 Tips: Video lớn đã được upload xong, có thể xóa preview để tiết kiệm memory</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div class="fb-preview-counter" id="fb-counter"></div>
+                        <div class="fb-preview-toggle" id="view-toggle">
+                            <button onclick="switchPreviewMode('fb')" class="active" id="btn-mode-fb">📱 FB Preview</button>
+                            <button onclick="switchPreviewMode('text')" id="btn-mode-text">📝 Text</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="fb-preview-container">
+                    <div class="fb-preview-grid" id="fb-preview-grid"></div>
+                </div>
+                <div id="text-cards-container" style="display:none">
+                    <div id="text-cards"></div>
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                    <button class="btn btn-ghost btn-sm" onclick="generateAllTexts()">🔄 Generate lại tất cả</button>
+                    <button class="btn btn-primary" onclick="showPreview()">📋 Preview Campaign Structure</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: Preview Structure -->
+        <div id="step-preview" style="display:none">
+            <div class="card fade-in" style="padding:20px;margin-bottom:16px">
+                <div style="font-weight:700;font-size:13px;margin-bottom:12px">📋 Step 3 — Campaign Structure Preview
+                </div>
+                <div id="preview-content"></div>
+                <div id="preview-status-msg"
+                    style="margin-top:12px;padding:8px 12px;border-radius:var(--radius-sm);font-size:11px">
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                    <button class="btn btn-green" id="btn-launch" onclick="launchCampaign()">🚀 Launch Campaign</button>
+                    <button class="btn btn-ghost" onclick="goToStep(2)">← Quay lại sửa</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: Launch Log -->
+        <div id="step-launch" style="display:none">
+            <div class="card fade-in" style="padding:20px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <div style="font-weight:700;font-size:13px">🚀 Đang tạo Campaign...</div>
+                    <div id="launch-progress-text" style="font-size:11px;color:var(--text-dim)">0%</div>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar" id="launch-progress" style="width:0%"></div>
+                </div>
+                <div class="log-box" id="log-box"></div>
+                <div id="launch-result" style="margin-top:12px;display:none"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="page-config" class="page">
+        <!-- Facebook Connect Card -->
+        <div class="card fade-in" style="padding:20px;margin-bottom:16px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:16px">🔗 Kết nối Facebook</div>
+            <div id="fb-connect-area" class="fb-connect-card">
+                <div style="font-size:32px;margin-bottom:8px">📱</div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:4px">Kết nối tài khoản Facebook</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">Tự động lấy danh sách Pages, TKQC
+                    và Pixels</div>
+                <button class="btn btn-fb" onclick="fbLogin()">🔗 Connect with Facebook</button>
+            </div>
+            <div id="fb-connected-area" style="display:none">
+                <div class="fb-connect-card connected">
+                    <div class="fb-status">
+                        <img id="cfg-fb-avatar" src="" alt="">
+                        <div>
+                            <div class="name" id="cfg-fb-name"></div>
+                            <div class="email">✅ Đã kết nối</div>
+                        </div>
+                        <button class="btn-disconnect" onclick="fbLogout()" style="margin-left:auto">Disconnect</button>
+                    </div>
+                    <div class="form-grid" style="gap:12px">
+                        <div class="fb-select-group">
+                            <label>📄 Chọn Page</label>
+                            <div class="search-dropdown" id="sd-page">
+                                <input class="sd-input" placeholder="🔍 Tìm Page theo tên..."
+                                    onclick="sdToggle('sd-page')" oninput="sdFilter('sd-page')">
+                                <span class="sd-arrow">▼</span>
+                                <div class="sd-list"></div>
+                                <input type="hidden" id="cfg-fb-page" value="">
+                            </div>
+                        </div>
+                        <div class="fb-select-group">
+                            <label>🏢 Chọn Tài khoản QC</label>
+                            <div class="search-dropdown" id="sd-account">
+                                <input class="sd-input" placeholder="🔍 Tìm TKQC theo tên..."
+                                    onclick="sdToggle('sd-account')" oninput="sdFilter('sd-account')">
+                                <span class="sd-arrow">▼</span>
+                                <div class="sd-list"></div>
+                                <input type="hidden" id="cfg-fb-account" value="">
+                            </div>
+                        </div>
+                        <div class="fb-select-group" style="grid-column:1/-1">
+                            <label>📍 Chọn Pixel</label>
+                            <div class="search-dropdown" id="sd-pixel">
+                                <input class="sd-input" placeholder="🔍 Tìm Pixel theo tên..."
+                                    onclick="sdToggle('sd-pixel')" oninput="sdFilter('sd-pixel')">
+                                <span class="sd-arrow">▼</span>
+                                <div class="sd-list"></div>
+                                <input type="hidden" id="cfg-fb-pixel" value="">
+                            </div>
+                            <!-- Manual Pixel Input (auto-shown when API returns no pixels) -->
+                            <div id="manual-pixel-section"
+                                style="display:none;margin-top:10px;padding:12px;background:rgba(249,115,22,.05);border:1px dashed rgba(249,115,22,.3);border-radius:8px">
+                                <div
+                                    style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                                    <span style="font-size:11px;font-weight:700;color:var(--accent)">⚠️ Không tìm thấy
+                                        Pixel — Nhập thủ công</span>
+                                    <button onclick="hideManualPixel()"
+                                        style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;line-height:1;padding:2px 5px"
+                                        title="Ẩn">✕</button>
+                                </div>
+                                <div style="display:flex;gap:8px;align-items:center">
+                                    <input type="text" id="cfg-pixel-inline" class="inp"
+                                        placeholder="Nhập Pixel ID (vd: 123456789012345)"
+                                        oninput="validatePixelId(this)"
+                                        style="flex:1;font-family:monospace;font-size:13px">
+                                    <button onclick="applyManualPixel()" class="btn btn-primary"
+                                        style="white-space:nowrap;padding:10px 14px;font-size:12px">✅ Dùng ID
+                                        này</button>
+                                </div>
+                                <div id="pixel-validate-msg"
+                                    style="font-size:11px;margin-top:5px;color:var(--text-dim)">📌 Tìm Pixel ID trong <a
+                                        href="https://business.facebook.com/events_manager" target="_blank"
+                                        style="color:var(--accent)">Facebook Events Manager</a></div>
+                            </div>
+                            <!-- Toggle link to manually enter pixel even when not needed -->
+                            <div id="manual-pixel-toggle" style="margin-top:6px">
+                                <span onclick="showManualPixel()"
+                                    style="font-size:11px;color:var(--text-dim);cursor:pointer;display:inline-flex;align-items:center;gap:4px"
+                                    title="Nhập Pixel ID thủ công">
+                                    🔧 Nhập Pixel ID thủ công
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="manual-toggle" onclick="toggleManualMode()">🔧 <span id="manual-toggle-text">Nhập thủ công
+                    (Advanced)</span></div>
+            <div id="manual-config" style="display:none;margin-top:12px">
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column:1/-1"><label>🔑 Facebook Access Token</label><input
+                            type="password" id="cfg-token" class="inp" placeholder="EAAxxxxxxx..."></div>
+                    <div class="form-group"><label>🏢 Ad Account ID</label><input type="text" id="cfg-account"
+                            class="inp" placeholder="act_123456789"></div>
+                    <div class="form-group"><label>📄 Default Page ID</label><input type="text" id="cfg-page"
+                            class="inp" placeholder="1234567890"></div>
+                    <div class="form-group"><label>📍 Facebook Pixel ID</label><input type="text" id="cfg-pixel"
+                            class="inp" placeholder="123456789012345"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI & Other Settings -->
+        <div class="card fade-in" style="padding:20px;margin-bottom:16px;animation-delay:.03s">
+            <div style="font-weight:700;font-size:13px;margin-bottom:16px">🤖 Cấu hình AI & Khác</div>
+            <!-- AI Provider Toggle -->
+            <div style="margin-bottom:16px">
+                <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:8px">🧠
+                    Chọn AI Provider</label>
+                <div
+                    style="display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;max-width:340px">
+                    <button class="btn" id="btn-ai-gemini" onclick="switchAIProvider('gemini')"
+                        style="flex:1;border-radius:0;border:none;font-size:12px;padding:10px 16px;background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;font-weight:700;transition:all .2s">✨
+                        Gemini</button>
+                    <button class="btn" id="btn-ai-openai" onclick="switchAIProvider('openai')"
+                        style="flex:1;border-radius:0;border:none;font-size:12px;padding:10px 16px;background:var(--bg-input);color:var(--text-dim);font-weight:600;transition:all .2s">💬
+                        ChatGPT</button>
+                </div>
+            </div>
+            <!-- Gemini Config -->
+            <div id="ai-config-gemini" class="form-grid" style="margin-bottom:12px">
+                <div class="form-group"><label>🔑 Gemini API Key</label><input type="password" id="cfg-gemini"
+                        class="inp" placeholder="AIzaSyxxxxxx..."></div>
+                <div class="form-group"><label>🧠 Gemini Model</label><input type="text" id="cfg-model" class="inp"
+                        value="gemini-2.5-flash-latest" placeholder="gemini-2.5-flash-latest"></div>
+            </div>
+            <!-- OpenAI Config -->
+            <div id="ai-config-openai" class="form-grid" style="margin-bottom:12px;display:none">
+                <div class="form-group"><label>🔑 OpenAI API Key</label><input type="password" id="cfg-openai"
+                        class="inp" placeholder="sk-xxxxxxxx..."></div>
+                <div class="form-group"><label>💬 ChatGPT Model</label>
+                    <select id="cfg-openai-model" class="inp">
+                        <option value="gpt-4o-mini" selected>GPT-4o Mini (nhanh, rẻ)</option>
+                        <option value="gpt-4o">GPT-4o (mạnh nhất)</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (rẻ nhất)</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" id="cfg-ai-provider" value="gemini">
+            <div class="form-grid">
+                <div class="form-group"><label>🎯 Conversion Event</label>
+                    <select id="cfg-event" class="inp">
+                        <option value="COMPLETE_REGISTRATION" selected>Complete Registration</option>
+                        <option value="PURCHASE">Purchase</option>
+                        <option value="ADD_TO_CART">Add to Cart</option>
+                        <option value="INITIATED_CHECKOUT">Initiated Checkout</option>
+                        <option value="LEAD">Lead</option>
+                        <option value="VIEW_CONTENT">View Content</option>
+                        <option value="CONTACT">Contact</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr style="border:none;border-top:1px dashed rgba(255,255,255,0.1);margin:16px 0">
+
+            <div style="margin-bottom:12px;padding:12px;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.2);border-radius:6px">
+                <label style="font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px;color:var(--yellow)">
+                    <span style="font-size:14px">🔥</span> Firebase Database URL (Kho Win Content Chung)
+                </label>
+                <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px">Link Realtime Database do công ty cấp (Ví dụ: https://project-id.firebaseio.com/win_library). Để trống nếu muốn lưu cá nhân trên máy.</div>
+                <input type="text" id="cfg-firebase-url" class="inp" placeholder="https://....firebaseio.com/win" style="border-color:rgba(217,119,6,.3)">
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:16px">
+                <button class="btn btn-primary" onclick="saveAIConfig()">💾 Lưu Cấu hình Phần này</button>
+            </div>
+            <div id="ai-cfg-toast"
+                style="font-size:11px;color:var(--green);margin-top:8px;display:none;font-weight:600">✅ Đã lưu cấu hình AI & DB!</div>
+        </div>
+        <div class="card fade-in" style="padding:20px;margin-bottom:16px;animation-delay:.06s">
+            <div style="font-weight:700;font-size:13px;margin-bottom:16px">📊 Default Campaign Settings</div>
+            <div class="form-grid">
+                <div class="form-group"><label>🎯 Objective</label>
+                    <select id="cfg-objective" class="inp">
+                        <option value="OUTCOME_SALES">Conversions (Sales)</option>
+                        <option value="OUTCOME_TRAFFIC">Traffic</option>
+                        <option value="OUTCOME_ENGAGEMENT">Engagement</option>
+                        <option value="OUTCOME_AWARENESS">Awareness</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>💰 Budget Campaign / ngày (CBO)</label><input type="number"
+                        id="cfg-budget" class="inp" value="200000" min="50000" step="50000"></div>
+                <div class="form-group"><label>🌍 Target Country</label><input type="text" id="cfg-country" class="inp"
+                        value="PH" placeholder="PH, VN, US..."></div>
+                <div class="form-group"><label>📌 CTA Button</label>
+                    <select id="cfg-cta" class="inp">
+                        <option value="SHOP_NOW">Shop Now</option>
+                        <option value="LEARN_MORE">Learn More</option>
+                        <option value="ORDER_NOW">Order Now</option>
+                        <option value="BUY_NOW">Buy Now</option>
+                        <option value="SIGN_UP">Sign Up</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="saveConfig()">💾 Lưu cấu hình</button>
+            <button class="btn btn-ghost" onclick="loadConfig()">🔄 Tải lại</button>
+            <button class="btn btn-ghost" onclick="listModels()">🔍 Kiểm tra models Gemini</button>
+        </div>
+        <div id="model-results" style="margin-top:12px;display:none"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="page-history" class="page">
+        <div class="card fade-in" style="padding:20px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:16px">📋 Campaigns đã tạo</div>
+            <div id="history-list" style="color:var(--text-muted);font-size:13px">Chưa có campaigns</div>
+        </div>
+    </div>
+
+    <div class="toast-box" id="toast-box"></div>
+    <div class="footer">Made with ❤️ by <span class="hl">Sếp Sơn</span> · TS Global © 2026</div>
+
+    <script>
+        // ==================== STATE ====================
+        let videoFiles = []; // [{file, headline, primary, desc}]
+        let currentStep = 1;
+        const CONFIG_KEY = 'ts_ads_config';
+        const HISTORY_KEY = 'ts_ads_history';
+        const FORMULA_KEY = 'ts_ads_formula';
+        const FB_API = 'https://graph.facebook.com/v25.0';
+
+        // ==================== CONTENT FORMULA ====================
+        const formulaPresets = {
+            longform_ph: `Viết bằng tiếng Filipino/Tagalog, dạng long-form Facebook post:\n\n1. 🔥 TÊN SẢN PHẨM + HEADLINE MẠNH (giật tít, gây tò mò)\n2. 😫 NỖI ĐAU KHÁCH HÀNG — vấn đề họ đang gặp / thứ họ đang cần\n3. ✅ CÔNG DỤNG + ĐIỂM NỔI BẬT sản phẩm (liệt kê 3-5 bullets)\n4. 🛒 CÂU GIẬT MUA HÀNG — urgency, promo, free shipping, limited stock\n5. 🔗 LINK BÁN HÀNG + #hashtag liên quan`,
+            shortform: `Viết ngắn gọn, dưới 100 từ:\n\n1. 🪝 HOOK — câu mở đầu gây chú ý (dưới 10 từ)\n2. ✅ BENEFIT — lợi ích chính sản phẩm (1-2 câu)\n3. 👉 CTA — kêu gọi hành động rõ ràng`,
+            review: `Viết dạng review/testimonial:\n\n1. 💬 "I tried..." — mở đầu như trải nghiệm thật\n2. 📈 KẾT QUẢ — kết quả cụ thể sau khi dùng\n3. ⭐ RECOMMEND — lý do khuyên dùng\n4. 👉 CTA — kêu gọi mua/thử`,
+            problem: `Viết theo cấu trúc Problem/Solution:\n\n1. ❓ VẤN ĐỀ — nêu pain point khách hàng đang gặp\n2. 💡 GIẢI PHÁP — giới thiệu sản phẩm như giải pháp\n3. 📊 BẰNG CHỨNG — social proof, số liệu, review\n4. 🎁 PROMO — khuyến mãi, giảm giá, quà tặng\n5. 👉 CTA — kêu gọi hành động cụ thể`,
+            custom: ''
+        };
+        let activeFormulaPreset = 'longform_ph';
+
+        function selectFormulaPreset(key) {
+            activeFormulaPreset = key;
+            // Update active button styling
+            document.querySelectorAll('#formula-presets button').forEach(btn => {
+                btn.style.background = 'var(--bg-input)';
+                btn.style.borderColor = 'var(--border)';
+                btn.style.color = 'var(--text-dim)';
+            });
+            const activeBtn = document.getElementById('fp-' + key);
+            if (activeBtn) {
+                activeBtn.style.background = 'rgba(168,85,247,.15)';
+                activeBtn.style.borderColor = 'rgba(168,85,247,.3)';
+                activeBtn.style.color = '#c084fc';
+            }
+            // Set textarea to preset content (only if not custom)
+            const textarea = document.getElementById('formula-text');
+            if (key !== 'custom') {
+                textarea.value = formulaPresets[key] || '';
+            } else {
+                // Load saved custom formula or empty
+                const saved = localStorage.getItem(FORMULA_KEY + '_custom');
+                textarea.value = saved || '';
+            }
+            saveFormula();
+        }
+
+        function saveFormula() {
+            const text = document.getElementById('formula-text')?.value || '';
+            localStorage.setItem(FORMULA_KEY, JSON.stringify({ preset: activeFormulaPreset, text }));
+            if (activeFormulaPreset === 'custom') {
+                localStorage.setItem(FORMULA_KEY + '_custom', text);
+            }
+        }
+
+        function loadFormula() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(FORMULA_KEY));
+                if (saved) {
+                    activeFormulaPreset = saved.preset || 'longform_ph';
+                    document.getElementById('formula-text').value = saved.text || formulaPresets[activeFormulaPreset] || '';
+                    selectFormulaPreset(activeFormulaPreset);
+                    return;
+                }
+            } catch (e) { }
+            // Default: load longform_ph
+            selectFormulaPreset('longform_ph');
+        }
+
+        // Load formula on page load
+        document.addEventListener('DOMContentLoaded', () => { setTimeout(loadFormula, 100); });
+        const FB_APP_ID = '1415560070289924';
+        let fbAccessToken = '';
+        let fbUserInfo = null;
+        let fbPages = [];
+        let fbAdAccounts = [];
+        let fbPixels = [];
+
+        // ==================== FACEBOOK SDK ====================
+        window.fbAsyncInit = function () {
+            FB.init({ appId: FB_APP_ID, cookie: true, xfbml: true, version: 'v25.0' });
+            FB.getLoginStatus(function (resp) {
+                if (resp.status === 'connected') {
+                    fbAccessToken = resp.authResponse.accessToken;
+                    onFbConnected();
+                }
+            });
+        };
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id; js.async = true;
+            js.src = 'https://connect.facebook.net/en_US/sdk.js';
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+        function fbLogin() {
+            FB.login(function (resp) {
+                if (resp.authResponse) {
+                    fbAccessToken = resp.authResponse.accessToken;
+                    onFbConnected();
+                    showToast('✅ Đã kết nối Facebook!');
+                } else {
+                    showToast('❌ Không thể kết nối Facebook', 'error');
+                }
+            }, { scope: 'pages_show_list,ads_management,ads_read,business_management' });
+        }
+
+        function fbLogout() {
+            FB.logout(function () {
+                fbAccessToken = '';
+                fbUserInfo = null;
+                fbPages = [];
+                fbAdAccounts = [];
+                fbPixels = [];
+                updateFbUI(false);
+                showToast('🔌 Đã ngắt kết nối Facebook');
+            });
+        }
+
+        // Fetch all pages from a paginated Facebook API endpoint
+        async function fbFetchAllPages(firstUrl) {
+            let results = [];
+            let url = firstUrl;
+            let pageCount = 0;
+            while (url && pageCount < 10) { // Max 10 pages = 2000 items safety cap
+                const resp = await fetch(url);
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message);
+                results = results.concat(data.data || []);
+                url = data.paging?.next || null;
+                pageCount++;
+            }
+            return results;
+        }
+
+        async function onFbConnected() {
+            try {
+                // Get user info
+                const userResp = await fetch(`${FB_API}/me?fields=name,picture.width(100)&access_token=${fbAccessToken}`);
+                fbUserInfo = await userResp.json();
+                updateFbUI(true);
+
+                // Show loading status in dropdowns
+                const sdInp = (id) => { const el = document.querySelector(`#${id} .sd-input`); if (el) el.value = '⏳ Đang tải...'; };
+                sdInp('sd-page'); sdInp('sd-page-create'); sdInp('sd-account');
+
+                // ── 1. Load Pages (with pagination, limit 200/page) ──────────────
+                // /me/accounts only returns pages where user is ADMIN role.
+                // Users with Advertiser/Moderator role won't see their pages here.
+                let allPages = [];
+                try {
+                    allPages = await fbFetchAllPages(
+                        `${FB_API}/me/accounts?fields=name,id,access_token&limit=200&access_token=${fbAccessToken}`
+                    );
+                } catch(e) { console.warn('[FB] Pages fetch error:', e.message); }
+
+                // ── 2. Load Ad Accounts (with pagination) ────────────────────────
+                // /me/adaccounts returns accounts directly linked to user OR via BM.
+                // But only status=1 (ACTIVE) shown — disabled/pending silently dropped.
+                let allRawAccounts = [];
+                try {
+                    allRawAccounts = await fbFetchAllPages(
+                        `${FB_API}/me/adaccounts?fields=name,account_id,account_status&limit=200&access_token=${fbAccessToken}`
+                    );
+                } catch(e) { console.warn('[FB] AdAccounts fetch error:', e.message); }
+
+                // Include ALL non-disabled statuses (1=Active, 2=Disabled, 3=Unsettled, 7=Pending_closure, 8=Closed, 9=Pending_settlement, 100=Any_active, 101=Any_closed)
+                // Show active and unsettled; exclude truly closed/disabled
+                const activeAccounts = allRawAccounts.filter(a => ![2, 8, 101].includes(a.account_status));
+
+                // ── 3. Fallback: Get accounts via Business Manager ────────────────
+                // Covers accounts where user is BM Admin (owned + client)
+                let bmAccounts = [];
+                try {
+                    const bizResp = await fetch(`${FB_API}/me/businesses?fields=id,name&limit=50&access_token=${fbAccessToken}`);
+                    const bizData = await bizResp.json();
+                    const businesses = bizData.data || [];
+
+                    if (businesses.length > 0) {
+                        const bmFetches = businesses.map(biz => Promise.all([
+                            fbFetchAllPages(`${FB_API}/${biz.id}/owned_ad_accounts?fields=name,account_id,account_status&limit=200&access_token=${fbAccessToken}`).catch(() => []),
+                            fbFetchAllPages(`${FB_API}/${biz.id}/client_ad_accounts?fields=name,account_id,account_status&limit=200&access_token=${fbAccessToken}`).catch(() => [])
+                        ]));
+                        const bmResults = await Promise.all(bmFetches);
+                        bmResults.forEach(([owned, client]) => {
+                            bmAccounts = bmAccounts.concat(owned, client);
+                        });
+                    }
+                } catch(e) { console.warn('[FB] BM fallback error:', e.message); }
+
+                // ── 4. Fallback: assigned_ad_accounts (BM employee) ──────────────
+                // Covers accounts assigned to the user inside a BM where they are NOT admin
+                let assignedAccounts = [];
+                try {
+                    assignedAccounts = await fbFetchAllPages(
+                        `${FB_API}/me/assigned_ad_accounts?fields=name,account_id,account_status&limit=200&access_token=${fbAccessToken}`
+                    );
+                } catch(e) { console.warn('[FB] Assigned accounts error:', e.message); }
+
+                // Merge & deduplicate all ad accounts (direct + BM admin + BM employee)
+                const seenAccIds = new Set();
+                const mergedAccounts = [...activeAccounts, ...bmAccounts, ...assignedAccounts]
+                    .filter(a => ![2, 8, 101].includes(a.account_status))
+                    .filter(a => {
+                    const key = a.account_id || a.id;
+                    if (seenAccIds.has(key)) return false;
+                    seenAccIds.add(key);
+                    return true;
+                });
+
+                fbPages = allPages;
+                fbAdAccounts = mergedAccounts;
+
+                populatePageDropdowns();
+                populateAccountDropdown();
+
+                // Show summary toast
+                const allRawFiltered = allRawAccounts.filter(a => [2, 8, 101].includes(a.account_status));
+                let summary = `✅ Đã tải: ${allPages.length} Pages, ${mergedAccounts.length} TKQC`;
+                if (allRawFiltered.length > 0) summary += ` (${allRawFiltered.length} TKQC bị vô hiệu hoá đã ẩn)`;
+                if (allPages.length === 0) summary += ` | ⚠️ Không thấy Page — cần quyền Admin trên Page`;
+                showToast(summary, mergedAccounts.length > 0 ? 'success' : 'warning');
+
+                // Auto-select from saved config
+                const cfg = getConfig();
+                if (cfg.page) {
+                    setDropdownValue('cfg-fb-page', cfg.page);
+                    setDropdownValue('inp-page', cfg.page);
+                }
+                if (cfg.account) {
+                    const accId = cfg.account.replace('act_', '');
+                    setDropdownValue('cfg-fb-account', 'act_' + accId);
+                    onFbAccountSelect();
+                }
+
+                // Save token to config
+                cfg.token = fbAccessToken;
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+
+            } catch (err) {
+                console.error('[FB Connect] Error:', err);
+                showToast('❌ Lỗi tải dữ liệu Facebook: ' + err.message, 'error');
+            }
+        }
+
+        function updateFbUI(connected) {
+            document.getElementById('fb-connect-area').style.display = connected ? 'none' : 'block';
+            document.getElementById('fb-connected-area').style.display = connected ? 'block' : 'none';
+            document.getElementById('header-fb-disconnected').style.display = connected ? 'none' : 'block';
+            document.getElementById('header-fb-connected').style.display = connected ? 'flex' : 'none';
+
+            if (connected && fbUserInfo) {
+                const avatarUrl = fbUserInfo.picture?.data?.url || '';
+                document.getElementById('cfg-fb-name').textContent = fbUserInfo.name;
+                document.getElementById('cfg-fb-avatar').src = avatarUrl;
+                document.getElementById('header-fb-name').textContent = fbUserInfo.name;
+                document.getElementById('header-fb-avatar').src = avatarUrl;
+            }
+
+            // Reset searchable dropdowns when disconnected
+            if (!connected) {
+                ['sd-page', 'sd-page-create', 'sd-account', 'sd-pixel'].forEach(sdId => {
+                    sdData[sdId] = [];
+                    const wrapper = document.getElementById(sdId);
+                    if (!wrapper) return;
+                    wrapper.querySelector('.sd-input').value = '';
+                    wrapper.querySelector('.sd-list').innerHTML = '';
+                    wrapper.querySelector('input[type=hidden]').value = '';
+                });
+            }
+        }
+
+        // ==================== SEARCHABLE DROPDOWN ENGINE ====================
+        const sdData = {}; // { sdId: [{value, name, id, extra}] }
+
+        function sdToggle(sdId) {
+            const wrapper = document.getElementById(sdId);
+            const isOpen = wrapper.classList.contains('open');
+            // Close all other dropdowns
+            document.querySelectorAll('.search-dropdown.open').forEach(el => el.classList.remove('open'));
+            if (!isOpen) {
+                wrapper.classList.add('open');
+                const inp = wrapper.querySelector('.sd-input');
+                inp.select();
+                sdRender(sdId, '');
+            }
+        }
+
+        function sdFilter(sdId) {
+            const wrapper = document.getElementById(sdId);
+            const query = wrapper.querySelector('.sd-input').value;
+            if (!wrapper.classList.contains('open')) wrapper.classList.add('open');
+            sdRender(sdId, query);
+        }
+
+        function sdRender(sdId, query) {
+            const wrapper = document.getElementById(sdId);
+            const list = wrapper.querySelector('.sd-list');
+            const items = sdData[sdId] || [];
+            const selectedVal = wrapper.querySelector('input[type=hidden]').value;
+            const q = (query || '').toLowerCase().trim();
+
+            const filtered = q ? items.filter(it => it.name.toLowerCase().includes(q) || it.id.toLowerCase().includes(q)) : items;
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="sd-empty">${items.length === 0 ? '📭 Chưa có dữ liệu' : '🔍 Không tìm thấy "' + q + '"'}</div>`;
+                return;
+            }
+
+            let html = '';
+            if (q && filtered.length !== items.length) {
+                html += `<div class="sd-count">🔍 ${filtered.length}/${items.length} kết quả</div>`;
+            }
+            html += filtered.map(it => `<div class="sd-item${it.value === selectedVal ? ' selected' : ''}" data-value="${it.value}" onclick="sdSelect('${sdId}', '${it.value.replace(/'/g, "\\'")}')">
+                <span class="sd-name">${it.name}</span>
+                <span class="sd-id">${it.id}</span>
+            </div>`).join('');
+            list.innerHTML = html;
+        }
+
+        function sdSelect(sdId, value) {
+            const wrapper = document.getElementById(sdId);
+            const items = sdData[sdId] || [];
+            const item = items.find(it => it.value === value);
+            const hidden = wrapper.querySelector('input[type=hidden]');
+            const inp = wrapper.querySelector('.sd-input');
+
+            hidden.value = value;
+            inp.value = item ? `${item.name} (${item.id})` : '';
+            wrapper.classList.remove('open');
+
+            // Trigger callbacks
+            if (sdId === 'sd-page') {
+                // Sync to create tab page dropdown
+                sdSelectByValue('sd-page-create', value);
+            }
+            if (sdId === 'sd-page-create') {
+                // Sync back to config page dropdown
+                sdSelectByValue('sd-page', value);
+            }
+            if (sdId === 'sd-account') {
+                onFbAccountSelect();
+            }
+        }
+
+        function sdSelectByValue(sdId, value) {
+            const wrapper = document.getElementById(sdId);
+            if (!wrapper) return;
+            const items = sdData[sdId] || [];
+            const item = items.find(it => it.value === value);
+            wrapper.querySelector('input[type=hidden]').value = value;
+            wrapper.querySelector('.sd-input').value = item ? `${item.name} (${item.id})` : '';
+        }
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.search-dropdown')) {
+                document.querySelectorAll('.search-dropdown.open').forEach(el => el.classList.remove('open'));
+            }
+        });
+
+        function populatePageDropdowns() {
+            const items = fbPages.map(p => ({ value: p.id, name: p.name, id: p.id, token: p.access_token || '' }));
+            sdData['sd-page'] = items;
+            sdData['sd-page-create'] = items;
+            sdRender('sd-page', '');
+            sdRender('sd-page-create', '');
+        }
+
+        function populateAccountDropdown() {
+            sdData['sd-account'] = fbAdAccounts.map(a => ({ value: 'act_' + a.account_id, name: a.name || 'TKQC', id: 'act_' + a.account_id }));
+            sdRender('sd-account', '');
+        }
+
+        async function populatePixelDropdown(accountId) {
+            const wrapper = document.getElementById('sd-pixel');
+            wrapper.querySelector('.sd-input').value = '⏳ Đang tải Pixels...';
+            try {
+                const resp = await fetch(`${FB_API}/${accountId}/adspixels?fields=name,id&access_token=${fbAccessToken}`);
+                const data = await resp.json();
+                fbPixels = data.data || [];
+                sdData['sd-pixel'] = fbPixels.map(p => ({ value: p.id, name: p.name, id: p.id }));
+                wrapper.querySelector('.sd-input').value = '';
+                if (fbPixels.length) {
+                    wrapper.querySelector('.sd-input').placeholder = '🔍 Tìm Pixel theo tên...';
+                    hideManualPixel();
+                } else {
+                    wrapper.querySelector('.sd-input').placeholder = '📭 Không tìm thấy Pixel nào';
+                    showManualPixel(true); // auto-show with no-pixel context
+                }
+                sdRender('sd-pixel', '');
+                // Auto-select from saved config
+                const cfg = getConfig();
+                if (cfg.pixel) {
+                    const found = sdSelectByValue('sd-pixel', cfg.pixel);
+                    if (!found && cfg.pixel) {
+                        // Pixel from config not in list — show manual with prefill
+                        showManualPixel(true);
+                        document.getElementById('cfg-pixel-inline').value = cfg.pixel;
+                        validatePixelId(document.getElementById('cfg-pixel-inline'));
+                    }
+                }
+            } catch (err) {
+                wrapper.querySelector('.sd-input').value = '';
+                wrapper.querySelector('.sd-input').placeholder = '❌ Lỗi tải Pixels — hãy nhập thủ công';
+                sdData['sd-pixel'] = [];
+                showManualPixel(true);
+                console.error('[FB Connect] Pixels error:', err);
+            }
+        }
+
+        function showManualPixel(autoShown = false) {
+            const sec = document.getElementById('manual-pixel-section');
+            const toggle = document.getElementById('manual-pixel-toggle');
+            if (!autoShown) {
+                // Manual trigger: change top message to neutral
+                sec.querySelector('span[style]').textContent = '✏️ Nhập Pixel ID thủ công';
+                sec.querySelector('span[style]').style.color = 'var(--text-dim)';
+                sec.style.background = 'rgba(255,255,255,.03)';
+                sec.style.borderColor = 'rgba(255,255,255,.1)';
+            } else {
+                sec.querySelector('span[style]').textContent = '⚠️ Không tìm thấy Pixel — Nhập thủ công';
+                sec.querySelector('span[style]').style.color = 'var(--accent)';
+                sec.style.background = 'rgba(249,115,22,.05)';
+                sec.style.borderColor = 'rgba(249,115,22,.3)';
+            }
+            sec.style.display = 'block';
+            if (toggle) toggle.style.display = 'none';
+            // Pre-fill from saved config
+            const cfg = getConfig();
+            if (cfg.pixel && !document.getElementById('cfg-pixel-inline').value) {
+                document.getElementById('cfg-pixel-inline').value = cfg.pixel;
+                validatePixelId(document.getElementById('cfg-pixel-inline'));
+            }
+        }
+
+        function hideManualPixel() {
+            const sec = document.getElementById('manual-pixel-section');
+            const toggle = document.getElementById('manual-pixel-toggle');
+            if (sec) sec.style.display = 'none';
+            if (toggle) toggle.style.display = 'block';
+        }
+
+        function validatePixelId(input) {
+            const val = input.value.trim();
+            const msg = document.getElementById('pixel-validate-msg');
+            if (!val) {
+                msg.innerHTML = '📌 Tìm Pixel ID trong <a href="https://business.facebook.com/events_manager" target="_blank" style="color:var(--accent)">Facebook Events Manager</a>';
+                msg.style.color = 'var(--text-dim)';
+                input.style.borderColor = '';
+            } else if (/^\d{10,20}$/.test(val)) {
+                msg.textContent = '✅ Format hợp lệ — ID gồm ' + val.length + ' chữ số';
+                msg.style.color = 'var(--green)';
+                input.style.borderColor = 'var(--green)';
+            } else {
+                msg.textContent = '⚠️ Pixel ID thường là 10–20 chữ số. Kiểm tra lại.';
+                msg.style.color = 'var(--yellow)';
+                input.style.borderColor = 'var(--yellow)';
+            }
+        }
+
+        function applyManualPixel() {
+            const val = document.getElementById('cfg-pixel-inline').value.trim();
+            if (!val) { showToast('⚠️ Vui lòng nhập Pixel ID', 'warning'); return; }
+            // Sync to both the main manual field and the hidden FB pixel field
+            document.getElementById('cfg-pixel').value = val;
+            document.getElementById('cfg-fb-pixel').value = val;
+            // Update dropdown display to show manually entered pixel
+            const inp = document.querySelector('#sd-pixel .sd-input');
+            if (inp) { inp.value = '✅ Pixel ID: ' + val; }
+            showToast('✅ Đã áp dụng Pixel ID: ' + val, 'success');
+            hideManualPixel();
+        }
+
+        function onFbPageSelect() {
+            const val = document.getElementById('cfg-fb-page').value;
+            sdSelectByValue('sd-page-create', val);
+        }
+
+        function onFbAccountSelect() {
+            const val = document.getElementById('cfg-fb-account').value;
+            if (val) {
+                populatePixelDropdown(val);
+            } else {
+                sdData['sd-pixel'] = [];
+                const wrapper = document.getElementById('sd-pixel');
+                wrapper.querySelector('.sd-input').value = '';
+                wrapper.querySelector('.sd-input').placeholder = '🔍 Chọn TKQC trước...';
+                wrapper.querySelector('input[type=hidden]').value = '';
+            }
+        }
+
+        function setDropdownValue(id, value) {
+            // For hidden inputs inside searchable dropdowns
+            const el = document.getElementById(id);
+            if (!el) return;
+            // Check if this is a hidden input in a search-dropdown
+            const wrapper = el.closest('.search-dropdown');
+            if (wrapper) {
+                sdSelectByValue(wrapper.id, value);
+            } else if (el.tagName === 'SELECT') {
+                for (let i = 0; i < el.options.length; i++) {
+                    if (el.options[i].value === value) { el.selectedIndex = i; return; }
+                }
+            } else {
+                el.value = value;
+            }
+        }
+
+        function toggleManualMode() {
+            const el = document.getElementById('manual-config');
+            const txt = document.getElementById('manual-toggle-text');
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                txt.textContent = 'Ẩn nhập thủ công';
+            } else {
+                el.style.display = 'none';
+                txt.textContent = 'Nhập thủ công (Advanced)';
+            }
+        }
+
+        // ==================== HELPERS ====================
+        function showToast(msg, type = 'success') {
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.textContent = msg;
+            document.getElementById('toast-box').appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['create', 'config', 'history'][i] === name));
+            document.querySelectorAll('.page').forEach(p => p.classList.toggle('show', p.id === 'page-' + name));
+            if (name === 'config') loadConfig();
+            if (name === 'history') loadHistory();
+        }
+
+        function goToStep(n) {
+            currentStep = n;
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('s' + i);
+                el.classList.toggle('active', i === n);
+                el.classList.toggle('done', i < n);
+            }
+            document.getElementById('step-text').style.display = n >= 2 ? 'block' : 'none';
+            document.getElementById('step-preview').style.display = n >= 3 ? 'block' : 'none';
+            document.getElementById('step-launch').style.display = n >= 4 ? 'block' : 'none';
+        }
+
+        function addLog(msg, type = '') {
+            const box = document.getElementById('log-box');
+            const time = new Date().toLocaleTimeString('vi-VN');
+            box.innerHTML += `<div class="log-item ${type}"><span class="time">[${time}]</span><span class="msg">${msg}</span></div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function setProgress(pct) {
+            document.getElementById('launch-progress').style.width = pct + '%';
+            document.getElementById('launch-progress-text').textContent = Math.round(pct) + '%';
+        }
+
+        function validateLaunchInputs({ activeToken, activeAccount, activePixel, pageId, objective }) {
+            if (!activeToken || !activeAccount) return 'Cần kết nối Facebook hoặc nhập Access Token + Ad Account!';
+            if (!videoFiles.length) return 'Cần tải lên ít nhất 1 video trước khi launch campaign!';
+            if (!pageId) return 'Thiếu Page ID. Hãy chọn Page trước khi launch.';
+            if (objective === 'OUTCOME_SALES' && !activePixel) {
+                return 'Pixel ID là bắt buộc cho Conversion campaign. Hãy chọn hoặc nhập Pixel ID trước khi launch.';
+            }
+            return '';
+        }
+
+        async function graphDeleteObject(objectId, activeToken, label) {
+            if (!objectId || !activeToken) return true;
+            try {
+                const resp = await fetch(`${FB_API}/${objectId}?access_token=${encodeURIComponent(activeToken)}`, {
+                    method: 'DELETE'
+                });
+                const data = await resp.json();
+                if (data && data.success) {
+                    addLog(`🧹 Rollback OK: ${label} ${objectId}`, 'warn');
+                    return true;
+                }
+                addLog(`⚠️ Rollback fail: ${label} ${objectId}`, 'warn');
+                return false;
+            } catch (err) {
+                addLog(`⚠️ Rollback error: ${label} ${objectId} · ${err.message}`, 'warn');
+                return false;
+            }
+        }
+
+        async function rollbackLaunch(created, activeToken) {
+            addLog('🧹 Bắt đầu rollback các object đã tạo...', 'warn');
+            for (const adId of [...created.adIds].reverse()) await graphDeleteObject(adId, activeToken, 'Ad');
+            for (const creativeId of [...created.creativeIds].reverse()) await graphDeleteObject(creativeId, activeToken, 'Creative');
+            for (const adSetId of [...created.adSetIds].reverse()) await graphDeleteObject(adSetId, activeToken, 'Ad Set');
+            for (const videoId of [...created.videoIds].reverse()) await graphDeleteObject(videoId, activeToken, 'Video');
+            if (created.campaignId) await graphDeleteObject(created.campaignId, activeToken, 'Campaign');
+        }
+
+        function getConfig() { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); }
+
+        // ==================== LIST MODELS ====================
+        async function listModels() {
+            const key = document.getElementById('cfg-gemini').value.trim();
+            if (!key) { showToast('Nhập Gemini API Key trước!', 'warning'); return; }
+            const el = document.getElementById('model-results');
+            el.style.display = 'block';
+            el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-dim)"><span class="spinner"></span> Đang kiểm tra...</div>';
+            try {
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message);
+                const models = (data.models || []).filter(m => m.supportedGenerationMethods?.includes('generateContent'));
+                if (models.length === 0) { el.innerHTML = '<div class="card" style="padding:12px;color:var(--red);font-size:12px">❌ Không tìm thấy model nào</div>'; return; }
+                el.innerHTML = `<div class="card" style="padding:12px">
+                    <div style="font-weight:700;font-size:12px;margin-bottom:8px">✅ ${models.length} models khả dụng (bấm để chọn):</div>
+                    ${models.map(m => {
+                    const name = m.name.replace('models/', '');
+                    return `<div style="padding:4px 8px;font-size:11px;cursor:pointer;border-radius:4px;margin:2px 0;background:var(--bg-input);border:1px solid var(--border)" 
+                            onclick="document.getElementById('cfg-model').value='${name}';showToast('Đã chọn: ${name}')" 
+                            onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                            <strong style="color:var(--accent)">${name}</strong>
+                            <span style="color:var(--text-muted);margin-left:8px">${m.displayName || ''}</span>
+                        </div>`;
+                }).join('')}
+                </div>`;
+            } catch (err) {
+                el.innerHTML = `<div class="card" style="padding:12px;color:var(--red);font-size:12px">❌ ${err.message}</div>`;
+            }
+        }
+
+        // ==================== CONFIG ====================
+        function saveConfig() {
+            // FB dropdowns have priority, fallback to manual inputs
+            const fbPage = document.getElementById('cfg-fb-page').value;
+            const fbAccount = document.getElementById('cfg-fb-account').value;
+            const fbPixel = document.getElementById('cfg-fb-pixel').value;
+            const manualPage = document.getElementById('cfg-page').value.trim();
+            const manualAccount = document.getElementById('cfg-account').value.trim();
+            const manualPixel = document.getElementById('cfg-pixel').value.trim();
+            const manualToken = document.getElementById('cfg-token').value.trim();
+
+            const cfg = {
+                token: fbAccessToken || manualToken,
+                account: fbAccount || manualAccount,
+                page: fbPage || manualPage,
+                aiProvider: document.getElementById('cfg-ai-provider').value || 'gemini',
+                gemini: document.getElementById('cfg-gemini').value.trim(),
+                model: document.getElementById('cfg-model').value.trim() || 'gemini-1.5-flash-latest',
+                openai: document.getElementById('cfg-openai').value.trim(),
+                openaiModel: document.getElementById('cfg-openai-model').value || 'gpt-4o-mini',
+                pixel: fbPixel || manualPixel,
+                event: document.getElementById('cfg-event').value,
+                objective: document.getElementById('cfg-objective').value,
+                budget: parseInt(document.getElementById('cfg-budget').value) || 200000,
+                country: document.getElementById('cfg-country').value.trim() || 'PH',
+                cta: document.getElementById('cfg-cta').value
+            };
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+
+            // Extra Configurations outside of main obj (for UI compatibility)
+            localStorage.setItem('ts_gemini_key', document.getElementById('cfg-gemini').value.trim());
+            localStorage.setItem('ts_openai_key', document.getElementById('cfg-openai').value.trim());
+            
+            // Format Firebase URL
+            const fbInput = document.getElementById('cfg-firebase-url');
+            if (fbInput) {
+                let dbUrl = fbInput.value.trim();
+                if(dbUrl.includes('firebaseapp.com')) { dbUrl = dbUrl.replace('firebaseapp.com', 'firebaseio.com'); }
+                if(dbUrl.endsWith('/')) dbUrl = dbUrl.slice(0, -1);
+                if(dbUrl.endsWith('.json')) dbUrl = dbUrl.slice(0, -5); 
+                localStorage.setItem('ts_firebase_url', dbUrl);
+                // Render lại Library
+                if (typeof winRender === 'function') winRender();
+            }
+
+            showToast('💾 Đã lưu cấu hình!');
+        }
+
+        function saveAIConfig() {
+            saveConfig();
+            const toast = document.getElementById('ai-cfg-toast');
+            if (toast) {
+                toast.style.display = 'block';
+                setTimeout(() => toast.style.display = 'none', 3000);
+            }
+        }
+
+        function loadConfig() {
+            const cfg = getConfig();
+            // Manual fields (always populate for fallback)
+            document.getElementById('cfg-token').value = cfg.token || '';
+            document.getElementById('cfg-account').value = cfg.account || '';
+            document.getElementById('cfg-page').value = cfg.page || '';
+            document.getElementById('cfg-gemini').value = cfg.gemini || '';
+            document.getElementById('cfg-model').value = cfg.model || 'gemini-1.5-flash-latest';
+            document.getElementById('cfg-openai').value = cfg.openai || '';
+            if (cfg.openaiModel) document.getElementById('cfg-openai-model').value = cfg.openaiModel;
+            if (cfg.aiProvider) switchAIProvider(cfg.aiProvider);
+            document.getElementById('cfg-pixel').value = cfg.pixel || '';
+            if (cfg.event) document.getElementById('cfg-event').value = cfg.event;
+            if (cfg.objective) document.getElementById('cfg-objective').value = cfg.objective;
+            document.getElementById('cfg-budget').value = cfg.budget || 200000;
+            document.getElementById('cfg-country').value = cfg.country || 'PH';
+            if (cfg.cta) document.getElementById('cfg-cta').value = cfg.cta;
+            
+            if(document.getElementById('cfg-firebase-url')) document.getElementById('cfg-firebase-url').value = localStorage.getItem('ts_firebase_url') || '';
+
+            // Also set page on create tab (if not FB-connected, use saved value)
+            if (cfg.page) setDropdownValue('inp-page', cfg.page);
+            // If FB connected, sync FB dropdowns from saved config
+            if (fbAccessToken && cfg.page) setDropdownValue('cfg-fb-page', cfg.page);
+            if (fbAccessToken && cfg.account) setDropdownValue('cfg-fb-account', cfg.account);
+            if (fbAccessToken && cfg.pixel) setDropdownValue('cfg-fb-pixel', cfg.pixel);
+        }
+
+        // ==================== MULTI FILE UPLOAD ====================
+        const dropZone = document.getElementById('drop-zone');
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault(); dropZone.classList.remove('dragover');
+            addFiles(Array.from(e.dataTransfer.files));
+        });
+
+        function updateCampPreview() {
+            const mkt = document.getElementById('inp-mkt')?.value?.trim() || '';
+            const prod = document.getElementById('inp-product-code')?.value?.trim() || '';
+            const custom = document.getElementById('inp-custom-name')?.value?.trim() || '';
+            const el = document.getElementById('camp-name-value');
+            if (el) {
+                if (mkt || prod) {
+                    const parts = [mkt, prod, custom].filter(p => p);
+                    el.textContent = parts.join('_');
+                } else {
+                    el.textContent = 'Auto_[số video]_[ngày tạo]';
+                }
+            }
+        }
+        function onFilesSelect(e) { addFiles(Array.from(e.target.files)); }
+
+        function addFiles(files) {
+            files.forEach(f => {
+                if (!f.type.startsWith('video/')) return;
+                if (f.size > 500 * 1024 * 1024) { showToast(`${f.name} quá lớn (max 500MB)!`, 'error'); return; }
+                // Additional Facebook limits check
+                if (f.size > 4000 * 1024 * 1024) { showToast(`${f.name} quá lớn cho Facebook Ads (max 4GB)!`, 'error'); return; }
+                if (videoFiles.find(v => v.file.name === f.name)) return; // skip duplicate
+                videoFiles.push({ file: f, headline: '', primary: '', desc: '' });
+            });
+            renderVideoList();
+            document.getElementById('btn-generate').disabled = videoFiles.length === 0;
+            if (videoFiles.length > 0) showToast(`✅ ${videoFiles.length} video đã sẵn sàng!`);
+        }
+
+        function removeVideo(idx) {
+            videoFiles.splice(idx, 1);
+            renderVideoList();
+            document.getElementById('btn-generate').disabled = videoFiles.length === 0;
+        }
+
+        function renderVideoList() {
+            const el = document.getElementById('video-list');
+            if (videoFiles.length === 0) { el.innerHTML = ''; return; }
+            el.innerHTML = videoFiles.map((v, i) => `
+    <div class="video-item">
+      <div class="name">🎬 <span>${v.file.name}</span></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="size">${(v.file.size / 1024 / 1024).toFixed(1)}MB</span>
+        <span class="badge" style="background:var(--blue);background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.15)">Ad Set ${i + 1}</span>
+        <button class="remove" onclick="removeVideo(${i})">✕</button>
+      </div>
+    </div>`).join('');
+        }
+
+        // ==================== AI PROVIDER ====================
+        function switchAIProvider(provider) {
+            document.getElementById('cfg-ai-provider').value = provider;
+            const isGemini = provider === 'gemini';
+            document.getElementById('ai-config-gemini').style.display = isGemini ? 'grid' : 'none';
+            document.getElementById('ai-config-openai').style.display = isGemini ? 'none' : 'grid';
+            // Toggle button styles
+            const btnG = document.getElementById('btn-ai-gemini');
+            const btnO = document.getElementById('btn-ai-openai');
+            if (isGemini) {
+                btnG.style.background = 'linear-gradient(135deg,#f97316,#ef4444)';
+                btnG.style.color = '#fff'; btnG.style.fontWeight = '700';
+                btnO.style.background = 'var(--bg-input)';
+                btnO.style.color = 'var(--text-dim)'; btnO.style.fontWeight = '600';
+            } else {
+                btnO.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+                btnO.style.color = '#fff'; btnO.style.fontWeight = '700';
+                btnG.style.background = 'var(--bg-input)';
+                btnG.style.color = 'var(--text-dim)'; btnG.style.fontWeight = '600';
+            }
+        }
+
+        // Unified AI call — supports Gemini & OpenAI
+        async function callAI(prompt, temperature = 0.7) {
+            const cfg = getConfig();
+            const provider = cfg.aiProvider || 'gemini';
+
+            if (provider === 'openai') {
+                if (!cfg.openai) throw new Error('Cần cấu hình OpenAI API Key trước!');
+                const model = cfg.openaiModel || 'gpt-4o-mini';
+                console.log(`[AdsAuto] Calling OpenAI API (${model})...`);
+                const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${cfg.openai}`
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: temperature
+                    })
+                });
+                if (!resp.ok) {
+                    const errText = await resp.text();
+                    console.error('[AdsAuto] OpenAI Error:', resp.status, errText);
+                    throw new Error(`OpenAI API ${resp.status}: ${errText.slice(0, 200)}`);
+                }
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                const text = data.choices?.[0]?.message?.content;
+                if (!text) throw new Error('ChatGPT không trả về text.');
+                return text;
+            } else {
+                // Gemini
+                if (!cfg.gemini) throw new Error('Cần cấu hình Gemini API Key trước!');
+                const model = cfg.model || 'gemini-1.5-flash-latest';
+                console.log(`[AdsAuto] Calling Gemini API (${model})...`);
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.gemini}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: temperature }
+                    })
+                });
+                if (!resp.ok) {
+                    const errText = await resp.text();
+                    console.error('[AdsAuto] Gemini Error:', resp.status, errText);
+                    throw new Error(`Gemini API ${resp.status}: ${errText.slice(0, 200)}`);
+                }
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) throw new Error('Gemini không trả về text. Kiểm tra API Key hoặc quota.');
+                return text;
+            }
+        }
+
+        function getActiveAILabel() {
+            const cfg = getConfig();
+            if (cfg.aiProvider === 'openai') return `ChatGPT (${cfg.openaiModel || 'gpt-4o-mini'})`;
+            return `Gemini (${cfg.model || 'gemini-1.5-flash-latest'})`;
+        }
+
+        // ==================== READ LANDING PAGE ====================
+        async function readLandingPage() {
+            const url = document.getElementById('inp-link').value.trim();
+            if (!url) { showToast('Nhập Link (Landing Page) trước!', 'warning'); return; }
+            const cfg = getConfig();
+            const provider = cfg.aiProvider || 'gemini';
+            if (provider === 'gemini' && !cfg.gemini) { showToast('Cần cấu hình Gemini API Key trước!', 'warning'); switchTab('config'); return; }
+            if (provider === 'openai' && !cfg.openai) { showToast('Cần cấu hình OpenAI API Key trước!', 'warning'); switchTab('config'); return; }
+
+            const btn = document.getElementById('btn-read-page');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Đang đọc landing page...';
+
+            try {
+                // Fetch page via CORS proxies
+                let html = '';
+                const proxies = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+                ];
+
+                for (const proxy of proxies) {
+                    try {
+                        const resp = await fetch(proxy, { signal: AbortSignal.timeout(10000) });
+                        if (resp.ok) { html = await resp.text(); break; }
+                    } catch (e) { console.log('[AdsAuto] Proxy failed:', proxy, e.message); }
+                }
+
+                if (!html) {
+                    throw new Error('Không thể truy cập landing page. Thử nhập mô tả sản phẩm thủ công.');
+                }
+
+                // Strip HTML tags, scripts, styles -> extract text
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                doc.querySelectorAll('script,style,noscript,iframe,svg').forEach(el => el.remove());
+                let pageText = doc.body?.textContent || '';
+                pageText = pageText.replace(/\s+/g, ' ').trim();
+                // Limit to ~3000 chars for the AI prompt
+                if (pageText.length > 3000) pageText = pageText.slice(0, 3000) + '...';
+
+                if (pageText.length < 20) {
+                    throw new Error('Landing page không có nội dung đủ. Thử nhập mô tả thủ công.');
+                }
+
+                btn.innerHTML = `<span class="spinner"></span> ${getActiveAILabel()} đang phân tích sản phẩm...`;
+
+                const prompt = `Analyze this landing page content and extract a concise product description for writing Facebook ad copy.
+
+PAGE CONTENT:
+${pageText}
+
+Return a product summary in this format (2-4 sentences, English):
+- Product name and type
+- Key features/benefits
+- Price (if available)
+- Any promotions/offers (free shipping, discount, etc.)
+
+Just return the summary text, no markdown, no explanation.`;
+
+                const summary = await callAI(prompt, 0.3);
+                if (!summary) throw new Error('AI không thể phân tích trang.');
+
+                document.getElementById('inp-product').value = summary.trim();
+                showToast('✅ AI đã đọc landing page & điền mô tả sản phẩm!');
+
+            } catch (err) {
+                showToast('❌ ' + err.message, 'error');
+                console.error('[AdsAuto] Read page error:', err);
+            }
+            btn.disabled = false;
+            btn.innerHTML = '🔍 AI đọc Landing Page & tự điền mô tả';
+        }
+
+        // ==================== AI TEXT GENERATION ====================
+        async function generateAllTexts() {
+            const cfg = getConfig();
+            const provider = cfg.aiProvider || 'gemini';
+            if (provider === 'gemini' && !cfg.gemini) { showToast('Cần cấu hình Gemini API Key trước!', 'warning'); switchTab('config'); return; }
+            if (provider === 'openai' && !cfg.openai) { showToast('Cần cấu hình OpenAI API Key trước!', 'warning'); switchTab('config'); return; }
+            if (videoFiles.length === 0) { showToast('Chọn ít nhất 1 video!', 'warning'); return; }
+
+            // Determine number of variations to generate
+            const variationInput = parseInt(document.getElementById('inp-variations')?.value) || 0;
+            const originalVideos = [...videoFiles]; // Save original video list
+            const totalVariations = variationInput > 0 ? variationInput : videoFiles.length;
+
+            document.getElementById('btn-generate').disabled = true;
+            document.getElementById('btn-generate').innerHTML = `<span class="spinner"></span> Đang generate ${totalVariations} biến thể...`;
+
+            try {
+                const productDesc = document.getElementById('inp-product').value.trim();
+                const landingPage = document.getElementById('inp-link').value.trim();
+
+                // Build win context if enabled
+                const winCtx = await winGetContext();
+
+                // Get content formula if set
+                const formulaText = document.getElementById('formula-text')?.value?.trim() || '';
+                const formulaBlock = formulaText ? `
+
+===== CONTENT FORMULA (BẮT BUỘC THEO ĐÚNG CẤU TRÚC NÀY) =====
+The "primary_text" field MUST follow this exact structure/formula:
+${formulaText}
+===== END FORMULA =====` : '';
+
+                const prompt = `You are an expert Facebook Ads copywriter. Generate ${totalVariations} UNIQUE ad copy variations.
+
+TARGET MARKET: Philippines
+${productDesc ? `PRODUCT INFO: ${productDesc}` : 'PRODUCT: General e-commerce product'}
+${landingPage ? `LANDING PAGE: ${landingPage}` : ''}${winCtx ? `
+
+---
+WIN CONTENT REFERENCE (analyze these high-performing ad samples and replicate their HOOK style, CTA patterns, emotional triggers, and sentence structure — but write ENTIRELY NEW content for the product above):
+${winCtx}
+---` : ''}${formulaBlock}
+
+RULES:
+- Write in English (Philippines market)
+- Mention specific product features/benefits from the product info above
+- Use emojis, create urgency, include call to action
+- Each ad copy must be UNIQUE with COMPLETELY DIFFERENT angles, hooks, and selling points${winCtx ? '\n- LEARN from the win content patterns above: hook style, CTA structure, urgency phrasing' : ''}${formulaText ? '\n- The primary_text MUST follow the Content Formula structure above. Do NOT deviate from it.' : ''}
+- Do NOT prefix any line with numbers like "1.", "2.", "3.", etc. Write flowing text, not numbered lists.
+- headline: max 40 chars, catchy
+- primary_text: 2-3 sentences, compelling with emoji
+- description: max 30 chars
+- Use different angles for each variation: benefit, social proof, urgency, emotional, scarcity, comparison, authority, curiosity
+
+IMPORTANT: Return ONLY a valid JSON array, no markdown, no explanation.
+Format: [{"headline":"...","primary_text":"...","description":"..."}]
+Generate exactly ${totalVariations} objects. Each MUST be completely unique.`;
+
+                console.log(`[AdsAuto] Calling ${getActiveAILabel()} for ${totalVariations} variations...`);
+                const rawText = await callAI(prompt, 0.9);
+
+                console.log('[AdsAuto] Raw text:', rawText);
+
+                // Extract JSON from response - handle markdown code blocks & extra text
+                let jsonStr = rawText;
+                jsonStr = jsonStr.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+                const arrMatch = jsonStr.match(/\[[\s\S]*\]/);
+                if (!arrMatch) {
+                    console.error('[AdsAuto] Cannot find JSON array in:', jsonStr);
+                    throw new Error('AI response không chứa JSON array. Raw: ' + jsonStr.slice(0, 100));
+                }
+                jsonStr = arrMatch[0];
+
+                let results;
+                try {
+                    results = JSON.parse(jsonStr);
+                } catch (parseErr) {
+                    console.error('[AdsAuto] JSON parse error:', parseErr, '\nJSON:', jsonStr);
+                    throw new Error('Không parse được JSON. Raw: ' + jsonStr.slice(0, 150));
+                }
+
+                if (!Array.isArray(results) || results.length === 0) {
+                    throw new Error('AI trả về array rỗng');
+                }
+
+                console.log('[AdsAuto] Parsed results:', results);
+
+                const stripLeadingNumber = (s) => s ? s.replace(/^\d+\.\s*/, '') : '';
+
+                // If user requested more variations than videos, expand videoFiles
+                if (totalVariations > originalVideos.length) {
+                    videoFiles = [];
+                    for (let i = 0; i < totalVariations; i++) {
+                        const srcVideo = originalVideos[i % originalVideos.length];
+                        videoFiles.push({
+                            file: srcVideo.file,
+                            headline: '',
+                            primary: '',
+                            desc: ''
+                        });
+                    }
+                }
+
+                // Map results to expanded videoFiles
+                for (let i = 0; i < videoFiles.length; i++) {
+                    const r = results[i] || results[results.length - 1] || {};
+                    videoFiles[i].headline = stripLeadingNumber(r.headline || r.title || '');
+                    videoFiles[i].primary = (r.primary_text || r.primaryText || r.text || r.body || '').split('\n').map(line => stripLeadingNumber(line)).join('\n');
+                    videoFiles[i].desc = stripLeadingNumber(r.description || r.desc || '');
+                }
+
+                const filled = videoFiles.filter(v => v.headline || v.primary).length;
+                switchPreviewMode(previewMode);
+                goToStep(2);
+                showToast(`🤖 AI đã generate ${filled} biến thể từ ${originalVideos.length} videos!`);
+
+            } catch (err) {
+                showToast('❌ Lỗi AI: ' + err.message, 'error');
+                console.error('[AdsAuto] Error:', err);
+                // Still show step 2 so user can manually fill in
+                switchPreviewMode(previewMode);
+                goToStep(2);
+                showToast('⚠️ Bạn có thể nhập text thủ công', 'warning');
+            }
+            document.getElementById('btn-generate').disabled = false;
+            document.getElementById('btn-generate').innerHTML = '🤖 Generate Ad Text (AI)';
+        }
+
+        // ==================== WIN CONTENT LIBRARY (FIREBASE) ====================
+        const WIN_KEY = 'ts_win_library'; // Fallback nếu user chưa cấu hình Firebase
+        let winContextOn = false;
+        let winPanelOpen = false;
+
+        function getFirebaseAPI() {
+            const url = localStorage.getItem('ts_firebase_url');
+            if(!url) return null;
+            return `${url}.json`;
+        }
+        
+        function getFirebaseItemAPI(id) {
+            const url = localStorage.getItem('ts_firebase_url');
+            if(!url) return null;
+            return `${url}/${id}.json`;
+        }
+
+        async function winLoad() {
+            const apiUrl = getFirebaseAPI();
+            if (!apiUrl) {
+                // Return local storage if no Firebase configured
+                return JSON.parse(localStorage.getItem(WIN_KEY) || '[]');
+            }
+
+            try {
+                const resp = await fetch(apiUrl);
+                if (!resp.ok) return [];
+                const data = await resp.json();
+                if (!data) return [];
+                
+                // Firebase REST returns object: { "-Oxyz": { content: "...", ctr: 2.1 }, "-Oabc": { ... } }
+                // Convert to array of objects with id injected
+                const items = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                }));
+                // Sort by descending CTR, then by Creation date
+                items.sort((a, b) => {
+                    const ctrA = parseFloat(a.ctr) || 0;
+                    const ctrB = parseFloat(b.ctr) || 0;
+                    if (ctrA !== ctrB) return ctrB - ctrA;
+                    // Sort by id reverse alphabetical for creation time fallback
+                    return b.id.localeCompare(a.id);
+                });
+                return items;
+            } catch (err) {
+                console.error('[Firebase DB] Lỗi load data:', err);
+                return JSON.parse(localStorage.getItem(WIN_KEY) || '[]'); // Fallback
+            }
+        }
+
+        async function winGetContext() {
+            if (!winContextOn) return '';
+            const items = await winLoad();
+            if (!items.length) return '';
+            return items.slice(0, 5).map((w, i) => {
+                const ctrTag = w.ctr ? ` [CTR: ${w.ctr}%]` : '';
+                return `Sample ${i + 1}${ctrTag}:\n${w.content}`;
+            }).join('\n\n');
+        }
+
+        async function winRender() {
+            const listEl = document.getElementById('win-list');
+            const isFirebase = !!getFirebaseAPI();
+            listEl.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text-dim);font-size:11px"><span class="spinner"></span> Đang tải thư viện Win Content chung ${isFirebase ? '(Cloud)' : '(Local)'}...</div>`;
+
+            const items = await winLoad();
+            const badge = document.getElementById('win-count-badge');
+            const sub = document.getElementById('win-sub');
+            const empty = document.getElementById('win-empty');
+
+            badge.textContent = `${items.length} mẫu`;
+
+            if (items.length === 0) {
+                sub.textContent = 'Bật để AI học theo mẫu ads đã win';
+                empty.style.display = '';
+                if(!isFirebase) {
+                    empty.innerHTML += `<br><span style="color:var(--yellow);font-size:10px">⚠️ Đang dùng LocalStorage cá nhân. Hãy vào tab Cấu hình nhập Link Firebase để xài chung toàn cty.</span>`;
+                }
+                listEl.innerHTML = '';
+                // Disable context if no items
+                winContextOn = false;
+                winUpdateSwitch();
+            } else {
+                sub.textContent = winContextOn
+                    ? `✅ AI đang học từ ${Math.min(items.length, 5)} mẫu win`
+                    : `${items.length} mẫu sẵn sàng — bật để AI học theo`;
+                empty.style.display = 'none';
+            }
+
+            listEl.innerHTML = items.map((w, i) => {
+                const ctrBadge = w.ctr ? `<span class="win-badge" style="font-size:9px">${w.ctr}% CTR</span>` : '';
+                const dateStr = w.date || w.created_at || '';
+                const itemId = w.id || i; // Use Firebase ID if available, else index
+                
+                return `<div class="win-item" id="wi-${itemId}">
+                    <div class="win-item-meta">
+                        <div style="display:flex;gap:6px;align-items:center">
+                            <span style="font-size:11px">🏆</span>
+                            ${ctrBadge}
+                            <span style="font-size:10px;color:var(--text-muted)">${dateStr.split('T')[0]}</span>
+                        </div>
+                        <button class="win-del" onclick="winDelete('${itemId}')" title="Xóa toàn hệ thống">✕</button>
+                    </div>
+                    <div class="win-item-text" id="wt-${itemId}">${w.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                    <span class="win-expand" onclick="winExpand('${itemId}', this)">▸ Xem thêm</span>
+                </div>`;
+            }).join('');
+        }
+
+        function winUpdateSwitch() {
+            const sw = document.getElementById('win-switch');
+            if (winContextOn) sw.classList.add('on');
+            else sw.classList.remove('on');
+        }
+
+        async function winToggleContext() {
+            const items = await winLoad();
+            if (!items.length) { showToast('Thư viện dùng chung chưa có mẫu win nào!', 'warning'); return; }
+            winContextOn = !winContextOn;
+            winUpdateSwitch();
+            winRender();
+            const genBtn = document.getElementById('btn-generate');
+            if (winContextOn) {
+                genBtn.innerHTML = '🏆 Generate (Win Mode)';
+            } else {
+                genBtn.innerHTML = '🤖 Generate Ad Text (AI)';
+            }
+        }
+
+        function winTogglePanel() {
+            winPanelOpen = !winPanelOpen;
+            document.getElementById('win-panel').classList.toggle('open', winPanelOpen);
+            document.getElementById('win-arrow').style.transform = winPanelOpen ? 'rotate(180deg)' : '';
+            if(winPanelOpen) winRender(); // Tải mới nhất mỗi lần mở panel
+        }
+
+        async function winAddItem() {
+            const content = document.getElementById('win-input').value.trim();
+            if (!content) { showToast('Nhập nội dung content win!', 'warning'); return; }
+            const ctr = parseFloat(document.getElementById('win-ctr').value) || null;
+            
+            const btnAdd = document.getElementById('btn-win-add');
+            btnAdd.disabled = true;
+            btnAdd.innerHTML = '⏳ Lưu...';
+
+            try {
+                const payload = { 
+                    content, 
+                    source: 'manual', 
+                    notes: 'Nhập thủ công',
+                    date: new Date().toISOString()
+                };
+                if (ctr) payload.ctr = Math.round(ctr * 100) / 100;
+
+                const apiUrl = getFirebaseAPI();
+                if (apiUrl) {
+                    await fetch(apiUrl, {
+                        method: 'POST', // POST via REST creates a push ID object automatically
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('✅ Đã lưu lên Clound Firebase thành công!');
+                } else {
+                    // Fallback local storage
+                    const items = JSON.parse(localStorage.getItem(WIN_KEY) || '[]');
+                    items.unshift(payload);
+                    localStorage.setItem(WIN_KEY, JSON.stringify(items));
+                    showToast('✅ Đã lưu vào máy tính (Local)!');
+                }
+                
+                document.getElementById('win-input').value = '';
+                document.getElementById('win-ctr').value = '';
+                await winRender();
+            } catch (err) {
+                showToast('❌ Lỗi lưu Data: ' + err.message, 'error');
+                console.error('[Firebase Add]', err);
+            }
+
+            btnAdd.disabled = false;
+            btnAdd.innerHTML = '💾 Lưu';
+        }
+
+        async function winDelete(id) {
+            if (!confirm('Bạn có chắc muốn xóa mẫu này KHỎI CƠ SỞ DỮ LIỆU CHUNG không? Toàn bộ công ty sẽ không thấy nữa.')) return;
+            try {
+                const itemApiUrl = getFirebaseItemAPI(id);
+                if (itemApiUrl) {
+                    await fetch(itemApiUrl, { method: 'DELETE' }); // Delete by ID
+                } else {
+                    // Fallback Local
+                    const idx = parseInt(id);
+                    const items = JSON.parse(localStorage.getItem(WIN_KEY) || '[]');
+                    items.splice(idx, 1);
+                    localStorage.setItem(WIN_KEY, JSON.stringify(items));
+                }
+                
+                const items = await winLoad();
+                if (winContextOn && items.length === 0) {
+                    winContextOn = false;
+                    document.getElementById('btn-generate').innerHTML = '🤖 Generate Ad Text (AI)';
+                }
+                await winRender();
+                showToast('Đã xóa khỏi hệ thống', 'success');
+            } catch (err) {
+                showToast('❌ Lỗi xóa Data: ' + err.message, 'error');
+            }
+        }
+
+        function winExpand(idx, btn) {
+            const el = document.getElementById('wt-' + idx);
+            const exp = el.classList.toggle('expanded');
+            btn.textContent = exp ? '▴ Thu gọn' : '▸ Xem thêm';
+        }
+
+        // Init win library on load
+        winRender();
+
+        // ==================== WIN SYNC FROM META ADS API ====================
+        async function winSyncFromMeta() {
+            if (!fbAccessToken) {
+                showToast('Kết nối Facebook trước ở tab ⚙️ Cấu hình!', 'warning');
+                return;
+            }
+            const accountId = document.getElementById('cfg-fb-account').value ||
+                              document.getElementById('cfg-account')?.value?.trim();
+            if (!accountId) {
+                showToast('Chọn Tài khoản quảng cáo (TKQC) trước!', 'warning');
+                return;
+            }
+
+            const minCTR  = parseFloat(document.getElementById('win-min-ctr').value) || 1.5;
+            const limit   = parseInt(document.getElementById('win-meta-limit').value)  || 20;
+            const btn     = document.getElementById('btn-win-sync');
+            const status  = document.getElementById('win-sync-status');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Đang kéo dữ liệu...';
+            status.style.display = 'block';
+            status.style.color   = 'var(--text-dim)';
+            status.textContent   = '⏳ Đang lấy danh sách ads từ Meta...';
+
+            try {
+                // Step 1: Fetch ads with insights (CTR) in last 30 days
+                const url = `${FB_API}/${accountId}/ads` +
+                    `?fields=name,creative{title,body,object_story_spec,effective_object_story_id}` +
+                    `,insights.date_preset(last_30d){ctr,impressions,clicks,spend}` +
+                    `&effective_status=["ACTIVE","PAUSED","ARCHIVED"]` +
+                    `&limit=50` +
+                    `&access_token=${fbAccessToken}`;
+
+                const resp = await fetch(url);
+                const data = await resp.json();
+
+                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+                const ads = data.data || [];
+                status.textContent = `📊 Phân tích ${ads.length} ads...`;
+
+                // Step 2: Filter by CTR and extract text
+                const winners = [];
+                for (const ad of ads) {
+                    const ins = ad.insights?.data?.[0];
+                    if (!ins) continue;
+                    const ctr = parseFloat(ins.ctr) || 0;
+                    if (ctr < minCTR) continue;
+
+                    // Extract ad copy text
+                    const cr = ad.creative || {};
+                    const spec = cr.object_story_spec || {};
+                    const linkData = spec.link_data || spec.video_data || {};
+
+                    const headline  = cr.title       || linkData.name        || '';
+                    const primary   = linkData.message || cr.body            || '';
+                    const desc      = linkData.description || '';
+
+                    const text = [headline, primary, desc].filter(Boolean).join('\n');
+                    if (!text.trim() || text.trim().length < 5) continue;
+
+                    winners.push({
+                        ad_id: ad.id,
+                        text,
+                        ctr: Math.round(ctr * 100) / 100,
+                        impressions: ins.impressions,
+                        ad_name: ad.name
+                    });
+                }
+
+                // Sort by CTR desc, take top N
+                winners.sort((a, b) => b.ctr - a.ctr);
+                const topWinners = winners.slice(0, limit);
+
+                if (topWinners.length === 0) {
+                    status.style.color = 'var(--yellow)';
+                    status.textContent = `⚠️ Không tìm thấy ad nào có CTR ≥ ${minCTR}% trong 30 ngày qua. Thử giảm CTR tối thiểu.`;
+                    btn.disabled = false;
+                    btn.innerHTML = '🔗 Sync Win Ads từ Meta';
+                    return;
+                }
+
+                // Step 3: Add to shared Database via API
+                // First get existing items to avoid syncing duplicates
+                const existing = await winLoad();
+                const existingIds = new Set(existing.map(w => w.ad_id || w.notes).filter(Boolean)); // try notes if ad_id was saved there
+                let addedCount = 0;
+
+                const apiUrl = getFirebaseAPI();
+
+                for (const w of topWinners) {
+                    if (existingIds.has(w.ad_id) || existingIds.has(`ad_id: ${w.ad_id}`)) continue;
+                    
+                    const payload = {
+                        content: w.text,
+                        ctr: w.ctr,
+                        source: 'meta',
+                        notes: `ad_id: ${w.ad_id} | ad_name: ${w.ad_name}`, // Using notes field to store ad_id since backend accepts it
+                        date: new Date().toISOString()
+                    };
+
+                    try {
+                        if (apiUrl) {
+                            await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                        } else {
+                            existing.push(payload);
+                            localStorage.setItem(WIN_KEY, JSON.stringify(existing));
+                        }
+                        addedCount++;
+                    } catch (e) {
+                         console.error('[WinSync DB Add]', e);
+                    }
+                }
+
+                await winRender();
+
+                const dbTotal = await winLoad();
+                status.style.color = 'var(--green)';
+                status.textContent = addedCount > 0
+                    ? `✅ Đã đồng bộ lên DB chung! (+${addedCount} win ads mới từ Meta). Tổng công ty: ${dbTotal.length} mẫu.`
+                    : `ℹ️ ${topWinners.length} ads win đã có sẵn trong Database. Không có mẫu mới.`;
+
+                if (addedCount > 0) showToast(`✅ Đồng bộ Meta -> DB thành công!`, 'success');
+
+            } catch (err) {
+                status.style.color = 'var(--red)';
+                status.textContent = '❌ Lỗi: ' + err.message;
+                showToast('❌ ' + err.message, 'error');
+                console.error('[WinSync Meta -> API]', err);
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '🔗 Sync Win Ads từ Meta';
+        }
+
+        let previewMode = 'fb'; // 'fb' or 'text'
+
+        function switchPreviewMode(mode) {
+            previewMode = mode;
+            document.getElementById('btn-mode-fb').classList.toggle('active', mode === 'fb');
+            document.getElementById('btn-mode-text').classList.toggle('active', mode === 'text');
+            document.getElementById('fb-preview-container').style.display = mode === 'fb' ? '' : 'none';
+            document.getElementById('text-cards-container').style.display = mode === 'text' ? '' : 'none';
+            if (mode === 'fb') renderFBPreview();
+            else renderTextCards();
+        }
+
+        function escapeHTML(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function escapeAttr(str) {
+            return escapeHTML(str)
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function updateVideoField(idx, field, value) {
+            if (!videoFiles[idx]) return;
+            videoFiles[idx][field] = value;
+
+            if (previewMode !== 'fb') return;
+
+            const card = document.getElementById(`fb-card-${idx}`);
+            if (!card) return;
+
+            if (field === 'primary') {
+                const bodyText = card.querySelector('.fb-ad-body-text');
+                if (bodyText) bodyText.textContent = value || '';
+            }
+            if (field === 'headline') {
+                const headline = card.querySelector('.fb-ad-headline');
+                if (headline) headline.textContent = value || 'Headline';
+            }
+            if (field === 'desc') {
+                const desc = card.querySelector('.fb-ad-desc');
+                if (!desc) {
+                    if ((value || '').trim()) {
+                        const info = card.querySelector('.fb-ad-link-info');
+                        if (info) {
+                            info.insertAdjacentHTML('beforeend', `<div class="fb-ad-desc">${escapeHTML(value)}</div>`);
+                        }
+                    }
+                } else if ((value || '').trim()) {
+                    desc.style.display = '';
+                    desc.textContent = value;
+                } else {
+                    desc.style.display = 'none';
+                    desc.textContent = '';
+                }
+            }
+        }
+
+        function renderTextCards() {
+            document.getElementById('text-cards').innerHTML = videoFiles.map((v, i) => `
+    <div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid var(--blue)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span class="badge" style="background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.15);font-weight:700">Ad Set ${i + 1}</span>
+        <span style="font-size:11px;color:var(--text-dim)">🎬 ${v.file.name}</span>
+      </div>
+      <div class="form-grid" style="gap:10px">
+        <div class="form-group"><label>📌 Headline</label><input type="text" class="inp txt-hl" data-idx="${i}" value="${escapeAttr(v.headline)}" oninput="videoFiles[${i}].headline=this.value"></div>
+        <div class="form-group"><label>📋 Description</label><input type="text" class="inp txt-desc" data-idx="${i}" value="${escapeAttr(v.desc)}" oninput="videoFiles[${i}].desc=this.value"></div>
+        <div class="form-group" style="grid-column:1/-1"><label>📝 Primary Text</label><textarea class="inp txt-pr" data-idx="${i}" rows="4" oninput="videoFiles[${i}].primary=this.value">${escapeHTML(v.primary)}</textarea></div>
+      </div>
+    </div>`).join('');
+            updateFBCounter();
+        }
+
+        function getPageDisplayName() {
+            // Try to get from dropdown selection
+            const sdItems = sdData['sd-page-create'] || sdData['sd-page'] || [];
+            const pageId = document.getElementById('inp-page')?.value;
+            if (pageId) {
+                const found = sdItems.find(it => it.value === pageId);
+                if (found) return found.name;
+            }
+            // Fallback to first page in list
+            if (sdItems.length > 0) return sdItems[0].name;
+            // Fallback to FB user name
+            if (typeof fbUserInfo !== 'undefined' && fbUserInfo?.name) return fbUserInfo.name;
+            return 'Your Page';
+        }
+
+        function getPageAvatarHTML() {
+            // Try to get page picture via Graph API
+            const pageId = document.getElementById('inp-page')?.value;
+            if (pageId && typeof fbAccessToken !== 'undefined' && fbAccessToken) {
+                return `<img src="https://graph.facebook.com/${pageId}/picture?type=small&access_token=${fbAccessToken}" onerror="this.style.display='none';this.parentElement.textContent='📄'">`;
+            }
+            // Fallback to initials
+            const name = getPageDisplayName();
+            return name.charAt(0).toUpperCase();
+        }
+
+        function getDomainFromLink() {
+            const link = document.getElementById('inp-link')?.value?.trim() || '';
+            try {
+                return new URL(link).hostname.replace('www.', '');
+            } catch (e) {
+                return link ? link.split('/')[2]?.replace('www.', '') || 'yoursite.com' : 'yoursite.com';
+            }
+        }
+
+        function getCTALabel() {
+            const cfg = getConfig();
+            const cta = cfg.cta || 'SHOP_NOW';
+            const map = {
+                'SHOP_NOW': 'Mua ngay',
+                'LEARN_MORE': 'Tìm hiểu thêm',
+                'SIGN_UP': 'Đăng ký',
+                'SUBSCRIBE': 'Đăng ký',
+                'CONTACT_US': 'Liên hệ',
+                'ORDER_NOW': 'Đặt hàng ngay',
+                'GET_OFFER': 'Nhận ưu đãi',
+                'BUY_NOW': 'Mua ngay'
+            };
+            return map[cta] || cta.replace(/_/g, ' ');
+        }
+
+        function truncateText(text, maxLen) {
+            // text should already be HTML-escaped at this point
+            if (!text || text.length <= maxLen) return text || '';
+            const truncated = text.slice(0, maxLen) + '... <span class="fb-see-more" onclick="event.preventDefault();handleSeeMore(event)">Xem thêm</span>';
+            // Store both escaped versions in data attributes
+            return `<div class="fb-text-toggle" data-truncated="${truncated.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" data-full="${text.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" data-expanded="false">${truncated}</div>`;
+        }
+
+        function renderFBPreview() {
+            const grid = document.getElementById('fb-preview-grid');
+            const pageName = getPageDisplayName();
+            const avatarHTML = getPageAvatarHTML();
+            const domain = getDomainFromLink();
+            const ctaLabel = getCTALabel();
+
+            grid.innerHTML = videoFiles.map((v, i) => {
+                // Create object URL for video thumbnail
+                const videoUrl = URL.createObjectURL(v.file);
+                const primaryText = escapeHTML(v.primary || '');
+                const headlineText = escapeHTML(v.headline || 'Headline');
+                const descText = escapeHTML(v.desc || '');
+                const headlineAttr = escapeAttr(v.headline || '');
+                const descAttr = escapeAttr(v.desc || '');
+
+                return `<div class="fb-ad-card" id="fb-card-${i}">
+                    <button class="fb-remove" onclick="removeAdPreview(${i})" title="Bỏ bài ads này">✕</button>
+                    <div class="fb-ad-header">
+                        <div class="fb-ad-avatar">${avatarHTML}</div>
+                        <div>
+                            <div class="fb-ad-page-name">${pageName}</div>
+                            <div class="fb-ad-sponsored">Quảng cáo · 🌐</div>
+                        </div>
+                    </div>
+                    <div class="fb-ad-body"><div class="fb-ad-body-text">${primaryText}</div></div>
+                    <div class="fb-ad-media">
+                        <video src="${videoUrl}" muted preload="metadata" onloadedmetadata="this.currentTime=1"></video>
+                        <div class="fb-play-btn"></div>
+                    </div>
+                    <div class="fb-ad-link-bar">
+                        <div class="fb-ad-link-info">
+                            <div class="fb-ad-domain">${domain}</div>
+                            <div class="fb-ad-headline">${headlineText}</div>
+                            ${descText ? `<div class="fb-ad-desc">${descText}</div>` : ''}
+                        </div>
+                        <button class="fb-ad-cta">${ctaLabel}</button>
+                    </div>
+                    <div class="fb-ad-inline-editor">
+                        <details>
+                            <summary>✏️ Sửa nhanh ngay trên preview</summary>
+                            <div class="fb-edit-grid">
+                                <div class="fb-edit-field">
+                                    <label>Headline</label>
+                                    <input class="inp" type="text" value="${headlineAttr}" oninput="updateVideoField(${i}, 'headline', this.value)">
+                                </div>
+                                <div class="fb-edit-field">
+                                    <label>Description</label>
+                                    <input class="inp" type="text" value="${descAttr}" oninput="updateVideoField(${i}, 'desc', this.value)">
+                                </div>
+                                <div class="fb-edit-field">
+                                    <label>Primary Text</label>
+                                    <textarea class="inp" rows="4" oninput="updateVideoField(${i}, 'primary', this.value)">${primaryText}</textarea>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                    <div class="fb-ad-actions">
+                        <span>👍 Thích</span>
+                        <span>💬 Bình luận</span>
+                        <span>↗️ Chia sẻ</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            updateFBCounter();
+        }
+
+        function handleSeeMore(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const seeMoreSpan = event.target;
+            const toggle = seeMoreSpan.closest('.fb-text-toggle');
+            if (!toggle) return;
+
+            const isExpanded = toggle.getAttribute('data-expanded') === 'true';
+
+            if (!isExpanded) {
+                // Expand to full text (already HTML-escaped, just decode entities and re-split by newlines)
+                const fullText = toggle.getAttribute('data-full');
+                // Decode HTML entities that are in the attribute
+                const decoded = fullText
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#39;/g, "'")
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>');
+                // Split by newline and join with <br>
+                const htmlFull = decoded.split('\n').join('<br>');
+                toggle.innerHTML = `${htmlFull}<br><span class="fb-see-less" onclick="event.preventDefault();handleSeeLess(event)">Thu gọn</span>`;
+                toggle.setAttribute('data-expanded', 'true');
+            }
+        }
+
+        function handleSeeLess(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const seeLessSpan = event.target;
+            const toggle = seeLessSpan.closest('.fb-text-toggle');
+            if (!toggle) return;
+
+            // Collapse to truncated text
+            const truncated = toggle.getAttribute('data-truncated');
+            // Decode HTML entities in the attribute value
+            const decoded = truncated
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+            toggle.innerHTML = decoded;
+            toggle.setAttribute('data-expanded', 'false');
+
+            // Re-attach event listener to new "Xem thêm" span
+            const seeMore = toggle.querySelector('.fb-see-more');
+            if (seeMore) {
+                seeMore.addEventListener('click', handleSeeMore);
+            }
+        }
+
+        function removeAdPreview(idx) {
+            videoFiles.splice(idx, 1);
+            if (previewMode === 'fb') renderFBPreview();
+            else renderTextCards();
+            // If no videos left, go back to step 1
+            if (videoFiles.length === 0) {
+                goToStep(1);
+                document.getElementById('btn-generate').disabled = true;
+                renderVideoList();
+                showToast('Đã bỏ tất cả bài ads', 'warning');
+            } else {
+                renderVideoList();
+                showToast(`Đã bỏ 1 bài · Còn ${videoFiles.length} bài`, 'info');
+            }
+        }
+
+        function updateFBCounter() {
+            const el = document.getElementById('fb-counter');
+            if (el) {
+                el.innerHTML = `📊 <span class="count">${videoFiles.length}</span> bài ads`;
+            }
+        }
+
+        // ==================== SCHEDULE ====================
+        function toggleSchedule() {
+            const toggle = document.getElementById('schedule-toggle');
+            const fields = document.getElementById('schedule-fields');
+            const section = document.getElementById('schedule-section');
+            const hint = document.getElementById('schedule-hint');
+            const isOn = toggle.classList.toggle('on');
+            fields.classList.toggle('show', isOn);
+            section.classList.toggle('active', isOn);
+            if (isOn) {
+                hint.textContent = '⏰ Campaign sẽ bắt đầu chạy từ 00:00 ngày đã chọn';
+                // Default: tomorrow
+                if (!document.getElementById('inp-start-date').value) {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const pad = n => String(n).padStart(2, '0');
+                    document.getElementById('inp-start-date').value = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
+                }
+            } else {
+                hint.textContent = '💡 Tắt = Lên camp chạy luôn ngay lập tức';
+            }
+        }
+
+        function getScheduleInfo() {
+            const isOn = document.getElementById('schedule-toggle').classList.contains('on');
+            if (!isOn) return null;
+            const dateVal = document.getElementById('inp-start-date').value;
+            if (!dateVal) return null;
+            // Convert to ISO 8601 at 00:00 local time
+            const startDate = new Date(dateVal + 'T00:00:00');
+            return {
+                startTime: startDate.toISOString(),
+                startDateDisplay: startDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            };
+        }
+
+        function formatScheduleDisplay(isoStr) {
+            if (!isoStr) return '---';
+            return new Date(isoStr).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ==================== PREVIEW ====================
+        function showPreview() {
+            const cfg = getConfig();
+            const pageId = document.getElementById('inp-page').value || cfg.page;
+            const link = document.getElementById('inp-link').value || 'https://www.facebook.com';
+            const budget = cfg.budget || 200000;
+            const objective = cfg.objective || 'OUTCOME_SALES';
+            const country = cfg.country || 'PH';
+            const cta = cfg.cta || 'SHOP_NOW';
+            const schedule = getScheduleInfo();
+
+            let scheduleHTML = '';
+            if (schedule) {
+                scheduleHTML = `
+    <div style="margin-bottom:16px;padding:12px 16px;background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:var(--radius-sm)">
+      <div style="font-weight:700;font-size:12px;color:var(--purple);margin-bottom:4px">⏰ Hẹn ngày bắt đầu</div>
+      <div style="font-size:13px">📅 Bắt đầu chạy từ: <strong style="color:var(--green)">${schedule.startDateDisplay}</strong> (00:00)</div>
+    </div>`;
+            }
+
+            // Update status message in Step 3
+            const statusEl = document.getElementById('preview-status-msg');
+            if (schedule) {
+                statusEl.style.background = 'rgba(139,92,246,.08)';
+                statusEl.style.border = '1px solid rgba(139,92,246,.15)';
+                statusEl.style.color = 'var(--purple)';
+                statusEl.innerHTML = `⏰ Campaign sẽ <strong>ACTIVE</strong> và bắt đầu chạy từ <strong>${schedule.startDateDisplay}</strong> (00:00)`;
+            } else {
+                statusEl.style.background = 'rgba(16,185,129,.08)';
+                statusEl.style.border = '1px solid rgba(16,185,129,.15)';
+                statusEl.style.color = 'var(--green)';
+                statusEl.innerHTML = `🚀 Campaign sẽ tạo <strong>ACTIVE</strong> và chạy ngay lập tức!`;
+            }
+            document.getElementById('btn-launch').innerHTML = schedule ? `🚀 Launch Campaign (⏰ ${schedule.startDateDisplay})` : '🚀 Launch Campaign (Chạy ngay)';
+
+            document.getElementById('preview-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="preview-card card"><div class="preview-label">🎯 Objective</div><div class="preview-value">${objective}</div></div>
+      <div class="preview-card card"><div class="preview-label">🌍 Target</div><div class="preview-value">🇵🇭 ${country}</div></div>
+      <div class="preview-card card"><div class="preview-label">💰 Budget Campaign/ngày</div><div class="preview-value">${budget.toLocaleString()}đ</div></div>
+      <div class="preview-card card"><div class="preview-label">🎬 Số Ad Set</div><div class="preview-value" style="color:var(--yellow)">${videoFiles.length}</div></div>
+    </div>
+    ${scheduleHTML}
+    <div class="structure-diagram">
+      <div class="structure-camp">
+        <div style="font-weight:800;font-size:13px;color:var(--accent)">📢 Campaign: Auto_${new Date().toISOString().slice(0, 10)}</div>
+        <div style="font-size:10px;color:var(--text-muted)">Objective: ${objective} · Status: ${schedule ? '⏰ Hẹn ' + schedule.startDateDisplay : 'ACTIVE 🚀'}</div>
+        ${videoFiles.map((v, i) => `
+          <div class="structure-adset">
+            <strong>Ad Set ${i + 1}:</strong> ${v.file.name} · 💰 Dùng chung budget Campaign<br>
+            <span style="font-size:10px;color:var(--text-dim)">📌 ${v.headline} · CTA: ${cta}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+            goToStep(3);
+        }
+
+        // ==================== LAUNCH ====================
+        async function launchCampaign() {
+            const cfg = getConfig();
+            // Use FB-connected token (priority) or manual token from config
+            const activeToken = fbAccessToken || cfg.token;
+            // Use FB dropdown account (priority) or manual config
+            const fbAccount = document.getElementById('cfg-fb-account').value;
+            const activeAccount = fbAccount || cfg.account;
+            // Use FB dropdown pixel (priority) or manual config
+            const fbPixel = document.getElementById('cfg-fb-pixel').value;
+            const activePixel = fbPixel || cfg.pixel;
+
+            if (!activeToken || !activeAccount) { showToast('Cần kết nối Facebook hoặc nhập Access Token + Ad Account!', 'error'); switchTab('config'); return; }
+
+            const pageId = document.getElementById('inp-page').value || document.getElementById('cfg-fb-page').value || cfg.page;
+            const link = document.getElementById('inp-link').value || 'https://www.facebook.com';
+            const budget = cfg.budget || 200000;
+            const country = cfg.country || 'PH';
+            const cta = cfg.cta || 'SHOP_NOW';
+            const objective = cfg.objective || 'OUTCOME_SALES';
+            const validationError = validateLaunchInputs({ activeToken, activeAccount, activePixel, pageId, objective });
+            if (validationError) { showToast(validationError, 'error'); switchTab('config'); return; }
+            const account = activeAccount.startsWith('act_') ? activeAccount : 'act_' + activeAccount;
+
+            // Check for large files and warn user
+            const largeFiles = videoFiles.filter(v => v.file.size > 1000 * 1024 * 1024); // > 1GB
+            if (largeFiles.length > 0) {
+                const largeFileNames = largeFiles.map(v => v.file.name + ` (${(v.file.size / 1024 / 1024 / 1024).toFixed(1)}GB)`).join(', ');
+                addLog(`⚠️ Phát hiện ${largeFiles.length} video lớn: ${largeFileNames}`, 'warn');
+                addLog('⏳ Upload có thể mất 5-15 phút. Đừng đóng tab!', 'info');
+            }
+
+            // Campaign naming: mã_mkt + mã_hàng + tuỳ_chỉnh
+            const mktCode = document.getElementById('inp-mkt')?.value?.trim() || '';
+            const productCode = document.getElementById('inp-product-code')?.value?.trim() || '';
+            const customName = document.getElementById('inp-custom-name')?.value?.trim() || '';
+            let campaignName = '';
+            if (mktCode || productCode) {
+                const parts = [mktCode, productCode, customName].filter(p => p);
+                campaignName = parts.join('_');
+            } else {
+                campaignName = `Auto_${videoFiles.length}vids_${new Date().toISOString().slice(0, 10)}_${Date.now().toString(36)}`;
+            }
+            const totalSteps = 1 + videoFiles.length * 4; // 1 campaign + (upload + adset + creative + ad) per video
+            let completedSteps = 0;
+
+            goToStep(4);
+            document.getElementById('btn-launch').disabled = true;
+            document.getElementById('btn-launch').innerHTML = '🚀 Launching...';
+            document.getElementById('log-box').innerHTML = '';
+            setProgress(0);
+
+            // Add cancel button
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-ghost btn-sm';
+            cancelBtn.innerHTML = '❌ Cancel';
+            cancelBtn.style.marginLeft = '8px';
+            cancelBtn.onclick = () => {
+                if (confirm('Bạn có chắc muốn hủy launch campaign?')) {
+                    isCancelled = true;
+                    addLog('🛑 Đã hủy launch campaign', 'error');
+                    document.getElementById('btn-launch').disabled = false;
+                    document.getElementById('btn-launch').innerHTML = '🚀 Launch Campaign';
+                    cancelBtn.remove();
+                }
+            };
+            document.getElementById('btn-launch').parentNode.appendChild(cancelBtn);
+
+            const created = { campaignId: '', adSetIds: [], creativeIds: [], adIds: [], videoIds: [] };
+            let isCancelled = false;
+
+            try {
+                // 1. Create Campaign
+                addLog(`📢 Tạo Campaign: ${campaignName} (${videoFiles.length} Ad Sets)...`, 'info');
+                addLog(`📋 Objective: ${objective} | Account: ${account}`, 'info');
+
+                // Facebook API - CBO: budget + bid strategy at campaign level
+                const schedule = getScheduleInfo();
+                const campBody = new URLSearchParams();
+                campBody.append('name', campaignName);
+                campBody.append('objective', objective);
+                campBody.append('status', 'ACTIVE');
+                campBody.append('special_ad_categories', 'NONE');
+                campBody.append('daily_budget', budget);
+                campBody.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP');
+                campBody.append('access_token', activeToken);
+
+                console.log('[AdsAuto] Campaign params:', Object.fromEntries(campBody));
+                const campResp = await fetch(`${FB_API}/${account}/campaigns`, {
+                    method: 'POST',
+                    body: campBody
+                });
+                const campData = await campResp.json();
+                console.log('[AdsAuto] Campaign response:', campData);
+                if (campData.error) {
+                    const e = campData.error;
+                    const detail = e.error_user_msg || e.error_user_title || '';
+                    addLog(`❌ Error code: ${e.code} | subcode: ${e.error_subcode || 'N/A'}`, 'error');
+                    if (detail) addLog(`💡 ${detail}`, 'warn');
+                    throw new Error('Campaign: ' + e.message);
+                }
+                const campaignId = campData.id;
+                created.campaignId = campaignId;
+                addLog(`✅ Campaign created! ID: ${campaignId}`, 'success');
+                completedSteps++; setProgress((completedSteps / totalSteps) * 100);
+
+                const adSetResults = [];
+
+                // 2. For each video → upload + ad set + creative + ad
+                for (let i = 0; i < videoFiles.length; i++) {
+                    if (isCancelled) {
+                        addLog('🛑 Launch đã bị hủy bởi user', 'error');
+                        break;
+                    }
+
+                    const v = videoFiles[i];
+                    const label = `[Ad Set ${i + 1}/${videoFiles.length}]`;
+
+                    // Upload video with progress and retry
+                    addLog(`${label} 📤 Upload: ${v.file.name} (${(v.file.size / 1024 / 1024).toFixed(1)}MB)...`, 'info');
+
+                    let uploadSuccess = false;
+                    let uploadAttempts = 0;
+                    const maxAttempts = 3;
+                    let vData;
+
+                    while (!uploadSuccess && uploadAttempts < maxAttempts) {
+                        uploadAttempts++;
+                        try {
+                            if (uploadAttempts > 1) {
+                                addLog(`${label} 🔄 Retry upload attempt ${uploadAttempts}/${maxAttempts}...`, 'info');
+                                await new Promise(r => setTimeout(r, 2000 * uploadAttempts)); // Exponential backoff
+                            }
+
+                            const vForm = new FormData();
+                            vForm.append('source', v.file);
+                            vForm.append('title', v.file.name);
+                            vForm.append('access_token', activeToken);
+
+                            // Add timeout and progress tracking
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+
+                            const vResp = await fetch(`${FB_API}/${account}/advideos`, {
+                                method: 'POST',
+                                body: vForm,
+                                signal: controller.signal
+                            });
+
+                            clearTimeout(timeoutId);
+                            vData = await vResp.json();
+
+                            if (vData.error) {
+                                const e = vData.error;
+                                if (e.code === 1 || e.code === 2 || e.code >= 500) { // Retry on server errors
+                                    if (uploadAttempts < maxAttempts) {
+                                        addLog(`${label} ⚠️ Server error (code ${e.code}), will retry...`, 'warn');
+                                        continue;
+                                    }
+                                }
+                                const detail = e.error_user_msg || e.error_user_title || '';
+                                addLog(`❌ Error code: ${e.code} | subcode: ${e.error_subcode || 'N/A'} | type: ${e.type || 'N/A'}`, 'error');
+                                if (detail) addLog(`💡 ${detail}`, 'warn');
+                                addLog(`💡 Kiểm tra: Token có quyền ads_management trên Ad Account ${account}?`, 'warn');
+                                throw new Error(`${label} Video upload: ${e.message}`);
+                            }
+
+                    uploadSuccess = true;
+                    addLog(`${label} ✅ Video uploaded: ${vData.id}`, 'success');
+
+                    // Free up memory for large files
+                    if (v.file.size > 500 * 1024 * 1024) { // > 500MB
+                        addLog(`${label} 🧹 Giải phóng memory cho file lớn...`, 'info');
+                        // Clear the file reference to free memory
+                        v.file = null;
+                    }
+
+                        } catch (fetchError) {
+                            if (fetchError.name === 'AbortError') {
+                                addLog(`${label} ⏰ Upload timeout (5 minutes)`, 'error');
+                            } else {
+                                addLog(`${label} 📡 Network error: ${fetchError.message}`, 'error');
+                            }
+
+                            if (uploadAttempts >= maxAttempts) {
+                                throw new Error(`${label} Video upload failed after ${maxAttempts} attempts: ${fetchError.message}`);
+                            }
+                        }
+                    }
+
+                    created.videoIds.push(vData.id);
+                    completedSteps++; setProgress((completedSteps / totalSteps) * 100);
+
+                    // Create Ad Set
+                    addLog(`${label} 🎯 Creating Ad Set...`, 'info');
+                    const asParams = new URLSearchParams();
+                    asParams.append('name', `AdSet${i + 1}_${v.file.name.replace(/\.[^/.]+$/, '')}`);
+                    asParams.append('campaign_id', campaignId);
+                    asParams.append('billing_event', 'IMPRESSIONS');
+                    asParams.append('optimization_goal', 'OFFSITE_CONVERSIONS');
+                    // promoted_object is REQUIRED for Conversions objective
+                    if (!activePixel) {
+                        throw new Error('Pixel ID là bắt buộc cho Conversion campaign! Vào Cấu hình → chọn Pixel hoặc nhập Pixel ID.');
+                    }
+                    asParams.append('promoted_object', JSON.stringify({ pixel_id: activePixel, custom_event_type: cfg.event || 'PURCHASE' }));
+                    asParams.append('targeting', JSON.stringify({ geo_locations: { countries: [country] } }));
+                    asParams.append('status', 'ACTIVE');
+                    // Schedule: start_time only
+                    if (schedule && schedule.startTime) {
+                        asParams.append('start_time', schedule.startTime);
+                        addLog(`${label} ⏰ Bắt đầu chạy từ: ${schedule.startDateDisplay} (00:00)`, 'info');
+                    }
+                    asParams.append('access_token', activeToken);
+                    console.log('[AdsAuto] AdSet params:', Object.fromEntries(asParams));
+                    const asResp = await fetch(`${FB_API}/${account}/adsets`, {
+                        method: 'POST',
+                        body: asParams
+                    });
+                    const asData = await asResp.json();
+                    console.log('[AdsAuto] AdSet response:', asData);
+                    if (asData.error) {
+                        const e = asData.error;
+                        const detail = e.error_user_msg || e.error_user_title || '';
+                        addLog(`❌ Error code: ${e.code} | subcode: ${e.error_subcode || 'N/A'}`, 'error');
+                        if (detail) addLog(`💡 ${detail}`, 'warn');
+                        throw new Error(`${label} Ad Set: ${e.message}`);
+                    }
+                    addLog(`${label} ✅ Ad Set created: ${asData.id}`, 'success');
+                    created.adSetIds.push(asData.id);
+                    completedSteps++; setProgress((completedSteps / totalSteps) * 100);
+
+                    // Wait for video processing & get thumbnail
+                    addLog(`${label} ⏳ Đang chờ video xử lý...`, 'info');
+                    await new Promise(r => setTimeout(r, 5000));
+
+                    // Get video thumbnail from Facebook
+                    let thumbUrl = '';
+                    try {
+                        const thumbResp = await fetch(`${FB_API}/${vData.id}/thumbnails?access_token=${activeToken}`);
+                        const thumbData = await thumbResp.json();
+                        thumbUrl = thumbData.data?.[0]?.uri || '';
+                        if (thumbUrl) addLog(`${label} 🖼️ Thumbnail: OK`, 'success');
+                    } catch (e) { console.log('[AdsAuto] Thumbnail fetch failed:', e); }
+
+                    // If no thumbnail, try video picture
+                    if (!thumbUrl) {
+                        try {
+                            const picResp = await fetch(`${FB_API}/${vData.id}?fields=picture&access_token=${activeToken}`);
+                            const picData = await picResp.json();
+                            thumbUrl = picData.picture || '';
+                        } catch (e) { console.log('[AdsAuto] Picture fetch failed:', e); }
+                    }
+
+                    // Create Ad Creative
+                    addLog(`${label} 🎨 Creating Creative...`, 'info');
+                    const crParams = new URLSearchParams();
+                    crParams.append('name', `Creative${i + 1}_${v.file.name.replace(/\.[^/.]+$/, '')}`);
+                    const videoDataObj = {
+                        video_id: vData.id,
+                        title: v.headline || 'Video Ad',
+                        message: v.primary || '',
+                        link_description: v.desc || '',
+                        call_to_action: { type: cta, value: { link: link } }
+                    };
+                    if (thumbUrl) videoDataObj.image_url = thumbUrl;
+                    crParams.append('object_story_spec', JSON.stringify({
+                        page_id: pageId,
+                        video_data: videoDataObj
+                    }));
+                    crParams.append('access_token', activeToken);
+                    console.log('[AdsAuto] Creative params:', Object.fromEntries(crParams));
+                    const crResp = await fetch(`${FB_API}/${account}/adcreatives`, {
+                        method: 'POST',
+                        body: crParams
+                    });
+                    const crData = await crResp.json();
+                    console.log('[AdsAuto] Creative response:', crData);
+                    if (crData.error) {
+                        const e = crData.error;
+                        const detail = e.error_user_msg || e.error_user_title || '';
+                        addLog(`❌ Error code: ${e.code} | subcode: ${e.error_subcode || 'N/A'}`, 'error');
+                        if (detail) addLog(`💡 ${detail}`, 'warn');
+                        throw new Error(`${label} Creative: ${e.message}`);
+                    }
+                    addLog(`${label} ✅ Creative created: ${crData.id}`, 'success');
+                    created.creativeIds.push(crData.id);
+                    completedSteps++; setProgress((completedSteps / totalSteps) * 100);
+
+                    // Create Ad
+                    addLog(`${label} 📢 Creating Ad...`, 'info');
+                    const adParams = new URLSearchParams();
+                    adParams.append('name', `Ad${i + 1}_${v.file.name.replace(/\.[^/.]+$/, '')}`);
+                    adParams.append('adset_id', asData.id);
+                    adParams.append('creative', JSON.stringify({ creative_id: crData.id }));
+                    adParams.append('status', 'ACTIVE');
+                    adParams.append('access_token', activeToken);
+                    const adResp = await fetch(`${FB_API}/${account}/ads`, {
+                        method: 'POST',
+                        body: adParams
+                    });
+                    const adData = await adResp.json();
+                    if (adData.error) throw new Error(`${label} Ad: ${adData.error.message}`);
+                    addLog(`${label} ✅ Ad created: ${adData.id}`, 'success');
+                    created.adIds.push(adData.id);
+                    completedSteps++; setProgress((completedSteps / totalSteps) * 100);
+
+                    adSetResults.push({ video: v.file.name, adsetId: asData.id, creativeId: crData.id, adId: adData.id, videoId: vData.id });
+                }
+
+                setProgress(100);
+                if (schedule) {
+                    addLog(`🎉 HOÀN TẤT! Campaign với ${videoFiles.length} Ad Sets — ⏰ Chạy từ ${schedule.startDateDisplay}`, 'success');
+                } else {
+                    addLog(`🎉 HOÀN TẤT! Campaign với ${videoFiles.length} Ad Sets — 🚀 Đang chạy!`, 'success');
+                }
+
+                // Save history
+                const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                const histEntry = { name: campaignName, campaignId, adSets: adSetResults, budget, country, videoCount: videoFiles.length, createdAt: new Date().toISOString() };
+                if (schedule) {
+                    histEntry.schedule = schedule;
+                }
+                hist.unshift(histEntry);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(0, 50)));
+
+                document.getElementById('launch-result').style.display = 'block';
+                document.getElementById('launch-result').innerHTML = `
+      <div class="card" style="padding:16px;border-left:3px solid var(--green);background:var(--green-bg)">
+        <div style="font-weight:700;font-size:14px;color:var(--green);margin-bottom:8px">🎉 Campaign tạo thành công!</div>
+        <div style="font-size:12px;color:var(--text-dim)">
+          <strong>Campaign:</strong> ${campaignId}<br>
+          <strong>Ad Sets:</strong> ${videoFiles.length}<br>
+          <strong>Budget Campaign:</strong> ${budget.toLocaleString()}đ/ngày (CBO)<br>
+          <strong>Status:</strong> ${schedule ? `<span style="color:var(--purple)">⏰ Chạy từ ${schedule.startDateDisplay}</span>` : `<span style="color:var(--green)">🚀 ACTIVE - Đang chạy</span>`} —
+          <a href="https://www.facebook.com/adsmanager" target="_blank" style="color:var(--blue)">Xem trên Ads Manager →</a>
+        </div>
+      </div>`;
+            } catch (err) {
+                addLog(`❌ ERROR: ${err.message}`, 'error');
+                if (created.campaignId || created.adSetIds.length || created.creativeIds.length || created.adIds.length || created.videoIds.length) {
+                    await rollbackLaunch(created, activeToken);
+                }
+                showToast('❌ Lỗi: ' + err.message, 'error');
+                document.getElementById('launch-result').style.display = 'block';
+                document.getElementById('launch-result').innerHTML = `
+      <div class="card" style="padding:16px;border-left:3px solid var(--red);background:var(--red-bg)">
+        <div style="font-weight:700;color:var(--red)">❌ Lỗi</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${err.message}</div>
+        <div style="font-size:11px;color:var(--yellow);margin-top:8px">Đã thử rollback các object đã tạo trên Meta để tránh phát sinh campaign rác.</div>
+      </div>`;
+            }
+            document.getElementById('btn-launch').disabled = false;
+            // Cleanup cancel button
+            if (cancelBtn && cancelBtn.parentNode) {
+                cancelBtn.remove();
+            }
+        }
+
+        // ==================== HISTORY ====================
+        function loadHistory() {
+            const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const el = document.getElementById('history-list');
+            if (hist.length === 0) { el.innerHTML = '<p style="color:var(--text-muted)">Chưa có campaigns</p>'; return; }
+            el.innerHTML = hist.map(h => {
+                const hasSchedule = h.schedule && h.schedule.startTime;
+                const scheduleInfo = hasSchedule ? `<div style="font-size:10px;color:var(--purple);margin-top:2px">⏰ Bắt đầu: ${h.schedule.startDateDisplay || formatScheduleDisplay(h.schedule.startTime)}</div>` : '';
+                const badge = hasSchedule
+                    ? `<span class="badge" style="background:rgba(139,92,246,.1);color:var(--purple);border:1px solid rgba(139,92,246,.15)">⏰ ${h.schedule.startDateDisplay || 'Scheduled'}</span>`
+                    : `<span class="badge" style="background:var(--green-bg);color:var(--green);border:1px solid rgba(16,185,129,.15)">🚀 ACTIVE</span>`;
+                return `
+    <div class="history-item">
+      <div>
+        <div style="font-weight:700;font-size:13px">${h.name}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">
+          🎬 ${h.videoCount || (h.adSets ? h.adSets.length : 1)} videos · 🌍 ${h.country} · 💰 ${(h.budget || 0).toLocaleString()}đ/campaign/ngày
+        </div>
+        ${scheduleInfo}
+        <div style="font-size:10px;color:var(--text-muted)">Campaign: ${h.campaignId} · ${new Date(h.createdAt).toLocaleString('vi-VN')}</div>
+      </div>
+      ${badge}
+    </div>`;
+            }).join('');
+        }
+
+        // ==================== INIT ====================
+        loadConfig();
+    </script>
+</body>
+
+</html>

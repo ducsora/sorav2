@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Mashup Engine — SoraVer2</title>
+    <meta name="description" content="Tạo video mashup từ nhiều nguồn — ghép hình ảnh ngẫu nhiên từ nhiều video với giọng từ một video chủ ngẫu nhiên.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* ===== Orange theme for Mashup ===== */
+        .oc  { color: #f97316; }
+        .ob  { background: rgba(249,115,22,.15); }
+        .mashup-ws { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; gap:1rem; flex-wrap:wrap; }
+        .page-header-left { display:flex; align-items:center; gap:1rem; }
+        .page-icon { width:48px; height:48px; border-radius:12px; background:rgba(249,115,22,.15); display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#f97316; }
+        .page-header h1 { font-size:1.5rem; font-weight:700; margin:0; }
+        .page-header p { font-size:.85rem; color:var(--text-2); margin:0; }
+
+        .how-banner { background:linear-gradient(135deg,rgba(249,115,22,.1),rgba(234,88,12,.05)); border:1px solid rgba(249,115,22,.2); border-radius:16px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:flex-start; gap:1rem; }
+        .how-banner-icon { font-size:1.5rem; color:#f97316; flex-shrink:0; margin-top:.1rem; }
+        .how-banner h3 { font-size:.95rem; font-weight:600; margin:0 0 .4rem; color:#f97316; }
+        .how-banner p { font-size:.82rem; color:var(--text-2); margin:0; line-height:1.6; }
+
+        .layout { display:grid; grid-template-columns:380px 1fr; gap:1.5rem; }
+        @media(max-width:960px){ .layout{ grid-template-columns:1fr; } }
+
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.25rem; margin-bottom:1rem; }
+        .card-header { display:flex; align-items:center; gap:.625rem; margin-bottom:1rem; }
+        .card-header i { color:#f97316; }
+        .card-header h3 { font-size:.95rem; font-weight:600; margin:0; }
+
+        /* Drop zone */
+        .drop-zone { border:2px dashed var(--border); border-radius:12px; padding:1.75rem 1rem; text-align:center; cursor:pointer; transition:all .25s; }
+        .drop-zone:hover,.drop-zone.drag-over { border-color:#f97316; background:rgba(249,115,22,.05); }
+        .drop-icon { font-size:2.2rem; color:#f97316; margin-bottom:.6rem; }
+        .drop-title { font-weight:600; font-size:.9rem; margin:0 0 .2rem; }
+        .drop-sub { font-size:.78rem; color:var(--text-3); margin:0 0 .65rem; }
+        .drop-hint { font-size:.72rem; color:var(--text-3); margin:.4rem 0 0; }
+
+        /* Source list */
+        .source-list { display:flex; flex-direction:column; gap:.5rem; margin-top:.875rem; }
+        .source-item { display:flex; align-items:center; gap:.75rem; background:rgba(249,115,22,.05); border:1px solid rgba(249,115,22,.15); border-radius:10px; padding:.6rem .875rem; }
+        .source-thumb { width:60px; height:40px; object-fit:cover; border-radius:6px; flex-shrink:0; background:#000; }
+        .source-info { flex:1; min-width:0; }
+        .source-name { font-size:.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .source-meta { font-size:.7rem; color:var(--text-3); display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.15rem; }
+        .source-meta span { background:rgba(255,255,255,.07); padding:1px 6px; border-radius:4px; }
+        .source-remove { width:22px; height:22px; border-radius:50%; background:#ef4444; color:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.6rem; flex-shrink:0; }
+        .master-badge { font-size:.62rem; font-weight:700; padding:1px 6px; border-radius:4px; background:rgba(249,115,22,.2); color:#f97316; margin-left:.35rem; }
+
+        /* Form */
+        .form-group { margin-bottom:1rem; }
+        .form-label { display:block; font-size:.8rem; font-weight:600; color:var(--text-2); margin-bottom:.4rem; }
+        .form-input,.form-select { width:100%; padding:.55rem .75rem; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.85rem; font-family:inherit; box-sizing:border-box; transition:border-color .2s; }
+        .form-input:focus,.form-select:focus { outline:none; border-color:#f97316; }
+        .form-hint { font-size:.72rem; color:var(--text-3); margin:.3rem 0 0; display:block; }
+        .range-row { display:flex; align-items:center; gap:.75rem; }
+        .range-row input[type=range] { flex:1; accent-color:#f97316; }
+        .range-val { font-size:.82rem; font-weight:700; color:#f97316; min-width:28px; text-align:right; }
+
+        /* Buttons */
+        .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.6rem 1.1rem; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; border:none; transition:all .2s; font-family:inherit; }
+        .btn-orange { background:linear-gradient(135deg,#f97316,#ea580c); color:#fff; }
+        .btn-orange:hover { background:linear-gradient(135deg,#ea580c,#c2410c); transform:translateY(-1px); box-shadow:0 4px 14px rgba(249,115,22,.35); }
+        .btn-orange:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-ghost { background:rgba(255,255,255,.07); color:var(--text); border:1px solid var(--border); }
+        .btn-ghost:hover { background:rgba(255,255,255,.12); }
+        .btn-full { width:100%; justify-content:center; }
+        .btn-lg { padding:.75rem 1.25rem; font-size:.9rem; }
+        .btn-sm { padding:.35rem .7rem; font-size:.76rem; }
+
+        /* Stats chips */
+        .stat-row { display:flex; gap:.625rem; margin-bottom:1rem; flex-wrap:wrap; }
+        .stat-chip { flex:1; min-width:70px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; padding:.5rem .75rem; text-align:center; }
+        .stat-chip strong { display:block; font-size:1.1rem; font-weight:700; color:#f97316; }
+        .stat-chip span { font-size:.67rem; color:var(--text-3); }
+
+        /* Progress & log */
+        .progress-bar { height:6px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,#f97316,#fb923c); border-radius:99px; transition:width .4s ease; }
+        .spinner { width:18px; height:18px; border:2.5px solid rgba(249,115,22,.3); border-top-color:#f97316; border-radius:50%; animation:spin .8s linear infinite; flex-shrink:0; }
+        @keyframes spin { to{ transform:rotate(360deg); } }
+        .process-log { background:rgba(0,0,0,.35); border:1px solid var(--border); border-radius:10px; padding:.75rem; font-size:.73rem; font-family:monospace; color:#fb923c; max-height:150px; overflow-y:auto; line-height:1.7; }
+        .log-warn { color:#f59e0b; }
+        .log-err { color:#ef4444; }
+        .log-ok { color:#34d399; }
+
+        .processing-card { border:1px solid rgba(249,115,22,.3); background:rgba(249,115,22,.04); }
+        @keyframes pulse-border { 0%,100%{border-color:rgba(249,115,22,.2)} 50%{border-color:rgba(249,115,22,.7)} }
+        .pulsing { animation:pulse-border 1.5s ease infinite; }
+
+        /* Results */
+        .results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+        .results-header h3 { font-size:1rem; font-weight:700; margin:0; }
+        .variant-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:1rem; }
+        .variant-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; transition:all .25s; }
+        .variant-card:hover { border-color:rgba(249,115,22,.4); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.25); }
+        .variant-thumb { position:relative; background:#000; aspect-ratio:16/9; overflow:hidden; }
+        .variant-thumb video { width:100%; height:100%; object-fit:cover; display:block; }
+        .vbadge { position:absolute; top:.5rem; left:.5rem; background:rgba(249,115,22,.9); color:#fff; font-size:.63rem; font-weight:700; padding:2px 7px; border-radius:5px; backdrop-filter:blur(4px); }
+        .vbadge-master { position:absolute; top:.5rem; right:.5rem; background:rgba(0,0,0,.7); color:#fb923c; font-size:.63rem; padding:2px 7px; border-radius:5px; backdrop-filter:blur(4px); }
+        .variant-body { padding:.875rem; }
+        .variant-title { font-size:.85rem; font-weight:600; margin:0 0 .25rem; }
+        .variant-meta { font-size:.71rem; color:var(--text-3); display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.7rem; }
+        .variant-actions { display:flex; gap:.4rem; }
+        .variant-actions .btn { flex:1; padding:.4rem .5rem; font-size:.74rem; justify-content:center; }
+
+        .empty-state { text-align:center; padding:4rem 2rem; color:var(--text-3); }
+        .empty-state i { font-size:3.5rem; margin-bottom:1rem; display:block; opacity:.25; color:#f97316; }
+        .empty-state p { font-size:.9rem; }
+
+        .step-badge { background:linear-gradient(135deg,#f97316,#ea580c); color:#fff; font-size:.7rem; font-weight:700; padding:2px 10px; border-radius:20px; display:inline-block; margin-bottom:.5rem; }
+        .info-box { display:flex; gap:.75rem; background:rgba(249,115,22,.07); border:1px solid rgba(249,115,22,.18); border-radius:10px; padding:.875rem; margin-bottom:1rem; font-size:.82rem; color:var(--text-2); }
+        .info-box i { color:#f97316; flex-shrink:0; margin-top:.1rem; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation:fadeIn .35s ease forwards; }
+
+        /* Voice Mode */
+        .voice-toggle { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.75rem; }
+        .voice-btn { border:2px solid var(--border); border-radius:10px; padding:.75rem .5rem; text-align:center; cursor:pointer; transition:all .2s; background:rgba(255,255,255,.03); }
+        .voice-btn:hover { border-color:rgba(249,115,22,.4); background:rgba(249,115,22,.05); }
+        .voice-btn.vb-active { border-color:#f97316; background:rgba(249,115,22,.1); }
+        .voice-btn .vb-icon { font-size:1.3rem; margin-bottom:.25rem; display:block; }
+        .voice-btn .vb-title { font-size:.78rem; font-weight:700; display:block; margin-bottom:.1rem; }
+        .voice-btn.vb-active .vb-title { color:#f97316; }
+        .voice-btn .vb-sub { font-size:.67rem; color:var(--text-3); display:block; line-height:1.3; }
+        .mp3-drop { border:2px dashed rgba(249,115,22,.3); border-radius:10px; padding:1.1rem; text-align:center; cursor:pointer; transition:all .2s; margin-top:.625rem; }
+        .mp3-drop:hover,.mp3-drop.drag-over { border-color:#f97316; background:rgba(249,115,22,.05); }
+        .mp3-file-info { display:flex; align-items:center; gap:.75rem; background:rgba(249,115,22,.07); border:1px solid rgba(249,115,22,.2); border-radius:10px; padding:.7rem; margin-top:.625rem; }
+        .mp3-file-icon { width:34px; height:34px; border-radius:8px; background:rgba(249,115,22,.15); color:#f97316; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    </style>
+</head>
+<body data-theme="dark">
+<div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <div class="logo-text">
+                    <span class="logo-name">SoraVer2</span>
+                    <span class="logo-tagline">AI Workspace</span>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="Tìm công cụ..." id="tool-search">
+        </div>
+        <div class="nav-section">
+            <p class="nav-label">Công cụ chính</p>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(250,204,21,0.15)"><i class="fa-solid fa-house" style="color:#facc15"></i></div>
+                    <span>Dashboard</span>
+                </a>
+                <a href="video.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-film" style="color:#8b5cf6"></i></div>
+                    <span>Video Dubbing</span>
+                    <span class="nav-badge">New</span>
+                </a>
+                <a href="shuffler.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(16,185,129,0.15)"><i class="fa-solid fa-shuffle" style="color:#10b981"></i></div>
+                    <span>Video Shuffler</span>
+                    <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span>
+                </a>
+                <a href="mashup.html" class="nav-item active">
+                    <div class="nav-icon" style="background:rgba(249,115,22,0.15)"><i class="fa-solid fa-layer-group" style="color:#f97316"></i></div>
+                    <span>Video Mashup</span>
+                    <span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span>
+                </a>
+                <a href="gif-maker.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(6,182,212,0.15)"><i class="fa-solid fa-film" style="color:#06b6d4"></i></div>
+                    <span>GIF Maker Pro</span>
+                    <span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span>
+                </a>
+                <a href="ads-automation.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(24,119,242,0.15)"><i class="fa-brands fa-facebook" style="color:#4d9cf5"></i></div>
+                    <span>Ads Automation</span>
+                    <span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span>
+                </a>
+            </nav>
+        </div>
+        <div class="sidebar-footer">
+            <div class="theme-toggle" id="theme-toggle">
+                <i class="fa-solid fa-sun"></i><span>Chế độ Sáng</span>
+            </div>
+            <div class="sidebar-version">v2.0.0</div>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+        <header class="mobile-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <span class="logo-name">SoraVer2</span>
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <div class="workspace mashup-ws">
+
+            <!-- Header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="page-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <div>
+                        <h1>Video Mashup Engine</h1>
+                        <p>Ghép hình ngẫu nhiên từ nhiều video — voice từ video chủ ngẫu nhiên</p>
+                    </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="btn-reset" style="display:none">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
+
+            <!-- How it works -->
+            <div class="how-banner">
+                <div class="how-banner-icon"><i class="fa-solid fa-circle-nodes"></i></div>
+                <div>
+                    <h3>Cách hoạt động — AntigravityVideoEngine</h3>
+                    <p>Upload nhiều video → Engine chọn ngẫu nhiên 1 video làm <strong>"Master"</strong> (lấy giọng & độ dài) → Cắt ghép hình ảnh ngẫu nhiên từ <strong>tất cả video (tắt tiếng)</strong> để lấp đầy độ dài → Xuất video mashup hoàn chỉnh. Xử lý hoàn toàn trong <strong>trình duyệt</strong>.</p>
+                </div>
+            </div>
+
+            <div class="layout">
+
+                <!-- LEFT: Controls -->
+                <div>
+                    <!-- Step 1: Upload -->
+                    <div class="card">
+                        <span class="step-badge">Bước 1</span>
+                        <div class="card-header">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <h3>Upload Video nguồn</h3>
+                        </div>
+                        <div class="drop-zone" id="drop-zone">
+                            <input type="file" id="video-input" accept="video/*" multiple hidden>
+                            <div class="drop-icon"><i class="fa-solid fa-photo-film"></i></div>
+                            <p class="drop-title">Kéo & thả nhiều video vào đây</p>
+                            <p class="drop-sub">hoặc</p>
+                            <button class="btn btn-orange" id="btn-browse">
+                                <i class="fa-solid fa-folder-open"></i> Chọn video
+                            </button>
+                            <p class="drop-hint">MP4, MOV, AVI · Cần ít nhất 2 video</p>
+                        </div>
+                        <div class="source-list" id="source-list"></div>
+                        <div class="info-box" id="source-info" style="display:none;margin-top:.875rem">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span id="source-info-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- Voice Source Card -->
+                    <div class="card" id="voice-card">
+                        <span class="step-badge" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)">Âm thanh</span>
+                        <div class="card-header">
+                            <i class="fa-solid fa-music"></i>
+                            <h3>Nguồn giọng nói (Voice)</h3>
+                        </div>
+                        <div class="voice-toggle">
+                            <div class="voice-btn vb-active" id="vbtn-video" onclick="setVoiceMode('video')">
+                                <span class="vb-icon">🎬</span>
+                                <span class="vb-title">Voice từ Video</span>
+                                <span class="vb-sub">Lấy giọng từ video Master (mặc định)</span>
+                            </div>
+                            <div class="voice-btn" id="vbtn-mp3" onclick="setVoiceMode('mp3')">
+                                <span class="vb-icon">🎵</span>
+                                <span class="vb-title">Voice MP3 riêng</span>
+                                <span class="vb-sub">Upload file audio tùy chọn</span>
+                            </div>
+                        </div>
+                        <div id="mp3-section" style="display:none">
+                            <div class="mp3-drop" id="mp3-drop">
+                                <input type="file" id="mp3-input" accept="audio/*" hidden>
+                                <i class="fa-solid fa-music" style="font-size:1.4rem;color:#f97316;display:block;margin-bottom:.3rem"></i>
+                                <p style="font-size:.8rem;font-weight:600;margin:0 0 .25rem">Kéo & thả file audio vào đây</p>
+                                <button class="btn btn-orange btn-sm" id="btn-browse-mp3" style="margin:.4rem 0"><i class="fa-solid fa-folder-open"></i> Chọn file</button>
+                                <p style="font-size:.68rem;color:var(--text-3);margin:0">MP3, WAV, AAC, M4A...</p>
+                            </div>
+                            <div class="mp3-file-info" id="mp3-file-info" style="display:none">
+                                <div class="mp3-file-icon"><i class="fa-solid fa-music"></i></div>
+                                <div style="flex:1;min-width:0">
+                                    <div style="font-size:.81rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="mp3-fname">—</div>
+                                    <div style="font-size:.69rem;color:var(--text-3);display:flex;gap:.4rem;margin-top:.15rem">
+                                        <span id="mp3-fsize">—</span><span id="mp3-fdur">—</span>
+                                    </div>
+                                </div>
+                                <button class="source-remove" id="mp3-remove"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Config -->
+                    <div class="card" id="step2-card">
+                        <span class="step-badge">Bước 2</span>
+                        <div class="card-header">
+                            <i class="fa-solid fa-sliders"></i>
+                            <h3>Cấu hình Mashup</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số video output cần tạo</label>
+                            <div class="range-row">
+                                <input type="range" id="num-outputs" min="1" max="10" value="5">
+                                <span class="range-val" id="num-outputs-val">5</span>
+                            </div>
+                            <span class="form-hint">✅ Mỗi video nguồn <strong>đảm bảo được làm Master ít nhất 1 lần</strong></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Độ dài mỗi phân cảnh (giây)</label>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.625rem">
+                                <div>
+                                    <span class="form-hint" style="display:block;margin-bottom:.25rem">Tối thiểu</span>
+                                    <input type="number" class="form-input" id="clip-min" value="1.5" min="0.5" max="10" step="0.5">
+                                </div>
+                                <div>
+                                    <span class="form-hint" style="display:block;margin-bottom:.25rem">Tối đa</span>
+                                    <input type="number" class="form-input" id="clip-max" value="4.5" min="1" max="15" step="0.5">
+                                </div>
+                            </div>
+                            <span class="form-hint">Khuyến nghị: 1.5s – 4.5s cho độ sinh động tối đa</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Chất lượng video</label>
+                            <select class="form-select" id="quality-select">
+                                <option value="4000000">Cao — 4 Mbps</option>
+                                <option value="2500000" selected>Chuẩn — 2.5 Mbps</option>
+                                <option value="1500000">Nhỏ gọn — 1.5 Mbps</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="card" id="stats-card" style="display:none">
+                        <div class="stat-row">
+                            <div class="stat-chip"><strong id="stat-sources">0</strong><span>Video nguồn</span></div>
+                            <div class="stat-chip"><strong id="stat-outputs">5</strong><span>Output</span></div>
+                            <div class="stat-chip"><strong id="stat-avgdur">—</strong><span>Dài TB</span></div>
+                            <div class="stat-chip"><strong id="stat-totalsize">—</strong><span>Tổng dung lượng</span></div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-orange btn-full btn-lg" id="btn-generate" disabled>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo Mashup ngay
+                    </button>
+                    <p class="form-hint" style="text-align:center;margin-top:.5rem" id="generate-hint">Upload ít nhất 2 video để bắt đầu</p>
+                </div>
+
+                <!-- RIGHT: Preview & Results -->
+                <div>
+                    <!-- Preview panel -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fa-solid fa-eye"></i>
+                            <h3>Xem trước video nguồn</h3>
+                        </div>
+                        <div style="background:#000;border-radius:10px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;overflow:hidden" id="preview-wrap">
+                            <div style="text-align:center;color:var(--text-3)" id="preview-placeholder">
+                                <i class="fa-solid fa-photo-film" style="font-size:2.5rem;opacity:.25;display:block;margin-bottom:.75rem"></i>
+                                <p style="font-size:.85rem">Upload video để xem trước</p>
+                            </div>
+                            <video id="video-preview" controls style="display:none;width:100%"></video>
+                        </div>
+                        <p id="preview-label" style="font-size:.72rem;color:var(--text-3);margin-top:.5rem;text-align:center"></p>
+                    </div>
+
+                    <!-- Processing panel -->
+                    <div class="card processing-card pulsing" id="processing-panel" style="display:none">
+                        <div class="card-header" style="margin-bottom:.75rem">
+                            <div class="spinner"></div>
+                            <h3 id="process-title">Đang xử lý...</h3>
+                        </div>
+                        <div class="progress-bar" style="margin-bottom:.6rem">
+                            <div class="progress-fill" id="process-progress" style="width:0%"></div>
+                        </div>
+                        <p style="font-size:.76rem;color:var(--text-3);margin-bottom:.5rem" id="process-subtitle">Khởi tạo...</p>
+                        <div class="process-log" id="process-log"></div>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="results-section">
+                        <div class="empty-state" id="empty-state">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <p>Video mashup sẽ xuất hiện ở đây</p>
+                            <p style="font-size:.78rem;margin-top:.35rem">Upload ít nhất 2 video và nhấn "Tạo Mashup"</p>
+                        </div>
+                        <div id="results-wrap" style="display:none">
+                            <div class="results-header">
+                                <h3><i class="fa-solid fa-layer-group" style="color:#f97316"></i> Video Mashup đã tạo</h3>
+                                <button class="btn btn-ghost btn-sm" id="btn-dl-all" style="display:none">
+                                    <i class="fa-solid fa-download"></i> Tải tất cả
+                                </button>
+                            </div>
+                            <div class="variant-grid" id="variant-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+<script>
+// =====================================================
+//  VIDEO MASHUP ENGINE — SoraVer2
+//  Inspired by AntigravityVideoEngine (Python/moviepy)
+//  Browser port: Canvas + MediaRecorder (WebM)
+// =====================================================
+
+const S = {
+    sources: [],   // {file, url, name, duration, width, height, size}
+    processing: false,
+    results: [],
+    voiceMode: 'video',  // 'video' | 'mp3'
+    mp3: null,           // {file, url, name, size, duration}
+};
+
+const $ = id => document.getElementById(id);
+const dropZone      = $('drop-zone');
+const videoInput    = $('video-input');
+const sourceList    = $('source-list');
+const btnBrowse     = $('btn-browse');
+const btnGenerate   = $('btn-generate');
+const generateHint  = $('generate-hint');
+const numOutputsEl  = $('num-outputs');
+const numOutputsVal = $('num-outputs-val');
+const btnReset      = $('btn-reset');
+
+// ---- Upload handlers ----
+btnBrowse.addEventListener('click', () => videoInput.click());
+videoInput.addEventListener('change', e => { [...e.target.files].forEach(f => addSource(f)); videoInput.value=''; });
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    [...e.dataTransfer.files].filter(f => f.type.startsWith('video/')).forEach(addSource);
+});
+
+numOutputsEl.addEventListener('input', function(){ numOutputsVal.textContent = this.value; updateStats(); updateBtn(); });
+$('num-outputs').addEventListener('input', function(){ numOutputsVal.textContent=this.value; updateStats(); });
+
+function fmtSize(b){ return b>1e9?(b/1e9).toFixed(1)+'GB':b>1e6?(b/1e6).toFixed(1)+'MB':(b/1e3).toFixed(0)+'KB'; }
+function fmtDur(s){ return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function addSource(file) {
+    if (S.sources.find(s=>s.name===file.name && s.size===file.size)) return;
+    const url = URL.createObjectURL(file);
+    const src = { file, url, name: file.name, size: file.size, duration:0, width:0, height:0 };
+    S.sources.push(src);
+
+    const vid = document.createElement('video');
+    vid.src = url; vid.preload = 'metadata';
+    vid.addEventListener('loadedmetadata', () => {
+        src.duration = vid.duration;
+        src.width    = vid.videoWidth;
+        src.height   = vid.videoHeight;
+        renderSourceList(); updateStats(); updateBtn();
+        // set first as preview
+        if (S.sources.length === 1) showPreview(src);
+    }, {once:true});
+
+    renderSourceList(); updateStats(); updateBtn();
+}
+
+function removeSource(idx) {
+    URL.revokeObjectURL(S.sources[idx].url);
+    S.sources.splice(idx, 1);
+    renderSourceList(); updateStats(); updateBtn();
+    if (S.sources.length > 0) showPreview(S.sources[0]);
+    else {
+        $('video-preview').style.display='none';
+        $('preview-placeholder').style.display='block';
+        $('preview-label').textContent='';
+    }
+}
+
+function renderSourceList() {
+    sourceList.innerHTML = '';
+    if (!S.sources.length) return;
+    S.sources.forEach((src, i) => {
+        const div = document.createElement('div');
+        div.className = 'source-item';
+        div.innerHTML = `
+            <video class="source-thumb" src="${src.url}" preload="metadata" muted></video>
+            <div class="source-info">
+                <div class="source-name">${src.name}</div>
+                <div class="source-meta">
+                    <span>${fmtSize(src.size)}</span>
+                    ${src.duration?`<span>${fmtDur(src.duration)}</span>`:''}
+                    ${src.width?`<span>${src.width}×${src.height}</span>`:''}
+                    <span>Video ${i+1}</span>
+                </div>
+            </div>
+            <button class="source-remove" title="Xóa"><i class="fa-solid fa-xmark"></i></button>
+        `;
+        div.querySelector('.source-thumb').addEventListener('click', () => showPreview(src));
+        div.querySelector('.source-remove').addEventListener('click', () => removeSource(i));
+        sourceList.appendChild(div);
+    });
+    $('source-info').style.display = S.sources.length >= 2 ? 'flex' : 'none';
+    if (S.sources.length >= 2) {
+        const n = S.sources.length, out = parseInt(numOutputsEl.value);
+        $('source-info-text').innerHTML = `${n} video sẵn sàng. <strong>Mỗi video được đảm bảo làm Master ít nhất 1 lần</strong> trong ${out} output (${out > n ? out - n + ' output phân bổ ngẫu nhiên thêm' : 'đủ 1-1'}).`;
+    }
+}
+
+function showPreview(src) {
+    const vp = $('video-preview');
+    vp.src = src.url; vp.style.display = 'block';
+    $('preview-placeholder').style.display = 'none';
+    $('preview-label').textContent = `Đang xem: ${src.name}`;
+}
+
+function updateStats() {
+    const n = S.sources.length;
+    $('stats-card').style.display = n ? 'block' : 'none';
+    $('stat-sources').textContent = n;
+    $('stat-outputs').textContent = numOutputsEl.value;
+    const avgDur = n ? (S.sources.reduce((a,s)=>a+s.duration,0)/n) : 0;
+    $('stat-avgdur').textContent = avgDur ? fmtDur(avgDur) : '—';
+    const totalSize = S.sources.reduce((a,s)=>a+s.size,0);
+    $('stat-totalsize').textContent = totalSize ? fmtSize(totalSize) : '—';
+}
+
+function updateBtn() {
+    const ok = S.sources.length >= 2 && S.sources.every(s=>s.duration>0) && !S.processing;
+    btnGenerate.disabled = !ok;
+    generateHint.textContent = ok
+        ? `Sẵn sàng tạo ${numOutputsEl.value} video mashup`
+        : S.sources.length < 2 ? 'Upload ít nhất 2 video để bắt đầu' : 'Đang tải thông tin video...';
+    btnReset.style.display = S.sources.length || S.results.length || S.mp3 ? '' : 'none';
+}
+
+btnReset.addEventListener('click', () => {
+    S.sources.forEach(s=>URL.revokeObjectURL(s.url));
+    S.results.forEach(r=>URL.revokeObjectURL(r.url));
+    if (S.mp3) URL.revokeObjectURL(S.mp3.url);
+    S.sources=[]; S.results=[]; S.mp3=null;
+    sourceList.innerHTML='';
+    $('variant-grid').innerHTML='';
+    $('results-wrap').style.display='none';
+    $('empty-state').style.display='block';
+    $('stats-card').style.display='none';
+    $('source-info').style.display='none';
+    $('video-preview').style.display='none';
+    $('preview-placeholder').style.display='block';
+    $('preview-label').textContent='';
+    $('mp3-file-info').style.display='none';
+    $('mp3-section').style.display='none';
+    $('vbtn-video').classList.add('vb-active');
+    $('vbtn-mp3').classList.remove('vb-active');
+    S.voiceMode = 'video';
+    updateStats(); updateBtn();
+});
+
+// ---- Voice Mode & MP3 ----
+function setVoiceMode(mode) {
+    S.voiceMode = mode;
+    $('vbtn-video').classList.toggle('vb-active', mode === 'video');
+    $('vbtn-mp3').classList.toggle('vb-active', mode === 'mp3');
+    $('mp3-section').style.display = mode === 'mp3' ? 'block' : 'none';
+    updateBtn();
+}
+
+$('btn-browse-mp3').addEventListener('click', () => $('mp3-input').click());
+$('mp3-input').addEventListener('change', e => { if (e.target.files[0]) loadMP3(e.target.files[0]); e.target.value=''; });
+
+const mp3Drop = $('mp3-drop');
+mp3Drop.addEventListener('dragover', e => { e.preventDefault(); mp3Drop.classList.add('drag-over'); });
+mp3Drop.addEventListener('dragleave', () => mp3Drop.classList.remove('drag-over'));
+mp3Drop.addEventListener('drop', e => {
+    e.preventDefault(); mp3Drop.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && (f.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name))) loadMP3(f);
+});
+
+$('mp3-remove').addEventListener('click', clearMP3);
+
+function loadMP3(file) {
+    if (S.mp3) URL.revokeObjectURL(S.mp3.url);
+    S.mp3 = null;
+    const url = URL.createObjectURL(file);
+    const audio = new Audio(url);
+    audio.addEventListener('loadedmetadata', () => {
+        S.mp3 = { file, url, name: file.name, size: file.size, duration: audio.duration };
+        $('mp3-fname').textContent = file.name;
+        $('mp3-fsize').textContent = fmtSize(file.size);
+        $('mp3-fdur').textContent = fmtDur(audio.duration) + ' (' + audio.duration.toFixed(1) + 's)';
+        $('mp3-file-info').style.display = 'flex';
+        updateBtn();
+    }, {once: true});
+    audio.load();
+    $('mp3-fname').textContent = file.name;
+    $('mp3-file-info').style.display = 'flex';
+}
+
+function clearMP3() {
+    if (S.mp3) URL.revokeObjectURL(S.mp3.url);
+    S.mp3 = null;
+    $('mp3-file-info').style.display = 'none';
+    updateBtn();
+}
+
+// ---- Generate ----
+btnGenerate.addEventListener('click', runMashup);
+
+function log(msg, cls='') {
+    const el = $('process-log');
+    const d = document.createElement('div');
+    d.textContent = '▶ ' + msg;
+    if (cls) d.className = cls;
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+}
+
+function setProgress(pct, title='', sub='') {
+    $('process-progress').style.width = pct + '%';
+    if (title) $('process-title').textContent = title;
+    if (sub) $('process-subtitle').textContent = sub;
+}
+
+// Guarantee every source appears as master at least once.
+// Returns array of masterIdx of length numOutputs.
+function assignMasters(numOutputs, numSources) {
+    // Start with a shuffled list of all source indices
+    const base = Array.from({ length: numSources }, (_, i) => i);
+    for (let i = base.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [base[i], base[j]] = [base[j], base[i]];
+    }
+    const result = [...base]; // first N slots: each source used exactly once
+    // Fill remaining slots (if numOutputs > numSources) randomly
+    while (result.length < numOutputs) {
+        result.push(Math.floor(Math.random() * numSources));
+    }
+    return result;
+}
+
+// Build the segment plan for one mashup output
+function buildPlan(sources, minDur, maxDur, forcedMasterIdx, extAudioDur) {
+    const useExtAudio = extAudioDur !== undefined;
+    const masterIdx = useExtAudio ? -1 : ((forcedMasterIdx !== undefined) ? forcedMasterIdx : Math.floor(Math.random() * sources.length));
+    const targetDur = useExtAudio ? extAudioDur : sources[masterIdx].duration;
+    const segments = [];
+    let cur = 0;
+
+    while (cur < targetDur - 0.1) {
+        const srcIdx = Math.floor(Math.random() * sources.length);
+        const src = sources[srcIdx];
+        const remaining = targetDur - cur;
+        const segLen = Math.min(
+            minDur + Math.random() * (maxDur - minDur),
+            remaining,
+            Math.max(0.5, src.duration - 0.2)
+        );
+        const maxStart = Math.max(0, src.duration - segLen);
+        const startT = Math.random() * maxStart;
+        segments.push({ srcIdx, start: startT, end: startT + segLen, dur: segLen });
+        cur += segLen;
+    }
+    return { masterIdx, targetDur, segments };
+}
+
+// Render one mashup — mp3Url: use external audio instead of master video
+async function renderMashup(plan, sources, bitrate, onProg, mp3Url) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const useMP3 = !!mp3Url;
+
+            // Canvas size: from master video (video mode) or first loaded source (mp3 mode)
+            const refSrc = useMP3 ? (sources.find(s=>s.width>0) || sources[0]) : sources[plan.masterIdx];
+            const W = refSrc.width || 1280, H = refSrc.height || 720;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            // Audio
+            const aCtx = new AudioContext();
+            const dest = aCtx.createMediaStreamDestination();
+            let audioPlayEl;
+
+            if (useMP3) {
+                const audioEl = new Audio(mp3Url);
+                audioEl.preload = 'auto';
+                await new Promise(r => {
+                    if (audioEl.readyState >= 3) { r(); return; }
+                    audioEl.addEventListener('canplaythrough', r, {once:true});
+                    audioEl.load();
+                });
+                const aSrc = aCtx.createMediaElementSource(audioEl);
+                aSrc.connect(dest); aSrc.connect(aCtx.destination);
+                audioPlayEl = audioEl;
+            } else {
+                const masterVid = document.createElement('video');
+                masterVid.src = sources[plan.masterIdx].url;
+                masterVid.preload = 'auto';
+                await waitMeta(masterVid);
+                const aSrc = aCtx.createMediaElementSource(masterVid);
+                aSrc.connect(dest); aSrc.connect(aCtx.destination);
+                audioPlayEl = masterVid;
+            }
+
+            // Stream
+            const vStream = canvas.captureStream(30);
+            const combined = new MediaStream([
+                ...vStream.getVideoTracks(),
+                ...dest.stream.getAudioTracks()
+            ]);
+            const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+                ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+            const rec = new MediaRecorder(combined, { mimeType: mime, videoBitsPerSecond: bitrate });
+            const chunks = [];
+            rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+            rec.onerror = e => reject(new Error(e.error?.message || 'Recorder error'));
+
+            // Source video elements (muted, visual only)
+            const srcVids = sources.map(s => {
+                const v = document.createElement('video');
+                v.src = s.url; v.muted = true; v.preload = 'auto';
+                return v;
+            });
+            await Promise.all(srcVids.map(v => waitMeta(v)));
+
+            // Drawing loop
+            let currentVid = srcVids[0];
+            let animId;
+            const draw = () => {
+                if (currentVid?.readyState >= 2) {
+                    ctx.drawImage(currentVid, 0, 0, W, H);
+                }
+                animId = requestAnimationFrame(draw);
+            };
+
+            // Start
+            rec.start(100);
+            draw();
+            audioPlayEl.play().catch(() => {});
+
+            // Play segments
+            // KEY FIX: pause MediaRecorder during seek → loại bỏ frozen frames và duration inflation
+            const { segments } = plan;
+            for (let i = 0; i < segments.length; i++) {
+                const seg = segments[i];
+                const sv = srcVids[seg.srcIdx];
+                currentVid = sv;
+
+                // 1. PAUSE recorder trước khi seek — thời gian seek sẽ KHÔNG được ghi vào video
+                try { if (rec.state === 'recording') rec.pause(); } catch(_) {}
+
+                // 2. Seek tới vị trí bắt đầu
+                sv.currentTime = seg.start;
+                await waitSeeked(sv);
+
+                // 3. Chờ 2 animation frames để frame đầu tiên được decode và vẽ lên canvas
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+                // 4. Bắt đầu play và RESUME recorder — chỉ ghi khi đã có hình thực sự
+                sv.play().catch(() => {});
+                try { if (rec.state === 'paused') rec.resume(); } catch(_) {}
+
+                // 5. Chờ đúng seg.dur giây — KHÔNG dùng currentTime polling vì sẽ bị lệch
+                await new Promise(r => setTimeout(r, seg.dur * 1000));
+                sv.pause();
+
+                onProg && onProg((i + 1) / segments.length);
+            }
+
+
+            // Stop
+            cancelAnimationFrame(animId);
+            audioPlayEl.pause();
+            rec.stop();
+
+            await new Promise(r => { rec.onstop = r; });
+            aCtx.close().catch(() => {});
+            srcVids.forEach(v => { v.pause(); v.src = ''; });
+            if (!useMP3) audioPlayEl.src = '';
+
+            const masterLabel = useMP3 ? S.mp3.name : sources[plan.masterIdx].name;
+            resolve({
+                url: URL.createObjectURL(new Blob(chunks, { type: mime })),
+                masterName: masterLabel,
+                segments: segments.length,
+                duration: plan.targetDur,
+                ext: 'webm'
+            });
+        } catch (err) { reject(err); }
+    });
+}
+
+function waitMeta(vid) {
+    return new Promise(r => {
+        if (vid.readyState >= 1) { r(); return; }
+        vid.addEventListener('loadedmetadata', r, { once: true });
+        vid.load();
+    });
+}
+function waitSeeked(vid) {
+    return new Promise(r => vid.addEventListener('seeked', r, { once: true }));
+}
+
+async function runMashup() {
+    if (S.processing) return;
+    S.processing = true;
+    S.results.forEach(r => URL.revokeObjectURL(r.url));
+    S.results = [];
+
+    const numOutputs = parseInt(numOutputsEl.value);
+    const minDur = Math.max(0.5, parseFloat($('clip-min').value) || 1.5);
+    const maxDur = Math.max(minDur + 0.5, parseFloat($('clip-max').value) || 4.5);
+    const bitrate = parseInt($('quality-select').value) || 2500000;
+
+    // Show processing
+    $('processing-panel').style.display = 'block';
+    $('process-log').innerHTML = '';
+    $('results-wrap').style.display = 'none';
+    $('empty-state').style.display = 'none';
+    btnGenerate.disabled = true;
+    setProgress(0, 'Khởi tạo...', '');
+
+    log(`${S.sources.length} video nguồn | ${numOutputs} output | ${minDur}s–${maxDur}s mỗi cảnh`);
+
+    // Determine voice source
+    const useMP3 = S.voiceMode === 'mp3' && S.mp3;
+    const mp3Url = useMP3 ? S.mp3.url : null;
+
+    // Build all plans
+    let plans;
+    if (useMP3) {
+        log(`🎵 Mode MP3: "${S.mp3.name}" | ${fmtDur(S.mp3.duration)} | ${numOutputs} visual variants`);
+        plans = Array.from({ length: numOutputs }, () => buildPlan(S.sources, minDur, maxDur, undefined, S.mp3.duration));
+    } else {
+        // Video master mode — guaranteed: mỗi video được làm Master ít nhất 1 lần
+        const masterIndices = assignMasters(numOutputs, S.sources.length);
+        log(`Phân bổ Master: [${masterIndices.map(i => 'V'+(i+1)).join(' → ')}]`);
+        plans = masterIndices.map(mi => buildPlan(S.sources, minDur, maxDur, mi));
+    }
+    log(`Kế hoạch hoàn tất — bắt đầu render...`, 'log-ok');
+    await sleep(200);
+
+    const results = [];
+    for (let i = 0; i < plans.length; i++) {
+        const plan = plans[i];
+        setProgress(5 + (i / plans.length) * 90,
+            `Render output ${i+1}/${plans.length}...`,
+            useMP3 ? `🎵 MP3 Voice | ${plan.segments.length} cảnh` : `Master: ${S.sources[plan.masterIdx].name} | ${plan.segments.length} cảnh`);
+        const masterLabel = useMP3 ? `🎵 MP3: "${S.mp3.name}"` : `🎬 Master: "${S.sources[plan.masterIdx].name}"`;
+        log(`[#${i+1}] ${masterLabel} | ${plan.segments.length} phân cảnh | ${fmtDur(plan.targetDur)}`);
+        try {
+            const result = await renderMashup(plan, S.sources, bitrate, (prog) => {
+                const base = 5 + (i / plans.length) * 90;
+                const step = (1 / plans.length) * 90;
+                $('process-progress').style.width = (base + prog * step) + '%';
+            }, mp3Url);
+            result.id = i + 1;
+            const baseName = useMP3 ? S.mp3.name.replace(/\.[^.]+$/,'') : S.sources[plan.masterIdx].name.replace(/\.[^.]+$/,'');
+            result.name = `mashup_${i+1}_${baseName}.${result.ext}`;
+            results.push(result);
+            S.results.push(result);
+            log(`[#${i+1}] ✓ Hoàn tất — ${fmtDur(result.duration)}`, 'log-ok');
+            // Show partial results
+            renderResults(results);
+        } catch (err) {
+            log(`[#${i+1}] ✗ Lỗi: ${err.message}`, 'log-err');
+        }
+    }
+
+    setProgress(100, 'Hoàn tất!', `Đã tạo ${results.length}/${plans.length} video mashup`);
+    log(`✅ ${results.length}/${plans.length} video thành công`, 'log-ok');
+    await sleep(400);
+
+    $('processing-panel').style.display = 'none';
+    S.processing = false;
+    updateBtn();
+    $('btn-dl-all').style.display = results.length > 1 ? '' : 'none';
+}
+
+function renderResults(results) {
+    $('results-wrap').style.display = 'block';
+    $('empty-state').style.display = 'none';
+    const grid = $('variant-grid');
+    grid.innerHTML = '';
+    results.forEach((r, i) => {
+        const card = document.createElement('div');
+        card.className = 'variant-card fade-in';
+        card.style.animationDelay = (i * 0.06) + 's';
+        card.innerHTML = `
+            <div class="variant-thumb">
+                <video src="${r.url}" muted loop style="width:100%;height:100%;object-fit:cover"
+                    onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video>
+                <div class="vbadge">#${r.id}</div>
+                <div class="vbadge-master"><i class="fa-solid fa-microphone" style="font-size:.6rem"></i> ${r.masterName.replace(/\.[^.]+$/,'').substring(0,14)}</div>
+            </div>
+            <div class="variant-body">
+                <p class="variant-title">Mashup #${r.id}</p>
+                <div class="variant-meta">
+                    <span><i class="fa-regular fa-clock"></i> ${fmtDur(r.duration)}</span>
+                    <span><i class="fa-solid fa-film"></i> ${r.segments} cảnh</span>
+                    <span>WebM</span>
+                </div>
+                <div class="variant-actions">
+                    <button class="btn btn-orange btn-sm" onclick="downloadResult('${r.url}','${r.name}')">
+                        <i class="fa-solid fa-download"></i> Tải xuống
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="previewResult('${r.url}','${r.name}')">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function downloadResult(url, name) {
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+}
+function previewResult(url, name) {
+    const vp = $('video-preview');
+    vp.src = url; vp.style.display='block'; vp.play();
+    $('preview-placeholder').style.display='none';
+    $('preview-label').textContent = '▶ ' + name;
+}
+
+$('btn-dl-all').addEventListener('click', () => {
+    S.results.forEach((r, i) => setTimeout(() => downloadResult(r.url, r.name), i * 500));
+});
+</script>
+</body>
+</html>

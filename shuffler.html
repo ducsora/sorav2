@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Shuffler &amp; Variator — SoraVer2</title>
+    <meta name="description" content="Tạo nhiều biến thể video khác nhau bằng cách xáo trộn cấu trúc thời gian — Anti-duplicate cho TikTok/Reels/Shorts.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .shuffler-workspace { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; gap:1rem; flex-wrap:wrap; }
+        .page-header-left { display:flex; align-items:center; gap:1rem; }
+        .page-icon { width:48px; height:48px; border-radius:12px; background:rgba(16,185,129,.15); display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#10b981; }
+        .page-header h1 { font-size:1.5rem; font-weight:700; margin:0; }
+        .page-header p { font-size:.85rem; color:var(--text-2); margin:0; }
+        .how-banner { background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(5,150,105,.06)); border:1px solid rgba(16,185,129,.2); border-radius:16px; padding:1.25rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:flex-start; gap:1rem; }
+        .how-banner-icon { font-size:1.5rem; color:#10b981; flex-shrink:0; margin-top:.1rem; }
+        .how-banner h3 { font-size:.95rem; font-weight:600; margin:0 0 .4rem; color:#10b981; }
+        .how-banner p { font-size:.82rem; color:var(--text-2); margin:0; line-height:1.6; }
+        .shuffler-layout { display:grid; grid-template-columns:360px 1fr; gap:1.5rem; }
+        @media(max-width:900px){ .shuffler-layout{ grid-template-columns:1fr; } }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.25rem; }
+        .card-header { display:flex; align-items:center; gap:.625rem; margin-bottom:1rem; }
+        .card-header i { color:#10b981; }
+        .card-header h3 { font-size:.95rem; font-weight:600; margin:0; }
+        .drop-zone { border:2px dashed var(--border); border-radius:12px; padding:2rem 1rem; text-align:center; cursor:pointer; transition:all .25s; }
+        .drop-zone:hover, .drop-zone.drag-over { border-color:#10b981; background:rgba(16,185,129,.06); }
+        .drop-icon { font-size:2.5rem; color:#10b981; margin-bottom:.75rem; }
+        .drop-title { font-weight:600; font-size:.95rem; margin:0 0 .25rem; }
+        .drop-sub { font-size:.8rem; color:var(--text-3); margin:0 0 .75rem; }
+        .drop-hint { font-size:.75rem; color:var(--text-3); margin:.5rem 0 0; }
+        .video-info-card { background:var(--bg-alt,rgba(255,255,255,.04)); border:1px solid var(--border); border-radius:10px; padding:.875rem; display:flex; gap:.875rem; align-items:center; }
+        .video-thumb-wrap { position:relative; flex-shrink:0; }
+        .video-thumb-wrap video { width:80px; height:52px; object-fit:cover; border-radius:6px; display:block; }
+        .video-remove-btn { position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#ef4444; color:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.6rem; }
+        .video-name { font-size:.85rem; font-weight:600; margin:0 0 .25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; }
+        .video-meta-row { display:flex; gap:.5rem; flex-wrap:wrap; }
+        .video-meta-row span { font-size:.72rem; background:rgba(255,255,255,.07); padding:2px 7px; border-radius:4px; color:var(--text-2); }
+        .form-group { margin-bottom:1rem; }
+        .form-label { display:block; font-size:.8rem; font-weight:600; color:var(--text-2); margin-bottom:.4rem; }
+        .form-input, .form-select { width:100%; padding:.55rem .75rem; background:var(--input-bg,rgba(255,255,255,.06)); border:1px solid var(--border); border-radius:8px; color:var(--text-1); font-size:.85rem; font-family:inherit; box-sizing:border-box; transition:border-color .2s; }
+        .form-input:focus, .form-select:focus { outline:none; border-color:#10b981; }
+        .form-hint { font-size:.72rem; color:var(--text-3); margin:.3rem 0 0; display:block; }
+        .range-input { width:100%; accent-color:#10b981; }
+        .templates-grid { display:grid; gap:.625rem; }
+        .template-card { border:1px solid var(--border); border-radius:10px; padding:.75rem; cursor:pointer; transition:all .2s; display:flex; gap:.75rem; align-items:flex-start; }
+        .template-card:hover { border-color:#10b981; background:rgba(16,185,129,.05); }
+        .template-card.selected { border-color:#10b981; background:rgba(16,185,129,.1); }
+        .template-card input[type=checkbox] { accent-color:#10b981; margin-top:.15rem; flex-shrink:0; }
+        .template-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+        .template-info h4 { font-size:.82rem; font-weight:600; margin:0 0 .2rem; }
+        .template-info p { font-size:.72rem; color:var(--text-3); margin:0; line-height:1.4; }
+        .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.6rem 1.1rem; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; border:none; transition:all .2s; font-family:inherit; }
+        .btn-primary { background:linear-gradient(135deg,#10b981,#059669); color:#fff; }
+        .btn-primary:hover { background:linear-gradient(135deg,#059669,#047857); transform:translateY(-1px); box-shadow:0 4px 14px rgba(16,185,129,.35); }
+        .btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+        .btn-secondary { background:rgba(255,255,255,.08); color:var(--text-1); border:1px solid var(--border); }
+        .btn-secondary:hover { background:rgba(255,255,255,.13); }
+        .btn-full { width:100%; justify-content:center; }
+        .btn-lg { padding:.75rem 1.25rem; font-size:.9rem; }
+        .btn-sm { padding:.4rem .75rem; font-size:.78rem; }
+        .progress-bar { height:6px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,#10b981,#34d399); border-radius:99px; transition:width .4s ease; }
+        .spinner { width:20px; height:20px; border:2.5px solid rgba(16,185,129,.3); border-top-color:#10b981; border-radius:50%; animation:spin .8s linear infinite; flex-shrink:0; }
+        @keyframes spin { to{ transform:rotate(360deg); } }
+        .process-log { background:rgba(0,0,0,.3); border:1px solid var(--border); border-radius:10px; padding:.75rem; font-size:.75rem; font-family:monospace; color:#10b981; max-height:160px; overflow-y:auto; line-height:1.7; }
+        .process-log .log-warn { color:#f59e0b; }
+        .process-log .log-err { color:#ef4444; }
+        .results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+        .results-header h3 { font-size:1rem; font-weight:700; margin:0; }
+        .variant-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem; }
+        .variant-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; transition:all .25s; }
+        .variant-card:hover { border-color:rgba(16,185,129,.4); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.25); }
+        .variant-thumb { position:relative; background:#000; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+        .variant-thumb video { width:100%; height:100%; object-fit:cover; display:block; }
+        .variant-badge { position:absolute; top:.5rem; left:.5rem; background:rgba(16,185,129,.9); color:#fff; font-size:.65rem; font-weight:700; padding:2px 7px; border-radius:5px; backdrop-filter:blur(4px); }
+        .variant-template-badge { position:absolute; top:.5rem; right:.5rem; background:rgba(0,0,0,.7); color:#fff; font-size:.65rem; padding:2px 7px; border-radius:5px; backdrop-filter:blur(4px); }
+        .variant-body { padding:.875rem; }
+        .variant-title { font-size:.85rem; font-weight:600; margin:0 0 .35rem; }
+        .variant-meta { font-size:.72rem; color:var(--text-3); display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.75rem; }
+        .variant-seq { font-size:.72rem; color:var(--text-2); background:rgba(255,255,255,.05); border-radius:6px; padding:.3rem .5rem; word-break:break-all; line-height:1.5; margin-bottom:.75rem; font-family:monospace; }
+        .variant-actions { display:flex; gap:.5rem; }
+        .variant-actions .btn { flex:1; padding:.45rem .5rem; font-size:.75rem; }
+        .processing-card { border:1px solid rgba(16,185,129,.3); background:rgba(16,185,129,.05); }
+        .empty-state { text-align:center; padding:4rem 2rem; color:var(--text-3); }
+        .empty-state i { font-size:3.5rem; margin-bottom:1rem; display:block; opacity:.3; color:#10b981; }
+        .empty-state p { font-size:.9rem; }
+        .step-badge { background:linear-gradient(135deg,#10b981,#059669); color:#fff; font-size:.72rem; font-weight:700; padding:2px 10px; border-radius:20px; display:inline-block; margin-bottom:.5rem; letter-spacing:.02em; }
+        .info-box { display:flex; gap:.75rem; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.2); border-radius:10px; padding:.875rem; margin-bottom:1rem; font-size:.82rem; color:var(--text-2); }
+        .info-box i { color:#10b981; flex-shrink:0; margin-top:.1rem; }
+        .mode-badge { font-size:.7rem; padding:1px 6px; border-radius:4px; margin-left:.35rem; font-weight:600; }
+        .mb-fast { background:rgba(16,185,129,.15); color:#10b981; }
+        .mb-smart { background:rgba(139,92,246,.15); color:#8b5cf6; }
+        .stat-row { display:flex; gap:.625rem; margin-bottom:1rem; flex-wrap:wrap; }
+        .stat-chip { flex:1; min-width:80px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; padding:.5rem .75rem; text-align:center; }
+        .stat-chip strong { display:block; font-size:1.1rem; font-weight:700; color:#10b981; }
+        .stat-chip span { font-size:.68rem; color:var(--text-3); }
+        .divider { height:1px; background:var(--border); margin:1rem 0; }
+        ::-webkit-scrollbar { width:5px; height:5px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.12); border-radius:99px; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation:fadeIn .35s ease forwards; }
+        @keyframes pulse-border { 0%,100%{border-color:rgba(16,185,129,.3)} 50%{border-color:rgba(16,185,129,.8)} }
+        .pulsing { animation:pulse-border 1.5s ease infinite; }
+    </style>
+</head>
+<body data-theme="dark">
+<div class="app-layout">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <div class="logo-text">
+                    <span class="logo-name">SoraVer2</span>
+                    <span class="logo-tagline">AI Workspace</span>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="Tìm công cụ..." id="tool-search">
+        </div>
+        <div class="nav-section">
+            <p class="nav-label">Công cụ chính</p>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(250,204,21,0.15)"><i class="fa-solid fa-house" style="color:#facc15"></i></div>
+                    <span>Dashboard</span>
+                </a>
+                <a href="video.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-film" style="color:#8b5cf6"></i></div>
+                    <span>Video Dubbing</span>
+                    <span class="nav-badge">New</span>
+                </a>
+                <a href="shuffler.html" class="nav-item active">
+                    <div class="nav-icon" style="background:rgba(16,185,129,0.15)"><i class="fa-solid fa-shuffle" style="color:#10b981"></i></div>
+                    <span>Video Shuffler</span>
+                    <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span>
+                </a>
+                <a href="mashup.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(249,115,22,0.15)"><i class="fa-solid fa-layer-group" style="color:#f97316"></i></div>
+                    <span>Video Mashup</span>
+                    <span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span>
+                </a>
+                <a href="gif-maker.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(6,182,212,0.15)"><i class="fa-solid fa-film" style="color:#06b6d4"></i></div>
+                    <span>GIF Maker Pro</span>
+                    <span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span>
+                </a>
+                <a href="ads-automation.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(24,119,242,0.15)"><i class="fa-brands fa-facebook" style="color:#4d9cf5"></i></div>
+                    <span>Ads Automation</span>
+                    <span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="theme-toggle" id="theme-toggle">
+                <i class="fa-solid fa-sun"></i><span>Chế độ Sáng</span>
+            </div>
+            <div class="sidebar-version">v2.0.0</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="mobile-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <span class="logo-name">SoraVer2</span>
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <div class="workspace shuffler-workspace">
+
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="page-icon"><i class="fa-solid fa-shuffle"></i></div>
+                    <div>
+                        <h1>Video Shuffler &amp; Variator</h1>
+                        <p>Tạo nhiều biến thể video — Anti-duplicate cho TikTok / Reels / Shorts</p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:.625rem;flex-wrap:wrap">
+                    <button class="btn btn-secondary btn-sm" id="btn-clear-all" style="display:none">
+                        <i class="fa-solid fa-trash"></i> Xóa tất cả
+                    </button>
+                </div>
+            </div>
+
+            <!-- How it works banner -->
+            <div class="how-banner">
+                <div class="how-banner-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                <div>
+                    <h3>Cách hoạt động</h3>
+                    <p>Công cụ cắt video gốc thành nhiều đoạn nhỏ → xáo trộn / sắp xếp lại theo template → tạo ra N biến thể khác nhau. Hoàn toàn xử lý trong <strong>trình duyệt</strong> — không cần upload server.</p>
+                    <p style="margin-top:.5rem;font-size:.78rem;color:#f59e0b"><i class="fa-solid fa-triangle-exclamation"></i> <strong>Định dạng xuất:</strong> Chạy qua <strong>start-server.bat</strong> để xuất <strong>.mp4</strong>. Mở file:// trực tiếp sẽ fallback sang <strong>.webm</strong>.</p>
+                </div>
+            </div>
+
+            <!-- file:// protocol warning -->
+            <div id="file-protocol-warning" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(234,88,12,.06));border:1px solid rgba(245,158,11,.35);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;align-items:flex-start;gap:1rem">
+                <div style="font-size:1.5rem;color:#f59e0b;flex-shrink:0;margin-top:.1rem"><i class="fa-solid fa-server"></i></div>
+                <div>
+                    <h3 style="font-size:.95rem;font-weight:600;margin:0 0 .4rem;color:#f59e0b">⚠️ Cần chạy Local Server để xuất MP4</h3>
+                    <p style="font-size:.82rem;color:var(--text-2);margin:0;line-height:1.6">
+                        FFmpeg.wasm yêu cầu HTTP server để tải file <code>.wasm</code>. Hiện bạn đang mở qua <code>file://</code>.<br>
+                        <strong style="color:#f59e0b">Cách khắc phục:</strong> Chạy <strong>start-server.bat</strong> → mở
+                        <a href="http://localhost:3001/shuffler.html" style="color:#10b981;font-weight:600">http://localhost:3001/shuffler.html</a>.
+                        Tool sẽ tự fallback WebM nếu không có server.
+                    </p>
+                </div>
+            </div>
+
+            <div class="shuffler-layout">
+
+                <!-- LEFT: Controls -->
+                <div>
+                    <!-- Step 1 -->
+                    <div class="card" style="margin-bottom:1rem">
+                        <span class="step-badge">Bước 1</span>
+                        <div class="card-header">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <h3>Upload Video gốc</h3>
+                        </div>
+                        <div class="drop-zone" id="drop-zone">
+                            <input type="file" id="video-input" accept="video/*" hidden>
+                            <div id="drop-zone-inner">
+                                <div class="drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                <p class="drop-title">Kéo &amp; thả video vào đây</p>
+                                <p class="drop-sub">hoặc</p>
+                                <button class="btn btn-primary" id="btn-browse">
+                                    <i class="fa-solid fa-folder-open"></i> Chọn tệp
+                                </button>
+                                <p class="drop-hint">MP4, MOV, AVI, MKV · Tối đa 2GB</p>
+                            </div>
+                        </div>
+                        <div class="video-info-card" id="video-info" style="display:none;margin-top:.875rem">
+                            <div class="video-thumb-wrap">
+                                <video id="video-thumb" preload="metadata" muted></video>
+                                <button class="video-remove-btn" id="btn-remove-video"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div style="flex:1;min-width:0">
+                                <p class="video-name" id="video-name">—</p>
+                                <div class="video-meta-row">
+                                    <span id="video-size">—</span>
+                                    <span id="video-dur">—</span>
+                                    <span id="video-res">—</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="card" style="margin-bottom:1rem" id="step2-card">
+                        <span class="step-badge">Bước 2</span>
+                        <div class="card-header">
+                            <i class="fa-solid fa-scissors"></i>
+                            <h3>Cấu hình cắt đoạn</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phương thức cắt</label>
+                            <select class="form-select" id="cut-mode">
+                                <option value="fixed">⏱ Cắt theo thời gian cố định (Fixed)</option>
+                                <option value="equal">📐 Chia đều N đoạn (Equal Parts)</option>
+                            </select>
+                        </div>
+                        <div id="cut-fixed-wrap">
+                            <div class="form-group">
+                                <label class="form-label">Độ dài mỗi đoạn (giây)</label>
+                                <input type="number" class="form-input" id="clip-length" value="5" min="2" max="60">
+                                <span class="form-hint">Khuyến nghị: 3–8 giây để có nhiều đoạn đa dạng</span>
+                            </div>
+                        </div>
+                        <div id="cut-equal-wrap" style="display:none">
+                            <div class="form-group">
+                                <label class="form-label">Số đoạn muốn chia</label>
+                                <input type="number" class="form-input" id="num-parts" value="8" min="2" max="50">
+                            </div>
+                        </div>
+                        <div class="info-box" id="clips-preview-info" style="display:none">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span id="clips-preview-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="card" style="margin-bottom:1rem">
+                        <span class="step-badge">Bước 3</span>
+                        <div class="card-header">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <h3>Chọn Template &amp; Số lượng</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số biến thể cần tạo</label>
+                            <input type="range" class="range-input" id="num-variants" min="1" max="10" value="5">
+                            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-3);margin-top:.25rem">
+                                <span>1</span><strong id="num-variants-val" style="color:#10b981;font-size:.85rem">5 biến thể</strong><span>10</span>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <label class="form-label" style="margin-bottom:.625rem">Templates sắp xếp lại <span style="font-size:.72rem;color:var(--text-3)">(chọn ít nhất 1)</span></label>
+                        <div class="templates-grid" id="templates-grid">
+                            <label class="template-card selected" data-tpl="random">
+                                <input type="checkbox" value="random" checked>
+                                <div class="template-icon" style="background:rgba(16,185,129,.15)">🔀</div>
+                                <div class="template-info">
+                                    <h4>Random Shuffle <span class="mode-badge mb-fast">Nhanh</span></h4>
+                                    <p>Xáo trộn hoàn toàn ngẫu nhiên — mỗi lần là một thứ tự khác nhau</p>
+                                </div>
+                            </label>
+                            <label class="template-card" data-tpl="reverse">
+                                <input type="checkbox" value="reverse">
+                                <div class="template-icon" style="background:rgba(139,92,246,.15)">⏪</div>
+                                <div class="template-info">
+                                    <h4>Reverse Order <span class="mode-badge mb-smart">Sáng tạo</span></h4>
+                                    <p>Đảo ngược thứ tự — kết thành mở đầu, gây bất ngờ tức thì</p>
+                                </div>
+                            </label>
+                            <label class="template-card" data-tpl="spoiler_first">
+                                <input type="checkbox" value="spoiler_first">
+                                <div class="template-icon" style="background:rgba(245,158,11,.15)">🎬</div>
+                                <div class="template-info">
+                                    <h4>Spoiler First <span class="mode-badge mb-smart">Hook</span></h4>
+                                    <p>Kéo đoạn kết lên đầu làm "hook" — tạo sự tò mò ngay giây đầu</p>
+                                </div>
+                            </label>
+                            <label class="template-card" data-tpl="peak_first">
+                                <input type="checkbox" value="peak_first">
+                                <div class="template-icon" style="background:rgba(239,68,68,.15)">⚡</div>
+                                <div class="template-info">
+                                    <h4>Peak First <span class="mode-badge mb-smart">High Energy</span></h4>
+                                    <p>Đoạn giữa (cao trào) lên đầu — năng lượng cao ngay từ đầu</p>
+                                </div>
+                            </label>
+                            <label class="template-card" data-tpl="skip_even">
+                                <input type="checkbox" value="skip_even">
+                                <div class="template-icon" style="background:rgba(6,182,212,.15)">🎯</div>
+                                <div class="template-info">
+                                    <h4>Odd-First Interleave <span class="mode-badge mb-fast">Nhanh</span></h4>
+                                    <p>Ghép đoạn lẻ trước, đoạn chẵn sau — tạo nhịp độ mới lạ</p>
+                                </div>
+                            </label>
+                            <label class="template-card" data-tpl="loop_highlight">
+                                <input type="checkbox" value="loop_highlight">
+                                <div class="template-icon" style="background:rgba(168,85,247,.15)">🔁</div>
+                                <div class="template-info">
+                                    <h4>Loop Highlight <span class="mode-badge mb-smart">Viral</span></h4>
+                                    <p>Lặp đoạn ấn tượng nhất (giữa video) 2 lần — tăng recall</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-full btn-lg" id="btn-generate" disabled>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo biến thể video
+                    </button>
+                    <p class="form-hint" style="text-align:center;margin-top:.5rem" id="generate-hint">Upload video để bắt đầu</p>
+                </div>
+
+                <!-- RIGHT: Preview & Results -->
+                <div>
+                    <div class="card" style="margin-bottom:1rem">
+                        <div class="card-header">
+                            <i class="fa-solid fa-eye"></i>
+                            <h3>Xem trước video gốc</h3>
+                        </div>
+                        <div style="background:#000;border-radius:10px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;overflow:hidden" id="preview-wrap">
+                            <div style="text-align:center;color:var(--text-3)" id="preview-placeholder">
+                                <i class="fa-solid fa-film" style="font-size:3rem;opacity:.3;display:block;margin-bottom:.75rem"></i>
+                                <p style="font-size:.85rem">Upload video để xem trước</p>
+                            </div>
+                            <video id="video-preview" controls style="display:none;width:100%;"></video>
+                        </div>
+                        <div id="clips-stat-row" class="stat-row" style="display:none;margin-top:1rem">
+                            <div class="stat-chip"><strong id="stat-clips">0</strong><span>Đoạn clip</span></div>
+                            <div class="stat-chip"><strong id="stat-dur">0s</strong><span>Thời lượng</span></div>
+                            <div class="stat-chip"><strong id="stat-variants">0</strong><span>Biến thể</span></div>
+                            <div class="stat-chip"><strong id="stat-templates">0</strong><span>Template</span></div>
+                        </div>
+                    </div>
+
+                    <div class="card processing-card pulsing" id="processing-panel" style="display:none;margin-bottom:1rem">
+                        <div class="card-header">
+                            <div class="spinner"></div>
+                            <h3 id="process-title">Đang xử lý...</h3>
+                        </div>
+                        <div class="progress-bar" style="margin-bottom:.75rem">
+                            <div class="progress-fill" id="process-progress" style="width:0%"></div>
+                        </div>
+                        <p style="font-size:.78rem;color:var(--text-3);margin-bottom:.625rem" id="process-subtitle">Khởi tạo...</p>
+                        <div class="process-log" id="process-log"></div>
+                    </div>
+
+                    <div id="results-section">
+                        <div class="empty-state" id="empty-state">
+                            <i class="fa-solid fa-shuffle"></i>
+                            <p>Kết quả biến thể sẽ xuất hiện ở đây</p>
+                            <p style="font-size:.78rem;margin-top:.35rem">Upload video và nhấn "Tạo biến thể" để bắt đầu</p>
+                        </div>
+                        <div id="variant-grid-wrap" style="display:none">
+                            <div class="results-header">
+                                <h3><i class="fa-solid fa-layer-group" style="color:#10b981"></i> Các biến thể đã tạo</h3>
+                                <button class="btn btn-secondary btn-sm" id="btn-download-all" style="display:none">
+                                    <i class="fa-solid fa-download"></i> Tải tất cả
+                                </button>
+                            </div>
+                            <div class="variant-grid" id="variant-grid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<a id="dl-anchor" style="display:none"></a>
+<script src="script.js"></script>
+<script>
+// =============================================
+//  VIDEO SHUFFLER & VARIATOR — SoraVer2 v2.1
+//  FFmpeg.wasm -> MP4  (localhost)
+//  MediaRecorder -> WebM (file:// fallback)
+// =============================================
+
+const IS_LOCAL = location.protocol !== 'file:';
+
+const S = {
+    file: null, videoUrl: null, duration: 0,
+    clips: [], variants: [],
+    processing: false,
+    ffmpeg: null, ffmpegLoading: false,
+    inputWritten: false, _inputExt: 'mp4',
+};
+
+const $ = id => document.getElementById(id);
+const dropZone        = $('drop-zone');
+const videoInput      = $('video-input');
+const videoThumb      = $('video-thumb');
+const videoPreview    = $('video-preview');
+const videoInfo       = $('video-info');
+const btnBrowse       = $('btn-browse');
+const btnRemove       = $('btn-remove-video');
+const btnGenerate     = $('btn-generate');
+const generateHint    = $('generate-hint');
+const processingPanel = $('processing-panel');
+const processProgress = $('process-progress');
+const processLog      = $('process-log');
+const processTitle    = $('process-title');
+const processSubtitle = $('process-subtitle');
+const variantGrid     = $('variant-grid');
+const variantGridWrap = $('variant-grid-wrap');
+const emptyState      = $('empty-state');
+const clipsPrevInfo   = $('clips-preview-info');
+const clipsPrevText   = $('clips-preview-text');
+const clipsStatRow    = $('clips-stat-row');
+const numVariantsRange = $('num-variants');
+const numVariantsVal  = $('num-variants-val');
+
+if (!IS_LOCAL) {
+    const w = $('file-protocol-warning');
+    if (w) w.style.display = 'flex';
+}
+
+// ---- Templates ----
+const TEMPLATES = {
+    random:         { label: 'Random Shuffle',     fn: shuffleRandom },
+    reverse:        { label: 'Reverse Order',      fn: shuffleReverse },
+    spoiler_first:  { label: 'Spoiler First',      fn: shuffleSpoilerFirst },
+    peak_first:     { label: 'Peak First',         fn: shufflePeakFirst },
+    skip_even:      { label: 'Odd-First Interleave', fn: shuffleOddFirst },
+    loop_highlight: { label: 'Loop Highlight',     fn: shuffleLoopHighlight },
+};
+
+function shuffleRandom(c) {
+    const a = [...c];
+    for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+}
+function shuffleReverse(c)       { return [...c].reverse(); }
+function shuffleSpoilerFirst(c)  { return c.length < 2 ? [...c] : [c[c.length-1], ...c.slice(0,-1)]; }
+function shufflePeakFirst(c) {
+    if (c.length < 3) return shuffleRandom(c);
+    const m = Math.floor(c.length/2);
+    return [c[m], ...c.slice(0,m), ...c.slice(m+1)];
+}
+function shuffleOddFirst(c)  { return [...c.filter((_,i)=>i%2===0), ...c.filter((_,i)=>i%2!==0)]; }
+function shuffleLoopHighlight(c) {
+    if (c.length < 2) return shuffleRandom(c);
+    const h = c[Math.floor(c.length/2)], rest = [...c];
+    rest.splice(Math.ceil(rest.length/2), 0, h);
+    return [h, ...rest];
+}
+
+// ---- Utils ----
+function fmtSize(b) { return b>1e9?(b/1e9).toFixed(1)+'GB':b>1e6?(b/1e6).toFixed(1)+'MB':(b/1e3).toFixed(0)+'KB'; }
+function fmtDur(s)  { return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
+function sleep(ms)  { return new Promise(r=>setTimeout(r,ms)); }
+function log(msg, cls='') {
+    const d = document.createElement('div');
+    d.textContent = '▶ ' + msg;
+    if (cls) d.className = cls;
+    processLog.appendChild(d);
+    processLog.scrollTop = processLog.scrollHeight;
+}
+function setProgress(pct, title='', sub='') {
+    processProgress.style.width = pct + '%';
+    if (title) processTitle.textContent = title;
+    if (sub)   processSubtitle.textContent = sub;
+}
+
+// ---- FFmpeg.wasm ----
+function loadScript(src) {
+    return new Promise((res, rej) => {
+        if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = res; s.onerror = () => rej(new Error('Failed: ' + src));
+        document.head.appendChild(s);
+    });
+}
+
+async function ensureFFmpeg() {
+    if (S.ffmpeg) return S.ffmpeg;
+    if (S.ffmpegLoading) { while (S.ffmpegLoading) await sleep(200); return S.ffmpeg; }
+    S.ffmpegLoading = true;
+    try {
+        log('Dang tai FFmpeg.wasm (~30MB)...', 'log-warn');
+        setProgress(3, 'Dang tai FFmpeg.wasm...', 'Lan dau co the mat 30-60 giay...');
+        await loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js');
+        await loadScript('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js');
+        const { FFmpeg } = window.FFmpegWASM;
+        const ff = new FFmpeg();
+        ff.on('progress', ({ progress }) => {
+            const cur = parseFloat(processProgress.style.width) || 15;
+            processProgress.style.width = Math.min(cur + progress * 10, 95) + '%';
+        });
+        await ff.load({
+            coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+            wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+        });
+        S.ffmpeg = ff;
+        log('✓ FFmpeg.wasm san sang — xuat .mp4');
+        return ff;
+    } catch(e) {
+        log('✗ Khong tai duoc FFmpeg: ' + e.message, 'log-err');
+        throw e;
+    } finally { S.ffmpegLoading = false; }
+}
+
+async function writeSourceFile(ff) {
+    if (S.inputWritten) return;
+    log('Ghi video goc vao FFmpeg FS...');
+    setProgress(8, 'Chuan bi video...', '');
+    const ext = S.file.name.split('.').pop().toLowerCase() || 'mp4';
+    const buf = await S.file.arrayBuffer();
+    await ff.writeFile('input.' + ext, new Uint8Array(buf));
+    S._inputExt = ext;
+    S.inputWritten = true;
+    log('✓ Da nap ' + fmtSize(S.file.size) + ' vao FFmpeg FS');
+}
+
+async function buildVariantFFmpeg(ff, sequence, vid) {
+    const src  = 'input.' + S._inputExt;
+    const lst  = 'lst' + vid + '.txt';
+    const out  = 'out' + vid + '.mp4';
+    let txt = '';
+    for (const c of sequence) {
+        txt += `file '${src}'\ninpoint ${c.start.toFixed(4)}\noutpoint ${c.end.toFixed(4)}\n\n`;
+    }
+    await ff.writeFile(lst, new TextEncoder().encode(txt));
+    log('[V' + vid + '] Encode MP4...');
+    let ok = false;
+    try {
+        await ff.exec(['-f','concat','-safe','0','-i',lst,'-c','copy','-movflags','+faststart',out]);
+        ok = true;
+    } catch(_) {}
+    if (!ok) {
+        log('[V' + vid + '] Re-encode H.264...', 'log-warn');
+        await ff.exec(['-f','concat','-safe','0','-i',lst,'-c:v','libx264','-preset','ultrafast','-crf','23','-c:a','aac','-b:a','128k','-movflags','+faststart',out]);
+    }
+    const data = await ff.readFile(out);
+    await ff.deleteFile(lst).catch(()=>{});
+    await ff.deleteFile(out).catch(()=>{});
+    return URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+}
+
+// ---- File handling ----
+btnBrowse.addEventListener('click', () => videoInput.click());
+videoInput.addEventListener('change', e => { if (e.target.files[0]) loadVideo(e.target.files[0]); });
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('video/')) loadVideo(f);
+});
+btnRemove.addEventListener('click', clearVideo);
+
+function loadVideo(file) {
+    S.file = file; S.inputWritten = false;
+    S.videoUrl = URL.createObjectURL(file);
+    $('video-name').textContent = file.name;
+    $('video-size').textContent = fmtSize(file.size);
+    videoThumb.src = S.videoUrl; videoThumb.currentTime = 0.5;
+    videoPreview.src = S.videoUrl; videoPreview.style.display = 'block';
+    $('preview-placeholder').style.display = 'none';
+    videoPreview.addEventListener('loadedmetadata', onMetaLoaded, {once:true});
+    videoInfo.style.display = 'flex';
+    dropZone.querySelector('#drop-zone-inner').style.display = 'none';
+    updateClipsPreview(); updateGenerateBtn();
+}
+function onMetaLoaded() {
+    S.duration = videoPreview.duration;
+    $('video-dur').textContent = fmtDur(S.duration);
+    $('video-res').textContent = videoPreview.videoWidth + 'x' + videoPreview.videoHeight;
+    updateClipsPreview(); updateGenerateBtn();
+}
+function clearVideo() {
+    S.file = null; S.videoUrl = null; S.duration = 0; S.clips = []; S.inputWritten = false;
+    videoPreview.src = ''; videoPreview.style.display = 'none';
+    $('preview-placeholder').style.display = 'block';
+    videoInfo.style.display = 'none';
+    dropZone.querySelector('#drop-zone-inner').style.display = '';
+    clipsPrevInfo.style.display = 'none'; clipsStatRow.style.display = 'none';
+    btnGenerate.disabled = true; generateHint.textContent = 'Upload video de bat dau';
+    resetResults();
+}
+
+// ---- Cut mode ----
+$('cut-mode').addEventListener('change', function(){
+    $('cut-fixed-wrap').style.display = this.value==='fixed' ? '' : 'none';
+    $('cut-equal-wrap').style.display = this.value==='equal' ? '' : 'none';
+    updateClipsPreview();
+});
+$('clip-length').addEventListener('input', updateClipsPreview);
+$('num-parts').addEventListener('input', updateClipsPreview);
+
+function computeClips() {
+    if (!S.duration) return [];
+    const mode = $('cut-mode').value, clips = [];
+    if (mode === 'fixed') {
+        const len = Math.max(1, parseFloat($('clip-length').value)||5);
+        for (let t=0; t<S.duration; t+=len)
+            clips.push({ start:t, end:Math.min(t+len,S.duration), index:clips.length });
+    } else {
+        const n = Math.max(2, parseInt($('num-parts').value)||8), seg = S.duration/n;
+        for (let i=0; i<n; i++) clips.push({ start:i*seg, end:(i+1)*seg, index:i });
+    }
+    return clips;
+}
+function updateClipsPreview() {
+    if (!S.duration) return;
+    S.clips = computeClips();
+    clipsPrevInfo.style.display = 'flex';
+    clipsPrevText.innerHTML = 'Video se duoc cat thanh <strong>' + S.clips.length + ' doan</strong> — moi doan ~<strong>' + (S.duration/S.clips.length).toFixed(1) + 's</strong>.';
+    updateStats(); updateGenerateBtn();
+}
+
+numVariantsRange.addEventListener('input', function(){ numVariantsVal.textContent = this.value + ' bien the'; updateStats(); });
+
+document.querySelectorAll('.template-card').forEach(card => {
+    card.addEventListener('click', function(){
+        const cb = this.querySelector('input[type=checkbox]');
+        cb.checked = !cb.checked; this.classList.toggle('selected', cb.checked); updateGenerateBtn();
+    });
+    card.querySelector('input').addEventListener('click', e => e.stopPropagation());
+});
+
+function getSelectedTemplates() { return [...document.querySelectorAll('.template-card input:checked')].map(i=>i.value); }
+
+function updateStats() {
+    const n = parseInt(numVariantsRange.value), t = getSelectedTemplates().length;
+    $('stat-clips').textContent = S.clips.length||'—';
+    $('stat-dur').textContent = S.duration ? fmtDur(S.duration) : '—';
+    $('stat-variants').textContent = n; $('stat-templates').textContent = t;
+    clipsStatRow.style.display = S.duration ? 'flex' : 'none';
+}
+function updateGenerateBtn() {
+    const ok = S.file && S.duration && S.clips.length >= 2 && getSelectedTemplates().length > 0;
+    btnGenerate.disabled = !ok;
+    generateHint.textContent = ok
+        ? 'San sang tao ' + numVariantsRange.value + ' bien the — ' + (IS_LOCAL ? 'MP4' : 'WebM')
+        : (!S.file ? 'Upload video de bat dau' : S.clips.length<2 ? 'Can it nhat 2 doan clip' : 'Chon it nhat 1 template');
+}
+
+// ---- Generate ----
+btnGenerate.addEventListener('click', generateVariants);
+
+async function generateVariants() {
+    if (S.processing) return;
+    S.processing = true; resetResults();
+    processingPanel.style.display = 'block';
+    processLog.innerHTML = ''; btnGenerate.disabled = true;
+
+    const clips = computeClips(); S.clips = clips;
+    const numVariants = parseInt(numVariantsRange.value);
+    const selectedTpls = getSelectedTemplates();
+    log('Video: ' + S.file.name + ' | ' + fmtDur(S.duration) + ' | ' + clips.length + ' doan');
+
+    let ff = null;
+    if (IS_LOCAL) {
+        setProgress(2, 'Khoi tao FFmpeg.wasm...', '');
+        try { ff = await ensureFFmpeg(); await writeSourceFile(ff); }
+        catch(e) { log('Fallback WebM: ' + e.message, 'log-warn'); ff = null; }
+    } else {
+        log('file:// detected → WebM fallback. Chay start-server.bat de co MP4.', 'log-warn');
+    }
+    log('Format: ' + (ff ? 'MP4 (FFmpeg)' : 'WebM (MediaRecorder)'));
+
+    setProgress(12, 'Tinh ke hoach...', '');
+    const plan = [];
+    for (let i=0; i<numVariants; i++) {
+        const tpl = selectedTpls[i % selectedTpls.length];
+        plan.push({ id:i+1, template:tpl, sequence: TEMPLATES[tpl].fn(clips) });
+    }
+    await sleep(100);
+
+    const results = [];
+    for (let i=0; i<plan.length; i++) {
+        const v = plan[i];
+        setProgress(15 + (i/plan.length)*80, 'Bien the ' + v.id + '/' + plan.length + '...', TEMPLATES[v.template].label);
+        try {
+            let blobUrl, name;
+            if (ff) {
+                blobUrl = await buildVariantFFmpeg(ff, v.sequence, v.id);
+                name = 'variant_' + v.id + '_' + v.template + '.mp4';
+            } else {
+                blobUrl = await buildVariantWebM(v.sequence);
+                name = 'variant_' + v.id + '_' + v.template + '.webm';
+            }
+            results.push({ ...v, blobUrl, name });
+            log('[V' + v.id + '] ✓ Xong');
+        } catch(e) { log('[V' + v.id + '] ✗ Loi: ' + e.message, 'log-err'); }
+    }
+
+    setProgress(100, 'Hoan tat!', 'Da tao ' + results.length + ' bien the');
+    log('✅ ' + results.length + '/' + plan.length + ' bien the thanh cong');
+    await sleep(300);
+    S.variants = results; renderResults(results);
+    processingPanel.style.display = 'none'; S.processing = false;
+    updateGenerateBtn(); $('btn-clear-all').style.display = '';
+    $('btn-download-all').style.display = results.length ? '' : 'none';
+}
+
+// ---- WebM fallback ----
+async function buildVariantWebM(sequence) {
+    return new Promise(async (resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const video  = document.createElement('video');
+        video.src = S.videoUrl; video.muted = false; video.preload = 'auto';
+        await new Promise(r => video.addEventListener('loadedmetadata', r, {once:true}));
+        canvas.width = video.videoWidth||1280; canvas.height = video.videoHeight||720;
+        const ctx = canvas.getContext('2d');
+        const vStream = canvas.captureStream(30);
+        const aCtx = new AudioContext(), dest = aCtx.createMediaStreamDestination();
+        const src = aCtx.createMediaElementSource(video);
+        src.connect(dest); src.connect(aCtx.destination);
+        const combined = new MediaStream([...vStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+        const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+        const rec = new MediaRecorder(combined, { mimeType:mime, videoBitsPerSecond:2_500_000 });
+        const chunks = [];
+        rec.ondataavailable = e => { if (e.data.size>0) chunks.push(e.data); };
+        rec.start(100);
+        let h; (function draw(){ ctx.drawImage(video,0,0,canvas.width,canvas.height); h=requestAnimationFrame(draw); })();
+        let idx = 0;
+        async function next() {
+            if (idx >= sequence.length) { cancelAnimationFrame(h); video.pause(); rec.stop(); return; }
+            const c = sequence[idx++];
+            video.currentTime = c.start;
+            await new Promise(r => video.addEventListener('seeked', r, {once:true}));
+            video.play().catch(()=>{});
+            const id = setInterval(() => { if (video.currentTime >= c.end-0.05) { video.pause(); clearInterval(id); next(); } }, 50);
+        }
+        rec.onstop = () => { aCtx.close(); resolve(URL.createObjectURL(new Blob(chunks, {type:mime}))); };
+        rec.onerror = e => { aCtx.close(); reject(e.error||new Error('Recorder error')); };
+        next();
+        setTimeout(() => { if (rec.state!=='inactive') { cancelAnimationFrame(h); video.pause(); rec.stop(); } }, S.duration*3*1000+15000);
+    });
+}
+
+// ---- Render results ----
+function renderResults(variants) {
+    emptyState.style.display = 'none'; variantGridWrap.style.display = 'block';
+    variantGrid.innerHTML = '';
+    variants.forEach((v, i) => {
+        const seqStr = v.sequence.map(c=>'C'+(c.index+1)).join('→');
+        const lbl    = TEMPLATES[v.template]?.label || v.template;
+        const isMp4  = v.name.endsWith('.mp4');
+        const card   = document.createElement('div');
+        card.className = 'variant-card fade-in'; card.style.animationDelay = (i*.07)+'s';
+        card.innerHTML = `
+<div class="variant-thumb">
+    <video src="${v.blobUrl}" muted loop style="width:100%;height:100%;object-fit:cover;display:block"
+        onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video>
+    <div class="variant-badge">V${v.id}</div>
+    <div class="variant-template-badge">${lbl.split(' ')[0]}</div>
+</div>
+<div class="variant-body">
+    <p class="variant-title">Bien the ${v.id} — ${lbl}</p>
+    <div class="variant-meta">
+        <span>${v.sequence.length} doan</span>
+        <span>${fmtDur(S.duration)}</span>
+        <span style="color:${isMp4?'#10b981':'#f59e0b'}">${isMp4?'MP4':'WebM'}</span>
+    </div>
+    <div class="variant-seq">${seqStr}</div>
+    <div class="variant-actions">
+        <button class="btn btn-primary btn-sm" onclick="dlVariant('${v.blobUrl}','${v.name}')">
+            <i class="fa-solid fa-download"></i> Tai ve
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="previewVariant('${v.blobUrl}')">
+            <i class="fa-solid fa-play"></i> Xem
+        </button>
+    </div>
+</div>`;
+        variantGrid.appendChild(card);
+    });
+}
+
+function dlVariant(url, name) { const a=$('dl-anchor'); a.href=url; a.download=name; a.click(); }
+function previewVariant(url) { videoPreview.src=url; videoPreview.play(); videoPreview.scrollIntoView({behavior:'smooth',block:'center'}); }
+
+$('btn-download-all').addEventListener('click', async () => {
+    for (const v of S.variants) { dlVariant(v.blobUrl, v.name); await sleep(400); }
+});
+$('btn-clear-all').addEventListener('click', () => {
+    S.variants=[]; resetResults(); $('btn-clear-all').style.display='none';
+    if (S.videoUrl) { videoPreview.src=S.videoUrl; videoPreview.pause(); }
+});
+function resetResults() {
+    variantGridWrap.style.display='none'; emptyState.style.display='block';
+    variantGrid.innerHTML=''; $('btn-download-all').style.display='none';
+}
+</script>
+</body>
+</html>

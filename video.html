@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Dubbing — SoraVer2</title>
+    <meta name="description" content="Chỉnh sửa video tiếng Trung sang tiếng Anh & Filipino với AI voice và phụ đề tự động.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="video.css">
+</head>
+<body data-theme="dark">
+<div class="app-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <div class="logo-text">
+                    <span class="logo-name">SoraVer2</span>
+                    <span class="logo-tagline">AI Workspace</span>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="Tìm công cụ..." id="tool-search">
+        </div>
+        <div class="nav-section">
+            <p class="nav-label">Công cụ chính</p>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(250,204,21,0.15)"><i class="fa-solid fa-house" style="color:#facc15"></i></div>
+                    <span>Dashboard</span>
+                </a>
+                <a href="video.html" class="nav-item active">
+                    <div class="nav-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-film" style="color:#8b5cf6"></i></div>
+                    <span>Video Dubbing</span>
+                    <span class="nav-badge">New</span>
+                </a>
+                <a href="shuffler.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(16,185,129,0.15)"><i class="fa-solid fa-shuffle" style="color:#10b981"></i></div>
+                    <span>Video Shuffler</span>
+                    <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span>
+                </a>
+                <a href="mashup.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(249,115,22,0.15)"><i class="fa-solid fa-layer-group" style="color:#f97316"></i></div>
+                    <span>Video Mashup</span>
+                    <span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span>
+                </a>
+                <a href="gif-maker.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(6,182,212,0.15)"><i class="fa-solid fa-film" style="color:#06b6d4"></i></div>
+                    <span>GIF Maker Pro</span>
+                    <span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span>
+                </a>
+                <a href="ads-automation.html" class="nav-item">
+                    <div class="nav-icon" style="background:rgba(24,119,242,0.15)"><i class="fa-brands fa-facebook" style="color:#4d9cf5"></i></div>
+                    <span>Ads Automation</span>
+                    <span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="theme-toggle" id="theme-toggle">
+                <i class="fa-solid fa-sun"></i><span>Chế độ Sáng</span>
+            </div>
+            <div class="sidebar-version">v2.0.0</div>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+        <header class="mobile-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <span class="logo-name">SoraVer2</span>
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <div class="workspace video-workspace">
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="page-icon"><i class="fa-solid fa-film"></i></div>
+                    <div>
+                        <h1>Video Dubbing</h1>
+                        <p>Chuyển đổi video tiếng Trung → Tiếng Anh / Filipino với AI</p>
+                    </div>
+                </div>
+                <div class="page-header-right">
+                    <button class="btn btn-secondary btn-sm" id="btn-settings">
+                        <i class="fa-solid fa-gear"></i> Cài đặt API
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="btn-reset">
+                        <i class="fa-solid fa-rotate-left"></i> Đặt lại
+                    </button>
+                </div>
+            </div>
+
+            <!-- API Settings Panel -->
+            <div class="settings-panel card" id="settings-panel" style="display:none">
+                <div class="settings-panel-header">
+                    <h3><i class="fa-solid fa-key"></i> Cấu hình API Keys</h3>
+                    <button class="btn-icon btn" id="btn-close-settings"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-microphone" style="color:#8b5cf6"></i>
+                            ElevenLabs API Key
+                        </label>
+                        <div class="input-with-eye">
+                            <input type="password" class="form-input" id="el-api-key" placeholder="xi_...">
+                            <button class="eye-btn" data-target="el-api-key"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <small class="form-hint">Dùng để tạo giọng đọc AI chất lượng cao. <a href="https://elevenlabs.io" target="_blank">Lấy API key →</a></small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-volume-high" style="color:#10b981"></i>
+                            TTSFree API Key <span style="font-size:.75rem;background:rgba(16,185,129,.15);color:#10b981;padding:2px 6px;border-radius:4px;margin-left:4px">Miễn phí</span>
+                        </label>
+                        <div class="input-with-eye">
+                            <input type="password" class="form-input" id="ttsfree-api-key" placeholder="Lấy từ ttsfree.com/profile">
+                            <button class="eye-btn" data-target="ttsfree-api-key"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <small class="form-hint">Giọng đọc AI miễn phí 500K ký tự/tháng. <a href="https://ttsfree.com/register" target="_blank">Tạo tài khoản miễn phí →</a></small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-brands fa-google" style="color:#4285f4"></i>
+                            Google Translate API Key
+                        </label>
+                        <div class="input-with-eye">
+                            <input type="password" class="form-input" id="gt-api-key" placeholder="AIza...">
+                            <button class="eye-btn" data-target="gt-api-key"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <small class="form-hint">Tự động dịch văn bản. Để trống nếu nhập thủ công.</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-waveform-lines" style="color:#f59e0b"></i>
+                            Whisper API Key (Groq / OpenAI)
+                        </label>
+                        <div class="input-with-eye">
+                            <input type="password" class="form-input" id="whisper-api-key"
+                                placeholder="gsk_... (Groq) hoặc sk-... (OpenAI)"
+                                oninput="autoDetectProvider(this.value)">
+                            <button class="eye-btn" data-target="whisper-api-key"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <small class="form-hint">Key bắt đầu bằng <code>gsk_</code> = Groq &middot; <code>sk-</code> = OpenAI. <a href="https://console.groq.com/keys" target="_blank">Lấy Groq key miễn phí →</a></small>
+                        <small id="provider-hint" style="display:block;margin-top:4px;font-size:.75rem;font-weight:600"></small>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn btn-primary btn-sm" id="btn-save-settings">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu cài đặt
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step Progress -->
+            <div class="step-progress">
+                <div class="step-item active" data-step="1">
+                    <div class="step-circle">
+                        <span class="step-num">1</span>
+                        <i class="fa-solid fa-check step-check"></i>
+                    </div>
+                    <span class="step-label">Upload Video</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item" data-step="2">
+                    <div class="step-circle">
+                        <span class="step-num">2</span>
+                        <i class="fa-solid fa-check step-check"></i>
+                    </div>
+                    <span class="step-label">Transcribe</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item" data-step="3">
+                    <div class="step-circle">
+                        <span class="step-num">3</span>
+                        <i class="fa-solid fa-check step-check"></i>
+                    </div>
+                    <span class="step-label">Dịch & Chỉnh sửa</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item" data-step="4">
+                    <div class="step-circle">
+                        <span class="step-num">4</span>
+                        <i class="fa-solid fa-check step-check"></i>
+                    </div>
+                    <span class="step-label">Tạo Voice AI</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item" data-step="5">
+                    <div class="step-circle">
+                        <span class="step-num">5</span>
+                        <i class="fa-solid fa-check step-check"></i>
+                    </div>
+                    <span class="step-label">Xuất Video</span>
+                </div>
+            </div>
+
+            <!-- Main Editor Layout -->
+            <div class="editor-layout">
+
+                <!-- LEFT: Controls Panel -->
+                <div class="controls-panel">
+
+                    <!-- STEP 1: Upload -->
+                    <div class="step-panel active" id="step-panel-1">
+                        <div class="step-panel-header">
+                            <span class="step-badge">Bước 1</span>
+                            <h3>Upload Video</h3>
+                        </div>
+
+                        <div class="drop-zone" id="drop-zone">
+                            <input type="file" id="video-input" accept="video/*" hidden>
+                            <div class="drop-zone-inner" id="drop-zone-inner">
+                                <div class="drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                <p class="drop-title">Kéo & thả video vào đây</p>
+                                <p class="drop-sub">hoặc</p>
+                                <button class="btn btn-primary" id="btn-browse">
+                                    <i class="fa-solid fa-folder-open"></i> Chọn tệp
+                                </button>
+                                <p class="drop-hint">MP4, MOV, AVI, MKV · Tối đa 2GB</p>
+                            </div>
+                        </div>
+
+                        <div class="video-info-card" id="video-info" style="display:none">
+                            <div class="video-info-thumb">
+                                <video id="video-thumb-preview" preload="metadata"></video>
+                                <button class="video-remove-btn" id="btn-remove-video">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <div class="video-info-meta">
+                                <p class="video-name" id="video-name">video.mp4</p>
+                                <div class="video-meta-row">
+                                    <span id="video-size">—</span>
+                                    <span id="video-duration">—</span>
+                                    <span id="video-res">—</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-full" id="btn-step1-next" disabled>
+                            Tiếp tục → Transcribe <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- STEP 2: Transcribe -->
+                    <div class="step-panel" id="step-panel-2">
+                        <div class="step-panel-header">
+                            <span class="step-badge">Bước 2</span>
+                            <h3>Chuyển giọng nói → Văn bản</h3>
+                        </div>
+
+                        <div class="segment-tabs">
+                            <button class="seg-tab active" data-tab="auto-transcribe">Tự động (Whisper)</button>
+                            <button class="seg-tab" data-tab="manual-transcribe">Nhập thủ công</button>
+                        </div>
+
+                        <div class="seg-content active" id="auto-transcribe">
+                            <div class="info-box info-box-purple">
+                                <i class="fa-solid fa-microchip"></i>
+                                <div>
+                                    <p><strong>Trích xuất giọng nói thật từ video</strong></p>
+                                    <p style="margin-top:4px">App sẽ tự động bóc tách audio từ video → gửi lên Whisper AI để nhận diện chính xác. Yêu cầu <strong>Whisper API key</strong> (Groq miễn phí hoặc OpenAI).</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Dịch vụ nhận diện</label>
+                                <select class="form-select" id="whisper-provider">
+                                    <option value="groq">Groq Whisper Large v3 (Miễn phí tốc độ cao)</option>
+                                    <option value="openai">OpenAI Whisper-1 (Không giới hạn kích thước)</option>
+                                </select>
+                                <small class="form-hint">Groq: giới hạn 25MB audio · OpenAI: hỗ trợ video dài hơn</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ngôn ngữ nguồn</label>
+                                <select class="form-select" id="source-lang">
+                                    <option value="zh" selected>🇨🇳 Tiếng Trung (Phổ thông)</option>
+                                    <option value="yue">🇭🇰 Tiếng Quảng Đông (dùng zh)</option>
+                                    <option value="auto">🌐 Tự động nhận diện</option>
+                                </select>
+                            </div>
+
+                            <!-- Extraction progress -->
+                            <div id="transcribe-progress-wrap" style="display:none">
+                                <div style="display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--text-2);margin-bottom:.5rem">
+                                    <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
+                                    <span id="transcribe-status">Đang xử lý…</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="transcribe-progress-bar" style="width:0%"></div>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-full" id="btn-auto-transcribe">
+                                <i class="fa-solid fa-waveform-lines"></i> Trích xuất & Transcribe Video
+                            </button>
+
+                            <div style="display:flex;align-items:center;gap:.5rem;margin-top:-.25rem">
+                                <div style="flex:1;height:1px;background:var(--border)"></div>
+                                <span style="font-size:.72rem;color:var(--text-3)">hoặc</span>
+                                <div style="flex:1;height:1px;background:var(--border)"></div>
+                            </div>
+
+                            <button class="btn btn-secondary btn-full btn-sm" id="btn-load-demo" style="opacity:.7">
+                                <i class="fa-solid fa-flask"></i> Tải dữ liệu Demo (không phải video thật)
+                            </button>
+                        </div>
+
+                        <div class="seg-content" id="manual-transcribe">
+                            <div class="form-group">
+                                <label class="form-label">Văn bản tiếng Trung (có thể có timestamps)</label>
+                                <textarea class="form-textarea" id="cn-text" rows="8" placeholder="Nhập toàn bộ nội dung tiếng Trung...&#10;&#10;Ví dụ:&#10;[00:00] 大家好，欢迎来到本教程。&#10;[00:05] 今天我们学习如何使用AI工具。"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Transcription Result -->
+                        <div class="transcribe-result" id="transcribe-result" style="display:none">
+                            <div class="result-header">
+                                <span class="badge badge-success"><i class="fa-solid fa-check"></i> Hoàn thành</span>
+                                <button class="btn btn-secondary btn-sm" id="btn-edit-transcribe">
+                                    <i class="fa-solid fa-pen"></i> Chỉnh sửa
+                                </button>
+                            </div>
+                            <div class="transcript-segments" id="transcript-segments"></div>
+                        </div>
+
+                        <div class="step-nav">
+                            <button class="btn btn-secondary" id="btn-step2-back">← Quay lại</button>
+                            <button class="btn btn-primary" id="btn-step2-next">Tiếp tục → Dịch thuật <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Translate & Edit -->
+                    <div class="step-panel" id="step-panel-3">
+                        <div class="step-panel-header">
+                            <span class="step-badge">Bước 3</span>
+                            <h3>Dịch thuật & Chỉnh sửa</h3>
+                        </div>
+
+                        <div class="lang-target-selector">
+                            <p class="form-label">Ngôn ngữ đầu ra</p>
+                            <div class="lang-options">
+                                <label class="lang-option">
+                                    <input type="radio" name="target-lang" value="en">
+                                    <div class="lang-option-card">
+                                        <span class="lang-flag">🇺🇸</span>
+                                        <span>Tiếng Anh</span>
+                                    </div>
+                                </label>
+                                <label class="lang-option">
+                                    <input type="radio" name="target-lang" value="tl">
+                                    <div class="lang-option-card">
+                                        <span class="lang-flag">🇵🇭</span>
+                                        <span>Filipino</span>
+                                    </div>
+                                </label>
+                                <label class="lang-option">
+                                    <input type="radio" name="target-lang" value="both" checked>
+                                    <div class="lang-option-card">
+                                        <span class="lang-flag">🌐</span>
+                                        <span>Cả hai</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="translation-table-wrap">
+                            <div class="translation-table-header">
+                                <span>🇨🇳 Tiếng Trung gốc</span>
+                                <span id="target-col-label">🇺🇸 Tiếng Anh</span>
+                            </div>
+                            <div class="translation-table" id="translation-table">
+                                <!-- Rows injected by JS -->
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-full" id="btn-auto-translate">
+                            <i class="fa-brands fa-google"></i> Dịch tự động (Google)
+                        </button>
+
+                        <div class="subtitle-settings card" style="margin-top:1rem">
+                            <h4 style="margin-bottom:1rem"><i class="fa-solid fa-closed-captioning"></i> Cài đặt phụ đề</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Hiển thị phụ đề</label>
+                                    <select class="form-select" id="subtitle-mode">
+                                        <option value="none">Không thêm phụ đề</option>
+                                        <option value="target" selected>Phụ đề ngôn ngữ đích</option>
+                                        <option value="both">Cả hai ngôn ngữ</option>
+                                        <option value="source">Phụ đề tiếng Trung</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Vị trí phụ đề</label>
+                                    <select class="form-select" id="subtitle-pos">
+                                        <option value="bottom" selected>Phía dưới</option>
+                                        <option value="top">Phía trên</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Font chữ</label>
+                                    <select class="form-select" id="subtitle-font">
+                                        <option value="Inter, Arial, sans-serif" selected>Inter (mặc định)</option>
+                                        <option value="Oswald, Impact, sans-serif">Oswald (tiêu đề mạnh)</option>
+                                        <option value="Roboto, Arial, sans-serif">Roboto</option>
+                                        <option value="Montserrat, Arial, sans-serif">Montserrat</option>
+                                        <option value="Arial, sans-serif">Arial</option>
+                                        <option value="Impact, sans-serif">Impact (cổ điển)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cỡ chữ</label>
+                                    <input type="range" id="subtitle-size" min="14" max="120" value="24" class="range-input">
+                                    <small id="subtitle-size-val" class="form-hint">24px</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Màu chữ &amp; Nền</label>
+                                    <div style="display:flex;gap:.5rem;align-items:center">
+                                        <input type="color" id="subtitle-color" value="#ffffff" class="color-input" title="Màu chữ">
+                                        <input type="color" id="subtitle-bg" value="#000000" class="color-input" title="Màu nền">
+                                        <input type="range" id="subtitle-bg-opacity" min="0" max="100" value="60" class="range-input" style="flex:1" title="Độ mờ nền">
+                                        <button id="btn-subtitle-no-bg" title="Không nền" style="flex-shrink:0;padding:.25rem .6rem;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:.75rem;white-space:nowrap" onclick="toggleSubtitleNoBg(this)">Không nền</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Viền chữ (Stroke) <span id="subtitle-stroke-val">0px</span></label>
+                                    <div style="display:flex;gap:.5rem;align-items:center">
+                                        <input type="color" id="subtitle-stroke-color" value="#000000" class="color-input" title="Màu viền">
+                                        <input type="range" id="subtitle-stroke-width" min="0" max="12" value="0" class="range-input" style="flex:1">
+                                    </div>
+                                    <small class="form-hint">Viền ngoài chữ — rất hữu ích khi không có nền hộp</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Bo góc hộp nền <span id="subtitle-radius-val">6px</span></label>
+                                    <input type="range" id="subtitle-radius" min="0" max="40" value="6" class="range-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kiểu chữ</label>
+                                    <div style="display:flex;gap:.5rem">
+                                        <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.82rem;flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px">
+                                            <input type="checkbox" id="subtitle-bold" checked style="accent-color:var(--primary)">
+                                            <strong>Bold</strong>
+                                        </label>
+                                        <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-size:.82rem;flex:1;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px">
+                                            <input type="checkbox" id="subtitle-uppercase" style="accent-color:var(--primary)">
+                                            <span style="letter-spacing:.05em;font-size:.78rem">ALL CAPS</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cover original subtitle -->
+                            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+                                <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.875rem;font-weight:600">
+                                    <input type="checkbox" id="cover-original-sub" style="width:15px;height:15px;accent-color:var(--primary)">
+                                    <span>🫥 Che subtitle gốc (burned-in)</span>
+                                </label>
+                                <small class="form-hint" style="margin-top:4px;display:block">Phủ nền đen lên vùng subtitle tiếng Trung có sẵn trong video trước khi thêm phụ đề mới</small>
+                                <div id="cover-sub-options" style="display:none;margin-top:.75rem;display:none">
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+                                        <div class="form-group">
+                                            <label class="form-label">Vị trí (% từ dưới) <span id="cover-sub-pos-val">20%</span></label>
+                                            <input type="range" id="cover-sub-pos" min="3" max="45" value="20" class="range-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Chiều cao vùng che <span id="cover-sub-height-val">8%</span></label>
+                                            <input type="range" id="cover-sub-height" min="3" max="20" value="8" class="range-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Chiều rộng vùng che <span id="cover-sub-width-val">100%</span></label>
+                                        <input type="range" id="cover-sub-width" min="30" max="100" value="100" class="range-input">
+                                        <small class="form-hint">Vùng che sẽ được căn giữa theo chiều ngang</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Màu nền che</label>
+                                        <div style="display:flex;gap:.5rem;align-items:center">
+                                            <input type="color" id="cover-sub-color" value="#000000" class="color-input" title="Màu nền che">
+                                            <input type="range" id="cover-sub-opacity" min="50" max="100" value="100" class="range-input" style="flex:1" title="Độ mờ (100 = hoàn toàn che)">
+                                            <small id="cover-sub-opacity-val" style="min-width:32px;font-size:.75rem">100%</small>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Bo góc vùng che <span id="cover-sub-radius-val">0px</span></label>
+                                        <input type="range" id="cover-sub-radius" min="0" max="50" value="0" class="range-input">
+                                    </div>
+                                    <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.82rem;margin-top:.25rem">
+                                        <input type="checkbox" id="snap-sub-to-cover" checked style="width:14px;height:14px;accent-color:var(--primary)">
+                                        <span>📌 Đặt subtitle mới <strong>vào trong vùng che</strong> (thay vì vị trí phụ đề chọn bên trên)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-nav">
+                            <button class="btn btn-secondary" id="btn-step3-back">← Quay lại</button>
+                            <button class="btn btn-primary" id="btn-step3-next">Tiếp tục → Voice AI <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Generate Voice -->
+                    <div class="step-panel" id="step-panel-4">
+                        <div class="step-panel-header">
+                            <span class="step-badge">Bước 4</span>
+                            <h3>Tạo giọng đọc AI</h3>
+                        </div>
+
+                        <div class="info-box info-box-purple">
+                            <i class="fa-solid fa-microphone"></i>
+                            <div>
+                                <p>Chọn dịch vụ TTS (Text-to-Speech) phù hợp:</p>
+                                <p style="margin-top:4px;font-size:.82rem">
+                                    🔵 <strong>ElevenLabs</strong> — Giọng thực đảo chất lượng cực cao · Cần API key trả phí<br>
+                                    🟢 <strong>TTSFree</strong> — Miễn phí 500K ký/tháng · 140+ ngôn ngữ · Giọng Microsoft Neural
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- TTS Provider Toggle -->
+                        <div class="form-group">
+                            <label class="form-label">Dịch vụ tạo giọng</label>
+                            <div class="provider-toggle" id="tts-provider-wrap">
+                                <label class="provider-option">
+                                    <input type="radio" name="tts-provider" value="elevenlabs" checked id="tts-el">
+                                    <div class="provider-card">
+                                        <i class="fa-solid fa-waveform-lines"></i>
+                                        <span>ElevenLabs</span>
+                                        <small>Chất lượng cao</small>
+                                    </div>
+                                </label>
+                                <label class="provider-option">
+                                    <input type="radio" name="tts-provider" value="ttsfree" id="tts-free">
+                                    <div class="provider-card">
+                                        <i class="fa-solid fa-volume-high"></i>
+                                        <span>TTSFree</span>
+                                        <small>Miễn phí</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- English Voice -->
+                        <div class="voice-section" id="voice-section-en">
+                            <div class="voice-section-header">
+                                <span class="lang-flag" style="font-size:1.25rem">🇺🇸</span>
+                                <h4>Giọng tiếng Anh</h4>
+                            </div>
+                            <div class="voice-grid" id="voice-grid-el-en">
+                                <div class="form-group">
+                                    <label class="form-label">Voice (ElevenLabs)</label>
+                                    <select class="form-select" id="voice-en">
+                                        <option value="nPczCjzI2devNBz1zQrb">Brian — Nam, tự nhiên</option>
+                                        <option value="jBpfuIE2acCO8z3wKNLl">Matilda — Nữ, ấm áp</option>
+                                        <option value="iP95p4xoKVk53GoZ742B">Chris — Nam, chuyên nghiệp</option>
+                                        <option value="cgSgspJ2msm6clMCkdW9">Jessica — Nữ, sắc nét</option>
+                                        <option value="pFZP5JQG7iQjIQuC4Bku">Lily — Nữ, nhẹ nhàng</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Model</label>
+                                    <select class="form-select" id="model-en">
+                                        <option value="eleven_multilingual_v2">Multilingual v2 (tốt nhất)</option>
+                                        <option value="eleven_turbo_v2_5">Turbo v2.5 (nhanh)</option>
+                                        <option value="eleven_flash_v2_5">Flash v2.5 (rất nhanh)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Độ ổn định <span id="val-stability-en">0.5</span></label>
+                                    <input type="range" class="range-input" id="stability-en" min="0" max="1" step="0.1" value="0.5">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tương đồng <span id="val-similarity-en">0.75</span></label>
+                                    <input type="range" class="range-input" id="similarity-en" min="0" max="1" step="0.05" value="0.75">
+                                </div>
+                            </div>
+                            <!-- TTSFree EN voices -->
+                            <div class="voice-grid" id="voice-grid-tts-en" style="display:none">
+                                <div class="form-group">
+                                    <label class="form-label">Voice (TTSFree — Tiếng Anh)</label>
+                                    <select class="form-select" id="ttsfree-voice-en">
+                                        <optgroup label="🇺🇸 English (US) — Nam">
+                                            <option value="en-US3">Christopher Neural — Nam US</option>
+                                            <option value="en-US4">Eric Neural — Nam US</option>
+                                            <option value="en-US5">Guy Neural — Nam US</option>
+                                            <option value="en-US8">Roger Neural — Nam US</option>
+                                            <option value="en-US9">Steffan Neural — Nam US</option>
+                                        </optgroup>
+                                        <optgroup label="🇺🇸 English (US) — Nữ">
+                                            <option value="en-US">Aria Neural — Nữ US</option>
+                                            <option value="en-US6">Jenny Neural — Nữ US</option>
+                                            <option value="en-US7">Michelle Neural — Nữ US</option>
+                                        </optgroup>
+                                        <optgroup label="🇬🇧 English (UK)">
+                                            <option value="en-GB3">Ryan Neural — Nam UK</option>
+                                            <option value="en-GB">Libby Neural — Nữ UK</option>
+                                            <option value="en-GB5">Thomas Neural — Nam UK</option>
+                                        </optgroup>
+                                        <optgroup label="🇦🇺 English (Australia)">
+                                            <option value="en-AU2">William Neural — Nam AU</option>
+                                            <option value="en-AU">Natasha Neural — Nữ AU</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tốc độ nói</label>
+                                    <select class="form-select" id="ttsfree-speed-en">
+                                        <option value="-2">Chậm hơn nhiều</option>
+                                        <option value="-1">Chậm hơn</option>
+                                        <option value="0" selected>Bình thường</option>
+                                        <option value="1">Nhanh hơn</option>
+                                        <option value="2">Nhanh hơn nhiều</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="voice-preview-row">
+                                <input type="text" class="form-input" id="preview-text-en" placeholder="Nhập câu thử giọng...">
+                                <button class="btn btn-secondary btn-sm" id="btn-preview-en">
+                                    <i class="fa-solid fa-play"></i> Thử
+                                </button>
+                            </div>
+                            <audio id="audio-preview-en" controls style="display:none;width:100%;margin-top:.5rem"></audio>
+                        </div>
+
+                        <!-- Filipino Voice -->
+                        <div class="voice-section" id="voice-section-tl">
+                            <div class="voice-section-header">
+                                <span class="lang-flag" style="font-size:1.25rem">🇵🇭</span>
+                                <h4>Giọng Filipino</h4>
+                            </div>
+                            <div class="voice-grid" id="voice-grid-el-tl">
+                                <div class="form-group">
+                                    <label class="form-label">Voice (ElevenLabs)</label>
+                                    <select class="form-select" id="voice-tl">
+                                        <option value="cgSgspJ2msm6clMCkdW9">Jessica — Nữ</option>
+                                        <option value="jBpfuIE2acCO8z3wKNLl">Matilda — Nữ</option>
+                                        <option value="iP95p4xoKVk53GoZ742B">Chris — Nam</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Model</label>
+                                    <select class="form-select" id="model-tl">
+                                        <option value="eleven_multilingual_v2">Multilingual v2 (tốt nhất)</option>
+                                        <option value="eleven_turbo_v2_5">Turbo v2.5 (nhanh)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Độ ổn định <span id="val-stability-tl">0.5</span></label>
+                                    <input type="range" class="range-input" id="stability-tl" min="0" max="1" step="0.1" value="0.5">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tương đồng <span id="val-similarity-tl">0.75</span></label>
+                                    <input type="range" class="range-input" id="similarity-tl" min="0" max="1" step="0.05" value="0.75">
+                                </div>
+                            </div>
+                            <!-- TTSFree TL voices -->
+                            <div class="voice-grid" id="voice-grid-tts-tl" style="display:none">
+                                <div class="form-group">
+                                    <label class="form-label">Voice (TTSFree — Filipino)</label>
+                                    <select class="form-select" id="ttsfree-voice-tl">
+                                        <optgroup label="🇵🇭 Filipino (Philippines)">
+                                            <option value="fil-PH2">Blessica Neural — Nữ 🇵🇭</option>
+                                            <option value="fil-PH">Angelo Neural — Nam 🇵🇭</option>
+                                        </optgroup>
+                                        <optgroup label="🇺🇸 English (Philippines accent)">
+                                            <option value="en-PH2">Rosa Neural — Nữ PH</option>
+                                            <option value="en-PH">James Neural — Nam PH</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tốc độ nói</label>
+                                    <select class="form-select" id="ttsfree-speed-tl">
+                                        <option value="-2">Chậm hơn nhiều</option>
+                                        <option value="-1">Chậm hơn</option>
+                                        <option value="0" selected>Bình thường</option>
+                                        <option value="1">Nhanh hơn</option>
+                                        <option value="2">Nhanh hơn nhiều</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="voice-preview-row">
+                                <input type="text" class="form-input" id="preview-text-tl" placeholder="Nhập câu thử giọng...">
+                                <button class="btn btn-secondary btn-sm" id="btn-preview-tl">
+                                    <i class="fa-solid fa-play"></i> Thử
+                                </button>
+                            </div>
+                            <audio id="audio-preview-tl" controls style="display:none;width:100%;margin-top:.5rem"></audio>
+                        </div>
+
+                        <!-- Generate All -->
+                        <div class="generate-all-wrap">
+                            <button class="btn btn-primary btn-full btn-lg" id="btn-generate-voice">
+                                <i class="fa-solid fa-waveform-lines"></i> Tạo giọng đọc cho tất cả phân đoạn
+                            </button>
+                            <div class="generate-progress" id="generate-progress" style="display:none">
+                                <div class="generate-status">
+                                    <div class="spinner"></div>
+                                    <span id="generate-status-text">Đang tạo giọng đọc...</span>
+                                </div>
+                                <div class="progress-bar" style="margin-top:.75rem">
+                                    <div class="progress-fill" id="generate-progress-bar" style="width:0%"></div>
+                                </div>
+                                <small id="generate-count" style="color:var(--text-3);margin-top:.35rem;display:block;text-align:right">0 / 0 phân đoạn</small>
+                            </div>
+                        </div>
+
+                        <div class="step-nav">
+                            <button class="btn btn-secondary" id="btn-step4-back">← Quay lại</button>
+                            <button class="btn btn-primary" id="btn-step4-next" disabled>Tiếp tục → Xuất video <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 5: Export -->
+                    <div class="step-panel" id="step-panel-5">
+                        <div class="step-panel-header">
+                            <span class="step-badge">Bước 5</span>
+                            <h3>Xuất Video</h3>
+                        </div>
+
+                        <div class="export-settings card">
+                            <h4 style="margin-bottom:1rem"><i class="fa-solid fa-sliders"></i> Cài đặt xuất</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Ngôn ngữ âm thanh xuất</label>
+                                    <select class="form-select" id="export-lang">
+                                        <option value="en">🇺🇸 Tiếng Anh</option>
+                                        <option value="tl">🇵🇭 Filipino</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tốc độ giọng AI — tất cả đồng bộ</label>
+                                    <div style="display:flex;align-items:center;gap:.75rem">
+                                        <input type="range" class="range-input" id="global-voice-speed"
+                                            min="0.5" max="2.0" step="0.05" value="1.0" style="flex:1">
+                                        <strong id="global-speed-val" style="min-width:42px;color:var(--primary)">1.00×</strong>
+                                    </div>
+                                    <small class="form-hint">0.5× = chậm hơn · 1× = nguyên bản · 2× = nhanh gấp đôi. Tất cả phân đoạn thay đổi cùng nhau.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Định dạng</label>
+                                    <select class="form-select" id="export-format">
+                                        <option value="mp4">MP4 (H.264 + AAC)</option>
+                                        <option value="webm">WebM (VP9 + Opus)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Chất lượng video</label>
+                                    <select class="form-select" id="export-quality">
+                                        <option value="high">Cao (giữ nguyên)</option>
+                                        <option value="medium" selected>Trung bình (nhanh hơn)</option>
+                                        <option value="low">Thấp (nhỏ hơn)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="export-info-row">
+                            <div class="export-info-item">
+                                <i class="fa-solid fa-file-video" style="color:var(--primary)"></i>
+                                <div>
+                                    <strong id="export-info-name">—</strong>
+                                    <small>Tệp đầu ra</small>
+                                </div>
+                            </div>
+                            <div class="export-info-item">
+                                <i class="fa-solid fa-clock" style="color:var(--warning)"></i>
+                                <div>
+                                    <strong id="export-info-duration">—</strong>
+                                    <small>Thời lượng</small>
+                                </div>
+                            </div>
+                            <div class="export-info-item">
+                                <i class="fa-solid fa-microphone" style="color:var(--success)"></i>
+                                <div>
+                                    <strong id="export-info-segments">—</strong>
+                                    <small>Phân đoạn voice</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-full btn-lg" id="btn-export">
+                            <i class="fa-solid fa-video"></i> Bắt đầu xuất video
+                        </button>
+
+                        <div class="export-progress" id="export-progress" style="display:none">
+                            <div class="generate-status">
+                                <div class="spinner"></div>
+                                <span id="export-status-text">Đang xử lý...</span>
+                            </div>
+                            <div class="progress-bar" style="margin-top:.75rem">
+                                <div class="progress-fill" id="export-progress-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="export-result" id="export-result" style="display:none">
+                            <div class="export-done-icon"><i class="fa-solid fa-circle-check"></i></div>
+                            <h3>Video đã xuất thành công!</h3>
+                            <p>Video đã được xử lý và sẵn sàng tải về.</p>
+                            <div class="export-result-actions">
+                                <a class="btn btn-primary" id="btn-download-video" download>
+                                    <i class="fa-solid fa-download"></i> Tải video
+                                </a>
+                                <button class="btn btn-secondary" id="btn-download-srt">
+                                    <i class="fa-solid fa-closed-captioning"></i> Tải file SRT
+                                </button>
+                                <button class="btn btn-secondary" id="btn-new-project">
+                                    <i class="fa-solid fa-plus"></i> Dự án mới
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="step-nav">
+                            <button class="btn btn-secondary" id="btn-step5-back">← Quay lại</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT: Preview Panel -->
+                <div class="preview-panel">
+                    <div class="preview-header">
+                        <h3><i class="fa-solid fa-eye"></i> Xem trước</h3>
+                        <div class="preview-header-actions">
+                            <!-- Dubbed lang switcher (shows after generate) -->
+                            <div class="dubbed-lang-wrap" id="dubbed-lang-wrap" style="display:none">
+                                <button class="dubbed-lang-btn active" id="dubbed-btn-en"
+                                    onclick="setDubbedLang('en')" title="Preview tiếng Anh">
+                                    🇺🇸 EN
+                                </button>
+                                <button class="dubbed-lang-btn" id="dubbed-btn-tl"
+                                    onclick="setDubbedLang('tl')" title="Preview Filipino">
+                                    🇵🇭 TL
+                                </button>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="btn-preview-dubbed"
+                                title="Preview giọng AI đã tạo"
+                                onclick="enableDubbedMode(!state.dubbedMode)"
+                                style="display:none">
+                                <i class="fa-solid fa-ear-listen"></i> Preview Dubbed
+                            </button>
+                            <button class="btn-icon btn" id="btn-fullscreen" title="Toàn màn hình">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="video-preview-wrap">
+                        <div class="video-placeholder" id="video-placeholder">
+                            <i class="fa-solid fa-film"></i>
+                            <p>Upload video để xem trước</p>
+                        </div>
+                        <video id="video-preview" controls style="display:none; width:100%; height:100%; object-fit:contain; border-radius:var(--radius); position:absolute; top:0; left:0;"></video>
+                        <div class="subtitle-overlay" id="subtitle-overlay"></div>
+                        <div id="original-sub-cover" style="display:none;position:absolute;left:0;width:100%;pointer-events:none;z-index:9"></div>
+                    </div>
+
+                    <!-- Segment List -->
+                    <div class="segment-list-wrap" id="segment-list-wrap" style="display:none">
+                        <div class="segment-list-header">
+                            <h4>Phân đoạn âm thanh</h4>
+                            <span class="badge badge-primary" id="segment-count-badge">0</span>
+                        </div>
+                        <div class="segment-list" id="segment-list"></div>
+                    </div>
+
+                    <!-- Timeline Editor -->
+                    <div class="timeline-panel" id="timeline-panel" style="display:none">
+                        <div class="timeline-panel-header" id="timeline-toggle" onclick="toggleTimeline()">
+                            <span><i class="fa-solid fa-film"></i> Timeline Editor</span>
+                            <span class="tl-badge" id="tl-badge">0 segments</span>
+                            <div class="tl-header-right">
+                                <span style="font-size:.7rem;color:var(--text-3)">Click hoặc kéo ▶ để chỉnh speed</span>
+                                <i class="fa-solid fa-chevron-down" id="timeline-chevron"></i>
+                            </div>
+                        </div>
+                        <div class="timeline-body" id="timeline-body">
+                            <!-- Toolbar -->
+                            <div class="tl-toolbar">
+                                <button class="btn btn-sm btn-secondary" onclick="timelineZoom(-1)" title="Zoom out"><i class="fa-solid fa-minus"></i></button>
+                                <span id="tl-zoom-label" style="font-size:.72rem;min-width:32px;text-align:center;color:var(--text-2)">1×</span>
+                                <button class="btn btn-sm btn-secondary" onclick="timelineZoom(1)" title="Zoom in"><i class="fa-solid fa-plus"></i></button>
+                                <button class="btn btn-sm btn-secondary" onclick="timelineFit()" style="margin-left:.5rem">Fit</button>
+                                <button class="btn btn-sm btn-secondary" onclick="resetAllSpeeds()" style="margin-left:auto" title="Đặt lại tốc độ về Auto cho tất cả">Reset Speed</button>
+                            </div>
+                            <!-- Legend -->
+                            <div class="tl-legend">
+                                <span class="tl-legend-dot ok"></span>Bình thường (≤1.2×)
+                                <span class="tl-legend-dot mid"></span>Tăng nhẹ (1.2–1.75×)
+                                <span class="tl-legend-dot high"></span>Nhanh (>1.75×)
+                            </div>
+                            <!-- Timeline scroll area -->
+                            <div class="tl-scroll-outer">
+                                <div class="tl-labels-col">
+                                    <div class="tl-label-cell tl-ruler-row"></div>
+                                    <div class="tl-label-cell">📹 Video</div>
+                                    <div class="tl-label-cell" id="tl-label-en">🇺🇸 EN</div>
+                                    <div class="tl-label-cell" id="tl-label-tl">🇵🇭 TL</div>
+                                </div>
+                                <div class="tl-tracks-scroll" id="tl-tracks-scroll">
+                                    <div class="tl-canvas" id="tl-canvas">
+                                        <div class="tl-ruler"     id="tl-ruler"></div>
+                                        <div class="tl-playhead" id="tl-playhead"></div>
+                                        <div class="tl-track"    id="tl-track-video"></div>
+                                        <div class="tl-track"    id="tl-track-en"></div>
+                                        <div class="tl-track"    id="tl-track-tl"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Speed Popover -->
+                        <div class="speed-popover" id="speed-popover" style="display:none">
+                            <button class="speed-pop-close" onclick="closeSpeedPopover()">✕</button>
+                            <div class="speed-pop-seg-text" id="speed-pop-seg-text"></div>
+                            <div class="speed-pop-info">
+                                <span>Speed: </span><strong id="speed-pop-val">1.00×</strong>
+                                <span style="margin-left:.5rem;color:var(--text-3);font-size:.72rem" id="speed-pop-dur"></span>
+                            </div>
+                            <input type="range" id="speed-pop-slider" min="0.5" max="2.0" step="0.05" value="1.0" style="width:100%;margin:.5rem 0">
+                            <div class="speed-pop-presets">
+                                <button onclick="setSpeedPreset(0.75)">0.75×</button>
+                                <button onclick="setSpeedPreset(1.0)">1×</button>
+                                <button onclick="setSpeedPreset(1.25)">1.25×</button>
+                                <button onclick="setSpeedPreset(1.5)">1.5×</button>
+                                <button onclick="setSpeedPreset(1.75)">1.75×</button>
+                                <button class="auto-btn" onclick="setSpeedAuto()">Auto</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- SRT Download Helper (hidden form) -->
+<a id="srt-download-link" style="display:none"></a>
+
+<script src="script.js"></script>
+<script src="video.js"></script>
+</body>
+</html>

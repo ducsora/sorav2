@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoraVer2 — AI Workspace</title>
+    <meta name="description" content="SoraVer2 - Bộ công cụ AI thế hệ mới: Chỉnh sửa video, dịch thuật, tạo giọng đọc.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                    <div class="logo-text">
+                        <span class="logo-name">SoraVer2</span>
+                        <span class="logo-tagline">AI Workspace</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-search">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Tìm công cụ..." id="tool-search">
+            </div>
+
+            <div class="nav-section">
+                <p class="nav-label">Công cụ chính</p>
+                <nav class="nav-menu">
+                    <a href="index.html" class="nav-item active" id="nav-home">
+                        <div class="nav-icon" style="background: rgba(250,204,21,0.15)">
+                            <i class="fa-solid fa-house" style="color:#facc15"></i>
+                        </div>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="video.html" class="nav-item nav-video" id="nav-video">
+                        <div class="nav-icon" style="background: rgba(139,92,246,0.15)">
+                            <i class="fa-solid fa-film" style="color:#8b5cf6"></i>
+                        </div>
+                        <span>Video Dubbing</span>
+                        <span class="nav-badge">New</span>
+                    </a>
+                    <a href="shuffler.html" class="nav-item" id="nav-shuffler">
+                        <div class="nav-icon" style="background: rgba(16,185,129,0.15)">
+                            <i class="fa-solid fa-shuffle" style="color:#10b981"></i>
+                        </div>
+                        <span>Video Shuffler</span>
+                        <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span>
+                    </a>
+                    <a href="mashup.html" class="nav-item" id="nav-mashup">
+                        <div class="nav-icon" style="background: rgba(249,115,22,0.15)">
+                            <i class="fa-solid fa-layer-group" style="color:#f97316"></i>
+                        </div>
+                        <span>Video Mashup</span>
+                        <span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span>
+                    </a>
+                    <a href="gif-maker.html" class="nav-item" id="nav-gif">
+                        <div class="nav-icon" style="background:rgba(6,182,212,0.15)">
+                            <i class="fa-solid fa-film" style="color:#06b6d4"></i>
+                        </div>
+                        <span>GIF Maker Pro</span>
+                        <span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span>
+                    </a>
+                    <a href="ads-automation.html" class="nav-item" id="nav-ads">
+                        <div class="nav-icon" style="background: rgba(24,119,242,0.15)">
+                            <i class="fa-brands fa-facebook" style="color:#4d9cf5"></i>
+                        </div>
+                        <span>Ads Automation</span>
+                        <span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="nav-section">
+                <p class="nav-label">Sắp ra mắt</p>
+                <nav class="nav-menu">
+                    <a href="#" class="nav-item nav-item-disabled">
+                        <div class="nav-icon" style="background: rgba(16,185,129,0.1)">
+                            <i class="fa-solid fa-robot" style="color:#10b981; opacity:0.5"></i>
+                        </div>
+                        <span style="opacity:0.5">AI Chat</span>
+                        <span class="nav-badge nav-badge-soon">Soon</span>
+                    </a>
+                    <a href="#" class="nav-item nav-item-disabled">
+                        <div class="nav-icon" style="background: rgba(249,115,22,0.1)">
+                            <i class="fa-solid fa-image" style="color:#f97316; opacity:0.5"></i>
+                        </div>
+                        <span style="opacity:0.5">Image AI</span>
+                        <span class="nav-badge nav-badge-soon">Soon</span>
+                    </a>
+                </nav>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="theme-toggle" id="theme-toggle">
+                    <i class="fa-solid fa-sun"></i>
+                    <span>Chế độ Sáng</span>
+                </div>
+                <div class="sidebar-version">v2.0.0</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="mobile-header">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                    <span class="logo-name">SoraVer2</span>
+                </div>
+                <button class="mobile-menu-btn" id="mobile-menu-btn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </header>
+
+            <div class="workspace">
+                <!-- Welcome Hero -->
+                <div class="hero-section">
+                    <div class="hero-content">
+                        <div class="hero-badge"><i class="fa-solid fa-sparkles"></i> AI-Powered</div>
+                        <h1>Chào mừng đến với <span class="gradient-text">SoraVer2</span></h1>
+                        <p>Bộ công cụ AI thế hệ mới — Chỉnh sửa video, dịch thuật đa ngôn ngữ, tạo giọng đọc chuyên nghiệp.</p>
+                        <a href="video.html" class="hero-cta">
+                            <i class="fa-solid fa-play"></i>
+                            Bắt đầu ngay
+                        </a>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="hero-orb hero-orb-1"></div>
+                        <div class="hero-orb hero-orb-2"></div>
+                        <div class="hero-card">
+                            <i class="fa-solid fa-film"></i>
+                            <div>
+                                <p>Video Dubbing</p>
+                                <small>Tiếng Trung → Tiếng Anh / Filipino</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools Grid -->
+                <div class="section-title">
+                    <h2>Bộ công cụ</h2>
+                    <p>Chọn công cụ để bắt đầu</p>
+                </div>
+
+                <div class="tools-grid">
+                    <a href="video.html" class="tool-card tool-video">
+                        <div class="tool-card-glow"></div>
+                        <div class="tool-card-icon">
+                            <i class="fa-solid fa-film"></i>
+                        </div>
+                        <div class="tool-card-badge">Mới</div>
+                        <h3>Video Dubbing</h3>
+                        <p>Chuyển đổi video tiếng Trung sang tiếng Anh & Filipino với AI voice và phụ đề tự động.</p>
+                        <div class="tool-card-tags">
+                            <span>ElevenLabs TTS</span>
+                            <span>Phụ đề</span>
+                            <span>Dịch thuật</span>
+                        </div>
+                        <div class="tool-card-arrow">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <a href="shuffler.html" class="tool-card" style="--card-glow:rgba(16,185,129,.25);text-decoration:none;">
+                        <div class="tool-card-glow" style="background:var(--card-glow)"></div>
+                        <div class="tool-card-icon" style="background:rgba(16,185,129,.15);color:#10b981">
+                            <i class="fa-solid fa-shuffle"></i>
+                        </div>
+                        <div class="tool-card-badge" style="background:rgba(16,185,129,.15);color:#10b981">Mới</div>
+                        <h3>Video Shuffler</h3>
+                        <p>Tạo 5–10 biến thể video khác nhau bằng cách xáo trộn thứ tự cảnh — tránh duplicate cho TikTok/Reels.</p>
+                        <div class="tool-card-tags">
+                            <span>FFmpeg.wasm</span>
+                            <span>5 Template</span>
+                            <span>Anti-Duplicate</span>
+                        </div>
+                        <div class="tool-card-arrow">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <a href="mashup.html" class="tool-card" style="--card-glow:rgba(249,115,22,.25);text-decoration:none;">
+                        <div class="tool-card-glow" style="background:var(--card-glow)"></div>
+                        <div class="tool-card-icon" style="background:rgba(249,115,22,.15);color:#f97316">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div class="tool-card-badge" style="background:rgba(249,115,22,.15);color:#f97316">Mới</div>
+                        <h3>Video Mashup</h3>
+                        <p>Ghép hình ngẫu nhiên từ nhiều video với giọng từ một video chủ — tạo nội dung độc đáo chống duplicate.</p>
+                        <div class="tool-card-tags">
+                            <span>Multi-Source</span>
+                            <span>Canvas Engine</span>
+                            <span>Anti-Duplicate</span>
+                        </div>
+                        <div class="tool-card-arrow">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <a href="gif-maker.html" class="tool-card" style="--card-glow:rgba(6,182,212,.25);text-decoration:none;">
+                        <div class="tool-card-glow" style="background:var(--card-glow)"></div>
+                        <div class="tool-card-icon" style="background:rgba(6,182,212,.15);color:#06b6d4">
+                            <i class="fa-solid fa-film"></i>
+                        </div>
+                        <div class="tool-card-badge" style="background:rgba(6,182,212,.15);color:#06b6d4">Mới</div>
+                        <h3>GIF Maker Pro</h3>
+                        <p>Chuyển video thành GIF chuẩn 1:1, tự động cắt đoạn giữa đẹp nhất, Smart Compress dưới 5MB.</p>
+                        <div class="tool-card-tags">
+                            <span>Center Crop</span>
+                            <span>Auto-Trim</span>
+                            <span>Smart Compress</span>
+                        </div>
+                        <div class="tool-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                    </a>
+
+                    <a href="ads-automation.html" class="tool-card" style="--card-glow:rgba(24,119,242,.25);text-decoration:none;">
+                        <div class="tool-card-glow" style="background:var(--card-glow)"></div>
+                        <div class="tool-card-icon" style="background:rgba(24,119,242,.15);color:#4d9cf5">
+                            <i class="fa-brands fa-facebook"></i>
+                        </div>
+                        <div class="tool-card-badge" style="background:rgba(24,119,242,.15);color:#4d9cf5">Pro</div>
+                        <h3>Ads Automation</h3>
+                        <p>Tự động tạo Facebook Campaign với AI — upload video, AI viết ad text, preview & launch trực tiếp lên Meta.</p>
+                        <div class="tool-card-tags">
+                            <span>Meta API</span>
+                            <span>AI Content</span>
+                            <span>Auto Launch</span>
+                        </div>
+                        <div class="tool-card-arrow">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </a>
+
+                    <div class="tool-card tool-disabled">
+                        <div class="tool-card-icon">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="tool-card-badge tool-badge-soon">Sắp ra mắt</div>
+                        <h3>AI Chat</h3>
+                        <p>Trò chuyện với AI, phân tích dữ liệu và tạo nội dung tự động.</p>
+                        <div class="tool-card-tags">
+                            <span>Gemini</span>
+                            <span>GPT-4</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card tool-disabled">
+                        <div class="tool-card-icon">
+                            <i class="fa-solid fa-image"></i>
+                        </div>
+                        <div class="tool-card-badge tool-badge-soon">Sắp ra mắt</div>
+                        <h3>Image AI</h3>
+                        <p>Tạo, chỉnh sửa và nâng cấp hình ảnh bằng AI thế hệ mới.</p>
+                        <div class="tool-card-tags">
+                            <span>Midjourney</span>
+                            <span>DALL-E</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-language"></i>
+                        <div>
+                            <strong>3</strong>
+                            <span>Ngôn ngữ hỗ trợ</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-microphone"></i>
+                        <div>
+                            <strong>AI</strong>
+                            <span>Giọng đọc ElevenLabs</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-closed-captioning"></i>
+                        <div>
+                            <strong>Auto</strong>
+                            <span>Phụ đề tự động</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-download"></i>
+                        <div>
+                            <strong>MP4</strong>
+                            <span>Xuất chất lượng cao</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
