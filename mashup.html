@@ -222,6 +222,20 @@
                 </button>
             </div>
 
+            <!-- file:// warning banner -->
+            <div id="file-protocol-warning" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(234,88,12,.06));border:1px solid rgba(245,158,11,.35);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;align-items:flex-start;gap:1rem">
+                <div style="font-size:1.5rem;color:#f59e0b;flex-shrink:0;margin-top:.1rem"><i class="fa-solid fa-server"></i></div>
+                <div>
+                    <h3 style="font-size:.95rem;font-weight:600;margin:0 0 .4rem;color:#f59e0b">&#9888;&#65039; Can chay Local Server de xuat MP4</h3>
+                    <p style="font-size:.82rem;color:var(--text-2);margin:0;line-height:1.6">
+                        FFmpeg.wasm yeu cau HTTP server de tai file <code>.wasm</code>. Hien ban dang mo qua <code>file://</code>.<br>
+                        <strong style="color:#f59e0b">Cach khac phuc:</strong> Chay <strong>start-server.bat</strong> va mo
+                        <a href="http://localhost:3001/mashup.html" style="color:#f97316;font-weight:600">http://localhost:3001/mashup.html</a>.
+                        Tool se tu fallback WebM neu khong co server.
+                    </p>
+                </div>
+            </div>
+
             <!-- How it works -->
             <div class="how-banner">
                 <div class="how-banner-icon"><i class="fa-solid fa-circle-nodes"></i></div>
@@ -414,8 +428,15 @@
 // =====================================================
 //  VIDEO MASHUP ENGINE — SoraVer2
 //  Inspired by AntigravityVideoEngine (Python/moviepy)
-//  Browser port: Canvas + MediaRecorder (WebM)
+//  Browser port: Canvas + MediaRecorder → FFmpeg.wasm → MP4
 // =====================================================
+
+const IS_LOCAL = location.protocol !== 'file:';
+
+if (!IS_LOCAL) {
+    const w = document.getElementById('file-protocol-warning');
+    if (w) w.style.display = 'flex';
+}
 
 const S = {
     sources: [],   // {file, url, name, duration, width, height, size}
@@ -809,6 +830,75 @@ function waitMeta(vid) {
 function waitSeeked(vid) {
     return new Promise(r => vid.addEventListener('seeked', r, { once: true }));
 }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ---- FFmpeg.wasm helpers (v0.11 — single-thread, no SharedArrayBuffer/CORS worker) ----
+function loadScript(src) {
+    return new Promise((res, rej) => {
+        if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = res;
+        s.onerror = () => rej(new Error('Failed: ' + src));
+        document.head.appendChild(s);
+    });
+}
+
+async function ensureFFmpeg() {
+    if (S.ffmpeg) return S.ffmpeg;
+    if (S.ffmpegLoading) { while (S.ffmpegLoading) await sleep(200); return S.ffmpeg; }
+    S.ffmpegLoading = true;
+    try {
+        log('Tải FFmpeg.wasm (~20MB)...', 'log-warn');
+        // v0.11 — uses createFFmpeg(), no Worker CORS issue
+        await loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
+        const { createFFmpeg, fetchFile } = window.FFmpeg;
+        S.fetchFile = fetchFile;
+        const ff = createFFmpeg({
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+            log: false,
+        });
+        await ff.load();
+        S.ffmpeg = ff;
+        log('✓ FFmpeg.wasm sẵn sàng — output .mp4', 'log-ok');
+        return ff;
+    } catch(e) {
+        log('✗ Không tải được FFmpeg: ' + e.message, 'log-err');
+        throw e;
+    } finally { S.ffmpegLoading = false; }
+}
+
+// Convert WebM blob → MP4 via FFmpeg remux (v0.11 API)
+async function remuxToMP4(webmBlob, idx) {
+    const ff = await ensureFFmpeg();
+    const fetchFile = S.fetchFile;
+    const inName  = `in${idx}.webm`;
+    const outName = `out${idx}.mp4`;
+    log(`[#${idx}] Remux WebM → MP4...`);
+    try {
+        ff.FS('writeFile', inName, await fetchFile(webmBlob));
+        // Try stream copy first (fast, no re-encode)
+        let ok = false;
+        try {
+            await ff.run('-i', inName, '-c', 'copy', '-movflags', '+faststart', outName);
+            ok = true;
+        } catch(_) {}
+        if (!ok) {
+            // Fallback: re-encode (handles codec incompatibility)
+            log(`[#${idx}] Re-encode H.264 (fallback)...`, 'log-warn');
+            await ff.run('-i', inName,
+                '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+                '-c:a', 'aac', '-b:a', '128k',
+                '-movflags', '+faststart', outName);
+        }
+        const data = ff.FS('readFile', outName);
+        const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+        log(`[#${idx}] ✓ MP4 — ${fmtSize(mp4Blob.size)}`, 'log-ok');
+        return mp4Blob;
+    } finally {
+        try { ff.FS('unlink', inName); } catch(_) {}
+        try { ff.FS('unlink', outName); } catch(_) {}
+    }
+}
 
 async function runMashup() {
     if (S.processing) return;
@@ -849,26 +939,59 @@ async function runMashup() {
     log(`Kế hoạch hoàn tất — bắt đầu render...`, 'log-ok');
     await sleep(200);
 
+    // Pre-load FFmpeg if on local server
+    let canMP4 = false;
+    if (IS_LOCAL) {
+        setProgress(3, 'Tải FFmpeg.wasm...', 'Lần đầu có thể mất 30–60 giây...');
+        try {
+            await ensureFFmpeg();
+            canMP4 = true;
+            log('✓ FFmpeg sẵn sàng — xuất MP4', 'log-ok');
+        } catch(e) {
+            log('⚠ Không tải được FFmpeg → fallback WebM: ' + e.message, 'log-warn');
+        }
+    } else {
+        log('file:// detected → WebM fallback. Chạy start-server.bat để có MP4.', 'log-warn');
+    }
+    log(`Format: ${canMP4 ? '🎬 MP4 (FFmpeg remux)' : '📹 WebM (MediaRecorder)'}`);
+
     const results = [];
     for (let i = 0; i < plans.length; i++) {
         const plan = plans[i];
-        setProgress(5 + (i / plans.length) * 90,
+        // Render phase: 5% → 80%
+        const phaseRenderStart = 5 + (i / plans.length) * (canMP4 ? 70 : 90);
+        const phaseRenderEnd   = 5 + ((i+1) / plans.length) * (canMP4 ? 70 : 90);
+        setProgress(phaseRenderStart,
             `Render output ${i+1}/${plans.length}...`,
             useMP3 ? `🎵 MP3 Voice | ${plan.segments.length} cảnh` : `Master: ${S.sources[plan.masterIdx].name} | ${plan.segments.length} cảnh`);
         const masterLabel = useMP3 ? `🎵 MP3: "${S.mp3.name}"` : `🎬 Master: "${S.sources[plan.masterIdx].name}"`;
         log(`[#${i+1}] ${masterLabel} | ${plan.segments.length} phân cảnh | ${fmtDur(plan.targetDur)}`);
         try {
+            // 1. Render WebM via MediaRecorder
             const result = await renderMashup(plan, S.sources, bitrate, (prog) => {
-                const base = 5 + (i / plans.length) * 90;
-                const step = (1 / plans.length) * 90;
-                $('process-progress').style.width = (base + prog * step) + '%';
+                setProgress(phaseRenderStart + prog * (phaseRenderEnd - phaseRenderStart));
             }, mp3Url);
             result.id = i + 1;
+
+            // 2. Post-process: remux to MP4 if FFmpeg available
+            if (canMP4) {
+                setProgress(phaseRenderEnd, `Chuyển đổi MP4 (#${i+1})...`, '');
+                try {
+                    const webmBlob = await fetch(result.url).then(r => r.blob());
+                    URL.revokeObjectURL(result.url);  // free WebM blob URL
+                    const mp4Blob = await remuxToMP4(webmBlob, i + 1);
+                    result.url = URL.createObjectURL(mp4Blob);
+                    result.ext = 'mp4';
+                } catch(convErr) {
+                    log(`[#${i+1}] ⚠ Convert lỗi, giữ WebM: ${convErr.message}`, 'log-warn');
+                }
+            }
+
             const baseName = useMP3 ? S.mp3.name.replace(/\.[^.]+$/,'') : S.sources[plan.masterIdx].name.replace(/\.[^.]+$/,'');
             result.name = `mashup_${i+1}_${baseName}.${result.ext}`;
             results.push(result);
             S.results.push(result);
-            log(`[#${i+1}] ✓ Hoàn tất — ${fmtDur(result.duration)}`, 'log-ok');
+            log(`[#${i+1}] ✓ Hoàn tất — ${fmtDur(result.duration)} | ${result.ext.toUpperCase()}`, 'log-ok');
             // Show partial results
             renderResults(results);
         } catch (err) {
@@ -907,7 +1030,7 @@ function renderResults(results) {
                 <div class="variant-meta">
                     <span><i class="fa-regular fa-clock"></i> ${fmtDur(r.duration)}</span>
                     <span><i class="fa-solid fa-film"></i> ${r.segments} cảnh</span>
-                    <span>WebM</span>
+                    <span style="${r.ext==='mp4'?'color:#34d399;font-weight:700':'color:#f59e0b'}">${r.ext==='mp4'?'✅ MP4':'📹 WebM'}</span>
                 </div>
                 <div class="variant-actions">
                     <button class="btn btn-orange btn-sm" onclick="downloadResult('${r.url}','${r.name}')">
