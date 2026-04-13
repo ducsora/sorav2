@@ -2,6 +2,9 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <!-- COI Service Worker: enables SharedArrayBuffer (FFmpeg.wasm) on any host incl. GitHub Pages -->
+    <!-- Must be the FIRST script — registers SW before any resources load -->
+    <script src="coi-serviceworker.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Mashup Engine — SoraVer2</title>
     <meta name="description" content="Tạo video mashup từ nhiều nguồn — ghép hình ảnh ngẫu nhiên từ nhiều video với giọng từ một video chủ ngẫu nhiên.">

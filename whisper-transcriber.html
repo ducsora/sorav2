@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoraVer2 — Whisper Transcriber</title>
+    <meta name="description" content="Bóc băng video bằng Groq Whisper AI — phân đoạn timestamped, dịch thuật với LLaMA.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: 'Inter', sans-serif; }
+
+/* ===== TOOL VARS ===== */
+:root {
+    --pu: #7c3aed;
+    --pu-h: #6d28d9;
+    --pu-light: rgba(124,58,237,.12);
+    --pu-glow:  rgba(124,58,237,.3);
+    --seg-color: #a78bfa;
+    --seg-bg: rgba(124,58,237,.08);
+}
+
+/* ===== APP SHELL ===== */
+.workspace {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* ===== TOOL TOPBAR ===== */
+.tool-topbar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--surface);
+}
+.tool-topbar h1 { font-size:1.15rem; font-weight:700; color:var(--text); margin:0; }
+.tool-topbar p  { font-size:.78rem; color:var(--text-muted); margin:0; }
+.t-icon { width:38px;height:38px;border-radius:9px;background:var(--pu-light);display:flex;align-items:center;justify-content:center;color:var(--pu);font-size:1rem;flex-shrink:0; }
+
+/* API KEY BAR */
+.api-strip {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .55rem 1.25rem;
+    background: rgba(124,58,237,.06);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.api-strip label { font-size:.75rem; color:var(--text-muted); white-space:nowrap; display:flex;align-items:center;gap:.3rem; }
+.api-strip input[type=password] {
+    flex: 1; min-width: 220px;
+    padding: .38rem .75rem;
+    border: 1px solid var(--border); border-radius:6px;
+    background: var(--bg); color:var(--text); font-size:.82rem;
+    outline:none; font-family:'Inter',sans-serif;
+}
+.api-strip input:focus { border-color:var(--pu); }
+.api-strip .note { font-size:.72rem; color:var(--text-muted); }
+
+/* ===== SPLIT LAYOUT ===== */
+.split-body {
+    flex: 1; min-height:0;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    overflow: hidden;
+}
+
+/* ===== LEFT PANEL ===== */
+.left-panel {
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction:column;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.lp-scroll {
+    flex:1; min-height:0; overflow-y:auto;
+    scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+    padding: 1rem;
+    display: flex; flex-direction:column; gap:.9rem;
+}
+.lp-scroll::-webkit-scrollbar { width:4px; }
+.lp-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* STEP HEADERS */
+.step-header {
+    display: flex; align-items: center; gap: .55rem;
+    font-size: .82rem; font-weight: 700; color: var(--text);
+}
+.step-badge {
+    width: 22px; height:22px; border-radius:50%;
+    background: var(--pu); color:#fff;
+    font-size:.72rem; font-weight:700;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+
+/* DROP ZONE */
+.drop-zone {
+    border: 2px dashed var(--border); border-radius:10px;
+    padding: 1.4rem 1rem; text-align:center; cursor:pointer;
+    transition:all .2s; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; gap:.4rem;
+}
+.drop-zone:hover,.drop-zone.drag { border-color:var(--pu); background:var(--pu-light); }
+.drop-zone i { font-size:1.8rem; color:var(--pu); }
+.drop-zone h4 { font-size:.85rem;color:var(--text);margin:0;font-weight:600; }
+.drop-zone p  { font-size:.75rem;color:var(--text-muted);margin:0; }
+
+/* FILE PILL */
+.file-pill {
+    display:none; align-items:center; gap:.55rem;
+    padding:.45rem .75rem; border-radius:8px;
+    background:var(--pu-light); border:1px solid rgba(124,58,237,.3);
+    font-size:.82rem; color:var(--text);
+}
+.file-pill i { color:var(--pu); }
+.file-pill .fname { flex:1; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.file-pill .fsize { font-size:.74rem; color:var(--text-muted); flex-shrink:0; }
+
+/* FORM ITEMS */
+.form-group { display:flex; flex-direction:column; gap:.35rem; }
+.form-group label { font-size:.77rem; font-weight:600; color:var(--text-muted); }
+.form-select {
+    padding:.45rem .65rem; border:1px solid var(--border); border-radius:7px;
+    background:var(--bg); color:var(--text); font-size:.83rem;
+    outline:none; cursor:pointer; font-family:'Inter',sans-serif; width:100%;
+}
+.form-select:focus { border-color:var(--pu); }
+
+/* INFO BOX */
+.info-box {
+    background:rgba(124,58,237,.07); border:1px solid rgba(124,58,237,.2);
+    border-radius:8px; padding:.65rem .85rem;
+    font-size:.78rem; color:var(--text-muted); line-height:1.6;
+}
+.info-box strong { color:var(--seg-color); }
+.info-box .head { font-weight:600; color:var(--pu); display:flex; align-items:center; gap:.4rem; margin-bottom:.3rem; font-size:.8rem; }
+
+/* PROGRESS */
+.prog-wrap { display:none; flex-direction:column; gap:.3rem; }
+.prog-bg { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,var(--pu),#a78bfa); width:0%; transition:width .35s ease; }
+.prog-lbl { font-size:.75rem; color:var(--text-muted); }
+
+/* ERROR */
+.err-box {
+    display:none; align-items:flex-start; gap:.5rem;
+    padding:.6rem .8rem; border-radius:7px;
+    background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+    font-size:.79rem; color:#fca5a5;
+}
+.err-box i { color:#f87171; flex-shrink:0; margin-top:1px; }
+
+/* BUTTONS */
+.btn { padding:.52rem 1rem; border-radius:8px; font-size:.86rem; font-weight:600; cursor:pointer; display:flex;align-items:center;justify-content:center;gap:.5rem; transition:all .18s; border:1px solid transparent; font-family:'Inter',sans-serif; }
+.btn-purple { background:var(--pu);color:#fff;border-color:var(--pu); width:100%; }
+.btn-purple:hover:not(:disabled) { background:var(--pu-h); box-shadow:0 0 22px var(--pu-glow); }
+.btn-purple:disabled { background:#374151;color:#6b7280;border-color:#374151;cursor:not-allowed; }
+.btn-outline { background:transparent;color:var(--text-muted);border-color:var(--border);width:100%;font-size:.8rem; }
+.btn-outline:hover { color:var(--pu);border-color:var(--pu); }
+.btn-sm { padding:.28rem .65rem;font-size:.74rem;font-weight:500;width:auto; }
+.or-sep { display:flex;align-items:center;gap:.6rem;font-size:.75rem;color:var(--text-muted); }
+.or-sep::before,.or-sep::after { content:'';flex:1;height:1px;background:var(--border); }
+
+/* STATUS BADGE */
+.status-row {
+    display:none; align-items:center; justify-content:space-between;
+    padding:.45rem .75rem; border-radius:7px;
+    background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.25);
+}
+.status-done { font-size:.8rem; font-weight:600; color:#10b981; display:flex;align-items:center;gap:.4rem; }
+.status-edit { font-size:.78rem;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:.3rem; }
+.status-edit:hover { color:var(--pu); }
+
+/* FULL TRANSCRIPT (left) */
+.transcript-box {
+    background:var(--bg); border:1px solid var(--border); border-radius:8px;
+    padding:.75rem; font-size:.84rem; color:var(--text); line-height:1.75;
+    white-space:pre-wrap; word-break:break-word; max-height:220px;
+    overflow-y:auto; resize:vertical; scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+}
+.transcript-box::-webkit-scrollbar { width:3px; }
+.transcript-box::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.t-export-row { display:flex;gap:.4rem;flex-wrap:wrap; }
+
+/* ===== RIGHT PANEL ===== */
+.right-panel {
+    display: flex; flex-direction:column;
+    overflow: hidden;
+    background: var(--bg);
+}
+
+/* PREVIEW SECTION */
+.preview-section {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+.preview-header {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:.6rem 1rem;
+    font-size:.83rem;font-weight:600;color:var(--text);
+    border-bottom:1px solid var(--border);
+}
+.preview-header i { font-size:.8rem; color:var(--text-muted); }
+.media-container { padding:.75rem 1rem; }
+.media-container video, .media-container audio {
+    width:100%; border-radius:8px; max-height:200px; background:#000;
+    accent-color:var(--pu);
+}
+
+/* SEGMENTS SECTION */
+.segments-section {
+    flex: 1; min-height:0;
+    display: flex; flex-direction:column;
+    overflow: hidden;
+}
+.seg-header {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:.65rem 1rem;
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+}
+.seg-header-left { display:flex;align-items:center;gap:.6rem;font-size:.83rem;font-weight:600;color:var(--text); }
+.seg-count { min-width:22px;height:22px;border-radius:99px;background:var(--pu);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px; }
+.seg-header-right { display:flex;gap:.4rem; }
+
+/* TRANSLATE CONTROLS in seg header */
+.trans-controls {
+    display:none; align-items:center;gap:.5rem;flex-wrap:wrap;
+    padding:.5rem 1rem; border-bottom:1px solid var(--border);
+    flex-shrink:0; background:var(--surface);
+}
+.trans-controls label { font-size:.75rem;color:var(--text-muted);white-space:nowrap; }
+.trans-controls select { padding:.3rem .55rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.78rem;outline:none; }
+
+/* SEGMENTS LIST */
+.seg-list-wrap {
+    flex:1;min-height:0;overflow-y:auto;
+    padding:.75rem 1rem;
+    display:flex;flex-direction:column;gap:.5rem;
+    scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+.seg-list-wrap::-webkit-scrollbar { width:4px; }
+.seg-list-wrap::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
+
+.seg-item {
+    display:grid;grid-template-columns:80px 1fr 30px;
+    gap:.6rem;align-items:start;
+    padding:.6rem .75rem;border-radius:9px;
+    border:1px solid var(--border);background:var(--surface);
+    cursor:pointer;transition:all .15s;
+}
+.seg-item:hover { border-color:var(--pu);background:var(--pu-light); }
+.seg-item.playing { border-color:var(--pu);background:var(--pu-light);box-shadow:0 0 0 1px var(--pu); }
+
+.seg-time-block { display:flex;flex-direction:column;gap:2px; }
+.seg-t-start { font-size:.82rem;font-weight:700;color:var(--seg-color);font-variant-numeric:tabular-nums; }
+.seg-t-sep { font-size:.7rem;color:var(--text-muted); }
+.seg-t-end { font-size:.72rem;color:var(--text-muted);font-variant-numeric:tabular-nums; }
+
+.seg-content { display:flex;flex-direction:column;gap:.25rem; }
+.seg-orig { font-size:.86rem;color:var(--text);line-height:1.55; }
+.seg-trans { font-size:.79rem;color:var(--seg-color);font-style:italic;line-height:1.45; }
+.seg-trans.loading { color:var(--text-muted);font-style:normal;opacity:.6; }
+
+.seg-play-btn {
+    width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--pu-light);color:var(--pu);font-size:.72rem;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .15s;flex-shrink:0;margin-top:2px;
+}
+.seg-play-btn:hover { background:var(--pu);color:#fff; }
+
+/* EMPTY STATE */
+.empty-state {
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    height:100%;color:var(--text-muted);gap:.6rem;padding:2rem;text-align:center;
+}
+.empty-state i { font-size:2.2rem;opacity:.2; }
+.empty-state p { font-size:.83rem; }
+
+/* RESPONSIVE */
+@media (max-width:860px) {
+    .split-body { grid-template-columns:1fr; grid-template-rows: auto 1fr; }
+    .left-panel { border-right:none; border-bottom:1px solid var(--border); max-height:50vh; }
+}
+</style>
+</head>
+<body data-theme="dark">
+<div class="app-layout">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <div class="logo-text">
+                    <span class="logo-name">SoraVer2</span>
+                    <span class="logo-tagline">AI Workspace</span>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="Tìm công cụ..." id="tool-search">
+        </div>
+        <div class="nav-section">
+            <p class="nav-label">Công cụ chính</p>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item"><div class="nav-icon" style="background:rgba(250,204,21,.15)"><i class="fa-solid fa-house" style="color:#facc15"></i></div><span>Dashboard</span></a>
+                <a href="video.html" class="nav-item"><div class="nav-icon" style="background:rgba(139,92,246,.15)"><i class="fa-solid fa-film" style="color:#8b5cf6"></i></div><span>Video Dubbing</span><span class="nav-badge">New</span></a>
+                <a href="shuffler.html" class="nav-item"><div class="nav-icon" style="background:rgba(16,185,129,.15)"><i class="fa-solid fa-shuffle" style="color:#10b981"></i></div><span>Video Shuffler</span><span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span></a>
+                <a href="mashup.html" class="nav-item"><div class="nav-icon" style="background:rgba(249,115,22,.15)"><i class="fa-solid fa-layer-group" style="color:#f97316"></i></div><span>Video Mashup</span><span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span></a>
+                <a href="gif-maker.html" class="nav-item"><div class="nav-icon" style="background:rgba(6,182,212,.15)"><i class="fa-solid fa-film" style="color:#06b6d4"></i></div><span>GIF Maker Pro</span><span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span></a>
+                <a href="ads-automation.html" class="nav-item"><div class="nav-icon" style="background:rgba(24,119,242,.15)"><i class="fa-brands fa-facebook" style="color:#4d9cf5"></i></div><span>Ads Automation</span><span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span></a>
+                <a href="whisper-transcriber.html" class="nav-item active"><div class="nav-icon" style="background:rgba(124,58,237,.15)"><i class="fa-solid fa-microphone-lines" style="color:#7c3aed"></i></div><span>Whisper Transcriber</span><span class="nav-badge" style="background:rgba(124,58,237,.2);color:#a78bfa">New</span></a>
+            </nav>
+        </div>
+        <div class="nav-section">
+            <p class="nav-label">Sắp ra mắt</p>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item nav-item-disabled"><div class="nav-icon" style="background:rgba(16,185,129,.1)"><i class="fa-solid fa-robot" style="color:#10b981;opacity:.5"></i></div><span style="opacity:.5">AI Chat</span><span class="nav-badge nav-badge-soon">Soon</span></a>
+            </nav>
+        </div>
+        <div class="sidebar-footer">
+            <div class="theme-toggle" id="theme-toggle"><i class="fa-solid fa-sun"></i><span>Chế độ Sáng</span></div>
+            <div class="sidebar-version">v2.0.0</div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main-content">
+        <header class="mobile-header">
+            <div class="logo"><div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div><span class="logo-name">SoraVer2</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <div class="workspace">
+            <!-- Top bar -->
+            <div class="tool-topbar">
+                <div class="t-icon"><i class="fa-solid fa-microphone-lines"></i></div>
+                <div><h1>Whisper Transcriber</h1><p>Nhận diện giọng nói bằng Groq Whisper AI · Phân đoạn timestamped · Dịch thuật với LLaMA</p></div>
+            </div>
+
+            <!-- API strip -->
+            <div class="api-strip">
+                <label><i class="fa-solid fa-key"></i> Groq API Key</label>
+                <input type="password" id="groqKey" placeholder="gsk_... (Miễn phí tại console.groq.com)">
+                <span class="note"><i class="fa-solid fa-circle-info"></i> Groq cấp Whisper large-v3 + LLaMA dịch thuật miễn phí</span>
+            </div>
+
+            <!-- Error -->
+            <div class="err-box" id="errBox" style="margin:.5rem 1rem 0">
+                <i class="fa-solid fa-circle-exclamation"></i><span id="errMsg"></span>
+            </div>
+
+            <!-- Split body -->
+            <div class="split-body">
+
+                <!-- ===== LEFT PANEL ===== -->
+                <div class="left-panel">
+                    <div class="lp-scroll">
+
+                        <!-- STEP 1: Upload -->
+                        <div>
+                            <div class="step-header"><div class="step-badge">1</div> Tải lên video / audio</div>
+                        </div>
+                        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <h4>Kéo thả hoặc click chọn file</h4>
+                            <p>MP4 · MOV · WEBM · MP3 · WAV · M4A · Giới hạn 25MB</p>
+                            <input type="file" id="fileInput" accept="video/*,audio/*" style="display:none">
+                        </div>
+                        <div class="file-pill" id="filePill">
+                            <i class="fa-solid fa-file-audio"></i>
+                            <span class="fname" id="fpName">—</span>
+                            <span class="fsize" id="fpSize"></span>
+                            <button class="btn btn-outline btn-sm" onclick="clearFile()" style="border-color:transparent;padding:.2rem .4rem;"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+
+                        <!-- STEP 2: Config -->
+                        <div>
+                            <div class="step-header"><div class="step-badge">2</div> Chuyển giọng nói → Văn bản</div>
+                        </div>
+
+                        <div class="info-box">
+                            <i class="fa-solid fa-robot" style="color:var(--pu);margin-right:.4rem"></i>
+                            Tự động tách audio → nhận diện bằng <strong>Groq Whisper</strong> · Miễn phí
+                        </div>
+
+                        <div class="form-group">
+                            <label>Dịch vụ nhận diện</label>
+                            <select class="form-select" id="modelSelect">
+                                <option value="whisper-large-v3">Groq Whisper Large v3 (Miễn phí · tốc độ cao)</option>
+                                <option value="whisper-large-v3-turbo">Groq Whisper Large v3 Turbo (Nhanh hơn)</option>
+                                <option value="distil-whisper-large-v3-en">Distil Whisper v3 EN (Chỉ tiếng Anh)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ngôn ngữ nguồn</label>
+                            <select class="form-select" id="langSelect">
+                                <option value="">🔍 Tự động phát hiện</option>
+                                <option value="zh">🇨🇳 Tiếng Trung (Phổ thông)</option>
+                                <option value="yue">🇭🇰 Tiếng Trung (Quảng Đông)</option>
+                                <option value="tl">🇵🇭 Tiếng Philippines (Tagalog)</option>
+                                <option value="en">🇬🇧 Tiếng Anh</option>
+                                <option value="vi">🇻🇳 Tiếng Việt</option>
+                                <option value="ja">🇯🇵 Tiếng Nhật</option>
+                                <option value="ko">🇰🇷 Tiếng Hàn</option>
+                                <option value="id">🇮🇩 Tiếng Indonesia</option>
+                                <option value="th">🇹🇭 Tiếng Thái</option>
+                            </select>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="prog-wrap" id="progWrap">
+                            <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
+                            <span class="prog-lbl" id="progLbl">Đang xử lý...</span>
+                        </div>
+
+                        <button class="btn btn-purple" id="btnStart" disabled onclick="startTranscribe()">
+                            <i class="fa-solid fa-microphone-lines"></i> Bắt đầu Transcribe
+                        </button>
+
+                        <div class="or-sep">hoặc</div>
+                        <button class="btn btn-outline" onclick="loadDemo()">
+                            <i class="fa-solid fa-flask"></i> Tải dữ liệu Demo
+                        </button>
+
+                        <!-- Status -->
+                        <div class="status-row" id="statusRow">
+                            <div class="status-done"><i class="fa-solid fa-circle-check"></i> Hoàn thành</div>
+                            <div class="status-edit" onclick="enableEdit()"><i class="fa-solid fa-pen"></i> Chỉnh sửa</div>
+                        </div>
+
+                        <!-- Full transcript (editable) -->
+                        <div id="transcriptSection" style="display:none">
+                            <div class="step-header" style="margin-bottom:.4rem"><div class="step-badge">3</div> Văn bản đầy đủ</div>
+                            <div class="transcript-box" id="transcriptBox" contenteditable="false"></div>
+                            <div class="t-export-row" style="margin-top:.5rem">
+                                <button class="btn btn-outline btn-sm" onclick="copyFull()"><i class="fa-solid fa-copy"></i> Copy</button>
+                                <button class="btn btn-outline btn-sm" onclick="exportTxt()"><i class="fa-solid fa-download"></i> TXT</button>
+                                <button class="btn btn-outline btn-sm" onclick="exportSrt()"><i class="fa-solid fa-closed-captioning"></i> SRT</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ===== RIGHT PANEL ===== -->
+                <div class="right-panel">
+
+                    <!-- Preview -->
+                    <div class="preview-section" id="previewSection" style="display:none">
+                        <div class="preview-header">
+                            <span><i class="fa-solid fa-circle" style="color:#ef4444;font-size:.5rem"></i> &nbsp;Xem trước</span>
+                            <i class="fa-solid fa-expand" style="cursor:pointer" onclick="toggleFullscreen()"></i>
+                        </div>
+                        <div class="media-container">
+                            <video id="mediaEl" controls style="display:none"></video>
+                            <audio id="audioEl" controls style="display:none"></audio>
+                        </div>
+                    </div>
+
+                    <!-- Segments -->
+                    <div class="segments-section">
+                        <div class="seg-header">
+                            <div class="seg-header-left">
+                                Phân đoạn âm thanh
+                                <span class="seg-count" id="segCount">0</span>
+                            </div>
+                            <div class="seg-header-right">
+                                <button class="btn btn-outline btn-sm" id="btnTranslate" onclick="translateAll()" style="display:none">
+                                    <i class="fa-solid fa-language"></i> Dịch tất cả
+                                </button>
+                                <button class="btn btn-outline btn-sm" id="btnClearTrans" onclick="clearTranslations()" style="display:none;color:#f87171;border-color:#f87171;">
+                                    <i class="fa-solid fa-xmark"></i> Bỏ dịch
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Translation config row -->
+                        <div class="trans-controls" id="transControls">
+                            <label><i class="fa-solid fa-language"></i> Dịch sang</label>
+                            <select id="targetLangSelect">
+                                <option value="Vietnamese">🇻🇳 Tiếng Việt</option>
+                                <option value="English">🇬🇧 Tiếng Anh</option>
+                                <option value="Filipino">🇵🇭 Tiếng Philippines</option>
+                                <option value="Chinese Simplified">🇨🇳 Tiếng Trung</option>
+                                <option value="Japanese">🇯🇵 Tiếng Nhật</option>
+                                <option value="Korean">🇰🇷 Tiếng Hàn</option>
+                            </select>
+                            <label>Model</label>
+                            <select id="llmSelect">
+                                <option value="llama-3.3-70b-versatile">LLaMA 3.3 70B (Chất lượng cao)</option>
+                                <option value="llama-3.1-8b-instant">LLaMA 3.1 8B (Nhanh)</option>
+                                <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+                            </select>
+                        </div>
+
+                        <!-- Progress for translation -->
+                        <div class="prog-wrap" id="transProg" style="padding:.4rem 1rem;flex-shrink:0">
+                            <div class="prog-bg"><div class="prog-fill" id="transFill" style="background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+                            <span class="prog-lbl" id="transLbl"></span>
+                        </div>
+
+                        <div class="seg-list-wrap" id="segListWrap">
+                            <div class="empty-state" id="emptyState">
+                                <i class="fa-solid fa-waveform-lines"></i>
+                                <p>Upload video và nhấn <strong>Bắt đầu Transcribe</strong> để xem phân đoạn âm thanh</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+<script>
+// ===========================
+//  STATE
+// ===========================
+let currentFile = null;
+let segments    = [];
+let fullText    = '';
+let translating = false;
+let mediaObjectURL = null;
+const mediaEl  = document.getElementById('mediaEl');
+const audioEl  = document.getElementById('audioEl');
+
+// ===========================
+//  INIT
+// ===========================
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('groq_api_key') || '';
+    if (saved) document.getElementById('groqKey').value = saved;
+});
+
+// ===========================
+//  FILE
+// ===========================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+
+function loadFile(f) {
+    if (!f) return;
+    currentFile = f;
+    const mb = (f.size / 1024 / 1024).toFixed(2);
+    dropZone.style.display = 'none';
+    const fp = document.getElementById('filePill');
+    fp.style.display = 'flex';
+    document.getElementById('fpName').textContent = f.name;
+    document.getElementById('fpSize').textContent = mb + ' MB' + (parseFloat(mb) > 25 ? ' ⚠️ >25MB' : '');
+    document.getElementById('btnStart').disabled = false;
+    hideErr();
+
+    // Preview
+    if (mediaObjectURL) URL.revokeObjectURL(mediaObjectURL);
+    mediaObjectURL = URL.createObjectURL(f);
+    const isVideo = f.type.startsWith('video/');
+    document.getElementById('previewSection').style.display = 'block';
+    if (isVideo) {
+        mediaEl.src = mediaObjectURL; mediaEl.style.display = 'block';
+        audioEl.style.display = 'none';
+    } else {
+        audioEl.src = mediaObjectURL; audioEl.style.display = 'block';
+        mediaEl.style.display = 'none';
+    }
+}
+
+window.clearFile = function () {
+    currentFile = null;
+    dropZone.style.display = 'flex';
+    document.getElementById('filePill').style.display = 'none';
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('previewSection').style.display = 'none';
+    fileInput.value = '';
+    resetResults();
+};
+
+// ===========================
+//  TRANSCRIBE
+// ===========================
+window.startTranscribe = async function () {
+    if (!currentFile) return;
+    const key = document.getElementById('groqKey').value.trim();
+    if (!key) { showErr('Vui lòng nhập Groq API Key (gsk_...).'); return; }
+    localStorage.setItem('groq_api_key', key);
+
+    const model = document.getElementById('modelSelect').value;
+    const lang  = document.getElementById('langSelect').value;
+
+    setUI('loading');
+    showProg(10, '🎵 Đang gửi file lên Groq Whisper API...');
+
+    try {
+        const form = new FormData();
+        form.append('file', currentFile);
+        form.append('model', model);
+        form.append('response_format', 'verbose_json');
+        form.append('timestamp_granularities[]', 'segment');
+        if (lang) form.append('language', lang);
+
+        showProg(30, `⚙️ Whisper đang phân tích giọng nói... (${model})`);
+
+        const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${key}` },
+            body: form,
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            const msg = err.error?.message || `Lỗi HTTP ${res.status}`;
+            if (res.status === 413) throw new Error('File quá lớn (>25MB). Hãy nén hoặc cắt ngắn video.');
+            if (res.status === 401) throw new Error('Groq API Key không hợp lệ. Kiểm tra lại tại console.groq.com');
+            throw new Error(msg);
+        }
+
+        const data = await res.json();
+        showProg(90, '✅ Xử lý kết quả...');
+
+        fullText = (data.text || '').trim();
+        segments = (data.segments || []).map((s, i) => ({
+            id: i, start: s.start, end: s.end, text: s.text.trim(), translation: null
+        }));
+
+        showProg(100, '✅ Hoàn tất!');
+        setTimeout(() => { document.getElementById('progWrap').style.display = 'none'; }, 1500);
+
+        renderResults();
+        setUI('done');
+
+    } catch (err) {
+        console.error(err);
+        showErr(err.message);
+        document.getElementById('progWrap').style.display = 'none';
+        setUI('idle');
+    }
+};
+
+// ===========================
+//  RENDER
+// ===========================
+function renderResults() {
+    // Full transcript
+    const tb = document.getElementById('transcriptBox');
+    tb.textContent = fullText;
+    document.getElementById('transcriptSection').style.display = 'block';
+    document.getElementById('statusRow').style.display = 'flex';
+
+    // Segments
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('segCount').textContent = segments.length;
+    renderSegments();
+
+    // Show translate button & controls
+    document.getElementById('btnTranslate').style.display = 'flex';
+    document.getElementById('transControls').style.display = 'flex';
+}
+
+function renderSegments() {
+    const wrap = document.getElementById('segListWrap');
+    const empty = document.getElementById('emptyState');
+
+    // Remove old seg items
+    wrap.querySelectorAll('.seg-item').forEach(el => el.remove());
+    if (empty) empty.style.display = 'none';
+
+    segments.forEach((seg) => {
+        const row = document.createElement('div');
+        row.className = 'seg-item';
+        row.id = `seg-${seg.id}`;
+        row.dataset.start = seg.start;
+
+        const transHtml = seg.translation
+            ? `<div class="seg-trans">${esc(seg.translation)}</div>`
+            : `<div class="seg-trans loading">—</div>`;
+
+        row.innerHTML = `
+            <div class="seg-time-block">
+                <div class="seg-t-start">${fmt(seg.start)}</div>
+                <div class="seg-t-sep">→</div>
+                <div class="seg-t-end">${fmt(seg.end)}</div>
+            </div>
+            <div class="seg-content">
+                <div class="seg-orig">${esc(seg.text)}</div>
+                ${transHtml}
+            </div>
+            <button class="seg-play-btn" title="Phát từ đây"><i class="fa-solid fa-play"></i></button>`;
+
+        row.querySelector('.seg-play-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            seekMedia(seg.start);
+        });
+        row.addEventListener('click', () => seekMedia(seg.start));
+        wrap.appendChild(row);
+    });
+}
+
+function updateSegTranslation(segId, text) {
+    const row = document.getElementById(`seg-${segId}`);
+    if (!row) return;
+    const td = row.querySelector('.seg-trans');
+    if (!td) return;
+    td.textContent = text;
+    td.classList.remove('loading');
+}
+
+// ===========================
+//  TRANSLATE (Groq LLaMA)
+// ===========================
+window.translateAll = async function () {
+    if (!segments.length || translating) return;
+    const key   = document.getElementById('groqKey').value.trim();
+    if (!key) { showErr('Cần Groq API Key để dịch.'); return; }
+    const tgt   = document.getElementById('targetLangSelect').value;
+    const llm   = document.getElementById('llmSelect').value;
+    translating = true;
+    document.getElementById('btnTranslate').disabled = true;
+    document.getElementById('btnTranslate').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    document.getElementById('transProg').style.display = 'flex';
+
+    // Mark all loading
+    segments.forEach(s => { s.translation = null; });
+    renderSegments();
+
+    // Batch translate: send all text at once to save API calls
+    const allTexts = segments.map((s, i) => `[${i}] ${s.text}`).join('\n');
+    const prompt = `Dịch từng dòng sau sang ${tgt}. Giữ nguyên định dạng [index]. Chỉ trả về các dòng đã dịch, không giải thích.\n\n${allTexts}`;
+
+    try {
+        showTransProg(20, `🌐 Đang dịch ${segments.length} phân đoạn sang ${tgt}...`);
+
+        const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: llm,
+                messages: [{ role:'user', content: prompt }],
+                temperature: 0.3,
+                max_tokens: 4096,
+            })
+        });
+
+        if (!r.ok) {
+            const e = await r.json().catch(() => ({}));
+            throw new Error(e.error?.message || `Lỗi HTTP ${r.status}`);
+        }
+
+        const d = await r.json();
+        const raw = d.choices?.[0]?.message?.content || '';
+        showTransProg(85, '📝 Đang áp dụng bản dịch...');
+
+        // Parse [index] lines
+        const lines = raw.split('\n');
+        const map = {};
+        lines.forEach(line => {
+            const m = line.match(/^\[(\d+)\]\s*(.+)/);
+            if (m) map[parseInt(m[1])] = m[2].trim();
+        });
+
+        segments.forEach((s, i) => {
+            s.translation = map[i] || '—';
+            updateSegTranslation(s.id, s.translation);
+        });
+
+        showTransProg(100, '✅ Dịch hoàn tất!');
+        document.getElementById('btnClearTrans').style.display = 'flex';
+        setTimeout(() => { document.getElementById('transProg').style.display = 'none'; }, 2000);
+
+    } catch (err) {
+        showErr('Lỗi dịch thuật: ' + err.message);
+        document.getElementById('transProg').style.display = 'none';
+    } finally {
+        translating = false;
+        document.getElementById('btnTranslate').disabled = false;
+        document.getElementById('btnTranslate').innerHTML = '<i class="fa-solid fa-language"></i> Dịch tất cả';
+    }
+};
+
+window.clearTranslations = function () {
+    segments.forEach(s => s.translation = null);
+    renderSegments();
+    document.getElementById('btnClearTrans').style.display = 'none';
+};
+
+// ===========================
+//  MEDIA SEEK
+// ===========================
+function seekMedia(t) {
+    const el = mediaEl.style.display !== 'none' ? mediaEl : audioEl;
+    el.currentTime = t;
+    el.play();
+    document.querySelectorAll('.seg-item').forEach(r => r.classList.remove('playing'));
+    const row = document.querySelector(`.seg-item[data-start="${t}"]`);
+    if (row) { row.classList.add('playing'); row.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+}
+
+// Highlight active segment during playback
+function setupTimeSync() {
+    [mediaEl, audioEl].forEach(el => {
+        el.addEventListener('timeupdate', () => {
+            const t = el.currentTime;
+            let activeIdx = -1;
+            segments.forEach((s, i) => { if (t >= s.start && t < s.end) activeIdx = i; });
+            document.querySelectorAll('.seg-item').forEach((r, i) => r.classList.toggle('playing', i === activeIdx));
+        });
+    });
+}
+setupTimeSync();
+
+// ===========================
+//  DEMO
+// ===========================
+window.loadDemo = function () {
+    fullText = '我买的这支Battle Brush Cleaner的评价真的非常好。因为它很好用来清潔，即使你用水瓶冲洗它也会清潔，它也不错的是它不像其他刷子，它很贴合。';
+    segments = [
+        { id:0, start:0,   end:4,   text:'我买的这支Battle Brush Cleaner的评价真的非常好。', translation:null },
+        { id:1, start:4,   end:6,   text:'因为它很好用来清潔，',                               translation:null },
+        { id:2, start:6,   end:9,   text:'即使你用水瓶冲洗它也会清潔，',                        translation:null },
+        { id:3, start:9,   end:11,  text:'它也不错的是它不像其他刷子，',                        translation:null },
+        { id:4, start:11,  end:14,  text:'它很贴合。',                                         translation:null },
+    ];
+    renderResults();
+    setUI('done');
+};
+
+// ===========================
+//  UI STATE
+// ===========================
+function setUI(state) {
+    const btn = document.getElementById('btnStart');
+    if (state === 'loading') {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang nhận diện...';
+    } else if (state === 'done') {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Transcribe lại';
+    } else {
+        btn.disabled = !currentFile;
+        btn.innerHTML = '<i class="fa-solid fa-microphone-lines"></i> Bắt đầu Transcribe';
+    }
+}
+
+function resetResults() {
+    segments = []; fullText = '';
+    document.getElementById('transcriptSection').style.display = 'none';
+    document.getElementById('statusRow').style.display = 'none';
+    document.getElementById('btnTranslate').style.display = 'none';
+    document.getElementById('btnClearTrans').style.display = 'none';
+    document.getElementById('transControls').style.display = 'none';
+    document.getElementById('transProg').style.display = 'none';
+    document.getElementById('segCount').textContent = '0';
+    document.getElementById('progWrap').style.display = 'none';
+    const wrap = document.getElementById('segListWrap');
+    wrap.querySelectorAll('.seg-item').forEach(el => el.remove());
+    document.getElementById('emptyState').style.display = 'flex';
+}
+
+// ===========================
+//  EDIT TRANSCRIPT
+// ===========================
+window.enableEdit = function () {
+    const tb = document.getElementById('transcriptBox');
+    tb.contentEditable = 'true';
+    tb.focus();
+    tb.addEventListener('blur', () => {
+        tb.contentEditable = 'false';
+        fullText = tb.innerText;
+    }, { once: true });
+};
+
+// ===========================
+//  EXPORT
+// ===========================
+window.copyFull = function () {
+    navigator.clipboard.writeText(fullText).then(() => alert('✅ Đã copy!'));
+};
+
+window.exportTxt = function () {
+    dl('transcript.txt', fullText);
+};
+
+window.exportSrt = function () {
+    const srt = segments.map((s, i) =>
+        `${i+1}\n${srtTime(s.start)} --> ${srtTime(s.end)}\n${s.text}${s.translation ? '\n' + s.translation : ''}`
+    ).join('\n\n');
+    dl('transcript.srt', srt);
+};
+
+function dl(name, content) {
+    const blob = new Blob([content], { type:'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// ===========================
+//  FULLSCREEN
+// ===========================
+window.toggleFullscreen = function () {
+    const el = mediaEl.style.display !== 'none' ? mediaEl : null;
+    if (el && el.requestFullscreen) el.requestFullscreen();
+};
+
+// ===========================
+//  HELPERS
+// ===========================
+function showProg(pct, lbl) {
+    document.getElementById('progWrap').style.display = 'flex';
+    document.getElementById('progFill').style.width = pct + '%';
+    document.getElementById('progLbl').textContent  = lbl;
+}
+
+function showTransProg(pct, lbl) {
+    document.getElementById('transProg').style.display = 'flex';
+    document.getElementById('transFill').style.width   = pct + '%';
+    document.getElementById('transLbl').textContent    = lbl;
+}
+
+function showErr(msg) {
+    const b = document.getElementById('errBox');
+    b.style.display = 'flex';
+    document.getElementById('errMsg').textContent = msg;
+}
+function hideErr() { document.getElementById('errBox').style.display = 'none'; }
+
+function fmt(s) {
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${pad(m)}:${pad(sec)}`;
+}
+
+function srtTime(s) {
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60), ms = Math.round((s%1)*1000);
+    return `${pad(h)}:${pad(m)}:${pad(sec)},${pad(ms,3)}`;
+}
+
+function pad(n, l=2) { return String(n).padStart(l,'0'); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
