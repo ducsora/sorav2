@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Comment Maker — SoraVer2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <style>
+        /* ========== PAGE LAYOUT ========== */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+        .page-header-icon {
+            width: 48px; height: 48px;
+            background: rgba(255, 0, 80, 0.15);
+            border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            color: #fe2c55;
+            flex-shrink: 0;
+        }
+        .page-header h1 { font-size: 1.5rem; font-weight: 700; }
+        .page-header p  { color: var(--text-2); font-size: 0.875rem; margin-top: 2px; }
+
+        /* ========== MAIN GRID ========== */
+        .comment-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .comment-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ========== FORM PANEL ========== */
+        .form-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .form-input {
+            width: 100%;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            padding: 0.65rem 0.875rem;
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+        }
+        .form-input:focus { border-color: #fe2c55; box-shadow: 0 0 0 3px rgba(254,44,85,0.15); }
+        textarea.form-input {
+            resize: vertical;
+            min-height: 100px;
+            line-height: 1.6;
+        }
+
+        /* ========== AVATAR UPLOAD ========== */
+        .avatar-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .avatar-preview-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .avatar-preview {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--border);
+            background: var(--surface-2);
+            display: block;
+        }
+        .avatar-remove-btn {
+            position: absolute;
+            top: -4px; right: -4px;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            font-size: 0.6rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .avatar-remove-btn.visible { display: flex; }
+
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-3);
+            font-size: 0.82rem;
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #fe2c55;
+            background: rgba(254,44,85,0.05);
+            color: var(--text);
+        }
+        .drop-zone i { font-size: 1.3rem; margin-bottom: 0.4rem; display: block; }
+        .drop-zone-btn {
+            display: inline-block;
+            margin-top: 0.4rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            padding: 0.3rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .drop-zone-btn:hover { border-color: #fe2c55; color: #fe2c55; }
+
+        /* ========== STYLE OPTIONS ========== */
+        .style-tabs {
+            display: flex;
+            background: var(--surface-2);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            gap: 3px;
+        }
+        .style-tab {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-2);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .style-tab.active {
+            background: #fe2c55;
+            color: #fff;
+        }
+
+        /* ========== COLOR OPTIONS ========== */
+        .color-opts {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .color-opt {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .color-opt.active { border-color: var(--text); transform: scale(1.15); }
+
+        /* ========== DOWNLOAD BUTTON ========== */
+        .download-btn {
+            width: 100%;
+            padding: 0.9rem;
+            background: #fe2c55;
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: var(--transition);
+        }
+        .download-btn:hover { background: #e0193f; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(254,44,85,0.4); }
+        .download-btn:active { transform: translateY(0); }
+
+        /* ========== PREVIEW PANEL ========== */
+        .preview-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            position: sticky;
+            top: 1.5rem;
+        }
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .preview-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .preview-size-tabs {
+            display: flex;
+            background: var(--surface-2);
+            border-radius: 8px;
+            padding: 2px;
+            gap: 2px;
+        }
+        .preview-size-tab {
+            padding: 0.3rem 0.75rem;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-2);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .preview-size-tab.active {
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+
+        /* ========== CANVAS WRAP ========== */
+        .canvas-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            border-radius: var(--radius);
+            padding: 2rem;
+            min-height: 240px;
+        }
+        #previewCanvas {
+            border-radius: 12px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ========== TIPS ========== */
+        .tips-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tip-chip {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            padding: 0.25rem 0.65rem;
+            font-size: 0.75rem;
+            color: var(--text-3);
+            display: flex; align-items: center; gap: 0.3rem;
+        }
+        .tip-chip i { color: #fe2c55; }
+
+        /* ========== EMOJI PICKER QUICK ========== */
+        .emoji-quick {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .emoji-btn {
+            width: 32px; height: 32px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .emoji-btn:hover { background: var(--border); transform: scale(1.1); }
+
+        /* ========== SLIDER ========== */
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .slider-row input[type=range] {
+            flex: 1;
+            accent-color: #fe2c55;
+            height: 4px;
+        }
+        .slider-val {
+            font-size: 0.8rem;
+            color: var(--text-2);
+            min-width: 36px;
+            text-align: right;
+        }
+
+        /* ========== MULTI EXPORT ========== */
+        .export-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        .export-btn {
+            padding: 0.65rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface-2);
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+            transition: var(--transition);
+        }
+        .export-btn:hover { border-color: #fe2c55; color: #fe2c55; background: rgba(254,44,85,0.07); }
+
+        /* ========== SECTION DIVIDER ========== */
+        .form-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 0.25rem 0;
+        }
+        .form-section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+<div class="app-layout">
+
+    <!-- ══════════════ SIDEBAR ══════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <div class="logo-text">
+                    <span class="logo-name">SoraVer2</span>
+                    <span class="logo-tagline">AI Workspace</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="Tìm công cụ..." id="tool-search">
+        </div>
+
+        <div class="nav-section">
+            <p class="nav-label">Công cụ chính</p>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item" id="nav-home">
+                    <div class="nav-icon" style="background:rgba(250,204,21,0.15)"><i class="fa-solid fa-house" style="color:#facc15"></i></div>
+                    <span>Dashboard</span>
+                </a>
+
+                <!-- Video Tools Accordion -->
+                <div class="nav-group" id="nav-group-video">
+                    <div class="nav-group-header" onclick="toggleNavGroup('nav-group-video')">
+                        <div class="nav-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-clapperboard" style="color:#8b5cf6"></i></div>
+                        <span>Video Tools</span>
+                        <span class="nav-group-count">5</span>
+                        <i class="fa-solid fa-chevron-right nav-group-arrow"></i>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="video.html" class="nav-item nav-child">
+                            <div class="nav-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-film" style="color:#8b5cf6"></i></div>
+                            <span>Video Dubbing</span>
+                            <span class="nav-badge">New</span>
+                        </a>
+                        <a href="shuffler.html" class="nav-item nav-child">
+                            <div class="nav-icon" style="background:rgba(16,185,129,0.15)"><i class="fa-solid fa-shuffle" style="color:#10b981"></i></div>
+                            <span>Video Shuffler</span>
+                            <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span>
+                        </a>
+                        <a href="mashup.html" class="nav-item nav-child">
+                            <div class="nav-icon" style="background:rgba(249,115,22,0.15)"><i class="fa-solid fa-layer-group" style="color:#f97316"></i></div>
+                            <span>Video Mashup</span>
+                            <span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span>
+                        </a>
+                        <a href="whisper-transcriber.html" class="nav-item nav-child">
+                            <div class="nav-icon" style="background:rgba(245,158,11,0.15)"><i class="fa-solid fa-microphone-lines" style="color:#f59e0b"></i></div>
+                            <span>Whisper Transcriber</span>
+                            <span class="nav-badge" style="background:rgba(245,158,11,.2);color:#f59e0b">New</span>
+                        </a>
+                        <a href="gif-maker.html" class="nav-item nav-child">
+                            <div class="nav-icon" style="background:rgba(6,182,212,0.15)"><i class="fa-solid fa-film" style="color:#06b6d4"></i></div>
+                            <span>GIF Maker Pro</span>
+                            <span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span>
+                        </a>
+                    </div>
+                </div>
+
+                <a href="ads-automation.html" class="nav-item" id="nav-ads">
+                    <div class="nav-icon" style="background:rgba(24,119,242,0.15)"><i class="fa-brands fa-facebook" style="color:#4d9cf5"></i></div>
+                    <span>Ads Automation</span>
+                    <span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span>
+                </a>
+                <a href="salary-calculator.html" class="nav-item" id="nav-salary">
+                    <div class="nav-icon" style="background:rgba(16,185,129,0.15)"><i class="fa-solid fa-calculator" style="color:#10b981"></i></div>
+                    <span>Tính Lương</span>
+                    <span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span>
+                </a>
+                <a href="tiktok-comment.html" class="nav-item active" id="nav-tiktok">
+                    <div class="nav-icon" style="background:rgba(254,44,85,0.15)"><i class="fa-brands fa-tiktok" style="color:#fe2c55"></i></div>
+                    <span>TikTok Comment</span>
+                    <span class="nav-badge" style="background:rgba(254,44,85,.2);color:#fe2c55">New</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="nav-section">
+            <p class="nav-label">Sắp ra mắt</p>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item nav-item-disabled">
+                    <div class="nav-icon" style="background:rgba(16,185,129,0.1)"><i class="fa-solid fa-robot" style="color:#10b981;opacity:.5"></i></div>
+                    <span style="opacity:.5">AI Chat</span>
+                    <span class="nav-badge nav-badge-soon">Soon</span>
+                </a>
+                <a href="#" class="nav-item nav-item-disabled">
+                    <div class="nav-icon" style="background:rgba(249,115,22,0.1)"><i class="fa-solid fa-image" style="color:#f97316;opacity:.5"></i></div>
+                    <span style="opacity:.5">Image AI</span>
+                    <span class="nav-badge nav-badge-soon">Soon</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="theme-toggle" id="theme-toggle">
+                <i class="fa-solid fa-sun"></i>
+                <span>Chế độ Sáng</span>
+            </div>
+            <div class="sidebar-version">v2.0.0</div>
+        </div>
+    </aside>
+
+    <!-- ══════════════ MAIN CONTENT ══════════════ -->
+    <main class="main-content">
+        <header class="mobile-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <span class="logo-name">SoraVer2</span>
+            </div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <div class="workspace">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-header-icon">
+                    <i class="fa-brands fa-tiktok"></i>
+                </div>
+                <div>
+                    <h1>TikTok Comment Maker</h1>
+                    <p>Tạo ảnh bình luận TikTok giả lập — chuyên nghiệp, sắc nét, tải xuống ngay</p>
+                </div>
+            </div>
+
+            <!-- Main Grid -->
+            <div class="comment-grid">
+
+                <!-- ═══ LEFT: FORM ═══ -->
+                <div class="form-panel">
+
+                    <!-- Kiểu comment -->
+                    <div>
+                        <label class="form-label">Kiểu hiển thị</label>
+                        <div class="style-tabs">
+                            <button class="style-tab active" data-style="reply" onclick="setStyle('reply',this)">
+                                <i class="fa-solid fa-reply"></i> Trả lời
+                            </button>
+                            <button class="style-tab" data-style="comment" onclick="setStyle('comment',this)">
+                                <i class="fa-regular fa-comment"></i> Bình luận
+                            </button>
+                            <button class="style-tab" data-style="pinned" onclick="setStyle('pinned',this)">
+                                <i class="fa-solid fa-thumbtack"></i> Ghim
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nickname -->
+                    <div>
+                        <label class="form-label" for="inp-nickname">Tên người dùng</label>
+                        <input id="inp-nickname" class="form-input" type="text"
+                               placeholder="Nhập nickname..." value="Lisa Noman"
+                               oninput="renderPreview()">
+                    </div>
+
+                    <!-- Comment text -->
+                    <div>
+                        <label class="form-label" for="inp-comment">Nội dung bình luận</label>
+                        <textarea id="inp-comment" class="form-input"
+                                  placeholder="Nhập nội dung bình luận..."
+                                  oninput="renderPreview()">Akala ko decoration lang siya hahaha, But it actually smells nice! Super worth it! 😂</textarea>
+                        <!-- Quick emoji -->
+                        <div class="emoji-quick" style="margin-top:0.5rem">
+                            <button class="emoji-btn" onclick="addEmoji('😂')">😂</button>
+                            <button class="emoji-btn" onclick="addEmoji('❤️')">❤️</button>
+                            <button class="emoji-btn" onclick="addEmoji('🔥')">🔥</button>
+                            <button class="emoji-btn" onclick="addEmoji('😍')">😍</button>
+                            <button class="emoji-btn" onclick="addEmoji('👍')">👍</button>
+                            <button class="emoji-btn" onclick="addEmoji('😮')">😮</button>
+                            <button class="emoji-btn" onclick="addEmoji('💯')">💯</button>
+                            <button class="emoji-btn" onclick="addEmoji('🎉')">🎉</button>
+                            <button class="emoji-btn" onclick="addEmoji('😭')">😭</button>
+                            <button class="emoji-btn" onclick="addEmoji('✨')">✨</button>
+                        </div>
+                    </div>
+
+                    <hr class="form-divider">
+                    <p class="form-section-label"><i class="fa-solid fa-sliders" style="margin-right:.4rem"></i>Tuỳ chỉnh giao diện</p>
+
+                    <!-- Avatar -->
+                    <div>
+                        <label class="form-label">Ảnh đại diện</label>
+                        <div class="avatar-row">
+                            <div class="avatar-preview-wrap">
+                                <img id="avatar-preview" class="avatar-preview"
+                                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23333'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%23555'/%3E%3Cellipse cx='32' cy='52' rx='18' ry='14' fill='%23555'/%3E%3C/svg%3E"
+                                     alt="Avatar">
+                                <button class="avatar-remove-btn" id="avatar-remove" onclick="removeAvatar()" title="Xoá ảnh">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <div class="drop-zone" id="drop-zone"
+                                 ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"
+                                 onclick="document.getElementById('avatar-input').click()">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                Kéo ảnh vào đây, hoặc
+                                <span class="drop-zone-btn">Chọn ảnh</span>
+                            </div>
+                            <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="onFileSelect(event)">
+                        </div>
+                    </div>
+
+                    <!-- Màu nền -->
+                    <div>
+                        <label class="form-label">Màu nền preview</label>
+                        <div class="color-opts" id="bg-color-opts">
+                            <div class="color-opt active" data-bg="#000000" style="background:#000" onclick="setBg(this)" title="Đen"></div>
+                            <div class="color-opt" data-bg="#18181b" style="background:#18181b" onclick="setBg(this)" title="Tối"></div>
+                            <div class="color-opt" data-bg="#1e293b" style="background:#1e293b" onclick="setBg(this)" title="Navy"></div>
+                            <div class="color-opt" data-bg="#ffffff" style="background:#fff;border-color:var(--border)" onclick="setBg(this)" title="Trắng"></div>
+                            <div class="color-opt" data-bg="#f1f5f9" style="background:#f1f5f9;border-color:var(--border)" onclick="setBg(this)" title="Sáng"></div>
+                            <div class="color-opt" data-bg="transparent" style="background: repeating-conic-gradient(#aaa 0% 25%, #fff 0% 50%) 0 0 / 12px 12px" onclick="setBg(this)" title="Trong suốt"></div>
+                        </div>
+                    </div>
+
+                    <!-- Font size -->
+                    <div>
+                        <label class="form-label">Cỡ chữ bình luận</label>
+                        <div class="slider-row">
+                            <input type="range" id="font-size-slider" min="14" max="40" value="22" oninput="updateFontSize(this.value)">
+                            <span class="slider-val" id="font-size-val">22px</span>
+                        </div>
+                    </div>
+
+                    <hr class="form-divider">
+
+                    <!-- Download -->
+                    <button class="download-btn" onclick="downloadPNG()">
+                        <i class="fa-solid fa-download"></i>
+                        Tải Ảnh Xuống (PNG)
+                    </button>
+                    <div class="export-grid">
+                        <button class="export-btn" onclick="downloadPNG('wide')">
+                            <i class="fa-solid fa-expand"></i> Rộng (16:9)
+                        </button>
+                        <button class="export-btn" onclick="downloadPNG('square')">
+                            <i class="fa-regular fa-square"></i> Vuông (1:1)
+                        </button>
+                        <button class="export-btn" onclick="downloadPNG('story')">
+                            <i class="fa-solid fa-mobile-screen"></i> Story (9:16)
+                        </button>
+                        <button class="export-btn" onclick="copyToClipboard()">
+                            <i class="fa-regular fa-copy"></i> Copy ảnh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ RIGHT: PREVIEW ═══ -->
+                <div class="preview-panel">
+                    <div class="preview-header">
+                        <span class="preview-title"><i class="fa-regular fa-eye" style="margin-right:.4rem"></i>Preview</span>
+                        <div class="preview-size-tabs">
+                            <button class="preview-size-tab active" data-size="auto" onclick="setPreviewSize('auto',this)">Auto</button>
+                            <button class="preview-size-tab" data-size="wide" onclick="setPreviewSize('wide',this)">Rộng</button>
+                            <button class="preview-size-tab" data-size="narrow" onclick="setPreviewSize('narrow',this)">Hẹp</button>
+                        </div>
+                    </div>
+
+                    <div class="canvas-wrap" id="canvas-wrap">
+                        <canvas id="previewCanvas"></canvas>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="tips-row">
+                        <div class="tip-chip"><i class="fa-solid fa-lightbulb"></i> Nhấn vào emoji để chèn nhanh</div>
+                        <div class="tip-chip"><i class="fa-solid fa-lightbulb"></i> Kéo thả ảnh avatar trực tiếp</div>
+                        <div class="tip-chip"><i class="fa-solid fa-lightbulb"></i> Chọn size trước khi tải xuống</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    /* ══════════════════════════════════
+       STATE
+    ══════════════════════════════════ */
+    const state = {
+        nickname: 'Lisa Noman',
+        comment: 'Akala ko decoration lang siya hahaha, But it actually smells nice! Super worth it! 😂',
+        avatarImg: null,          // HTMLImageElement or null
+        style: 'reply',           // reply | comment | pinned
+        bgColor: '#000000',
+        fontSize: 22,
+        previewSize: 'auto',      // auto | wide | narrow
+        likes: Math.floor(Math.random() * 9000) + 500,
+        verified: false,
+    };
+
+    /* ══════════════════════════════════
+       AVATAR MANAGEMENT
+    ══════════════════════════════════ */
+    const DEFAULT_AVATAR_SRC = document.getElementById('avatar-preview').src;
+
+    function loadAvatarFromFile(file) {
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                state.avatarImg = img;
+                document.getElementById('avatar-preview').src = e.target.result;
+                document.getElementById('avatar-remove').classList.add('visible');
+                renderPreview();
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    window.removeAvatar = function () {
+        state.avatarImg = null;
+        document.getElementById('avatar-preview').src = DEFAULT_AVATAR_SRC;
+        document.getElementById('avatar-remove').classList.remove('visible');
+        renderPreview();
+    };
+
+    window.onFileSelect = e => loadAvatarFromFile(e.target.files[0]);
+    window.onDragOver  = e => { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); };
+    window.onDragLeave = () => document.getElementById('drop-zone').classList.remove('drag-over');
+    window.onDrop = e => {
+        e.preventDefault();
+        document.getElementById('drop-zone').classList.remove('drag-over');
+        loadAvatarFromFile(e.dataTransfer.files[0]);
+    };
+
+    /* ══════════════════════════════════
+       UI CONTROLS
+    ══════════════════════════════════ */
+    window.setStyle = function (s, btn) {
+        state.style = s;
+        document.querySelectorAll('.style-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderPreview();
+    };
+
+    window.setBg = function (el) {
+        state.bgColor = el.dataset.bg;
+        document.querySelectorAll('.color-opt').forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        renderPreview();
+    };
+
+    window.updateFontSize = function (val) {
+        state.fontSize = parseInt(val);
+        document.getElementById('font-size-val').textContent = val + 'px';
+        renderPreview();
+    };
+
+    window.setPreviewSize = function (size, btn) {
+        state.previewSize = size;
+        document.querySelectorAll('.preview-size-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderPreview();
+    };
+
+    window.addEmoji = function (emoji) {
+        const ta = document.getElementById('inp-comment');
+        const start = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.slice(0, start) + emoji + ta.value.slice(end);
+        ta.selectionStart = ta.selectionEnd = start + emoji.length;
+        ta.focus();
+        state.comment = ta.value;
+        renderPreview();
+    };
+
+    // Live input binding
+    document.getElementById('inp-nickname').addEventListener('input', e => { state.nickname = e.target.value; renderPreview(); });
+    document.getElementById('inp-comment').addEventListener('input',  e => { state.comment  = e.target.value; renderPreview(); });
+
+    /* ══════════════════════════════════
+       CANVAS RENDER ENGINE
+    ══════════════════════════════════ */
+    const SCALE = 2; // HiDPI
+
+    function getCanvasSize() {
+        const size = state.previewSize;
+        if (size === 'wide')   return { w: 800, h: 450 };
+        if (size === 'narrow') return { w: 400, h: 300 };
+        // auto — fit to content
+        return { w: 560, h: null }; // h computed after text wrap
+    }
+
+    // Draw rounded rectangle
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    // Draw circle-clipped avatar
+    function drawAvatar(ctx, x, y, r, img) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + r, y + r, r, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        if (img) {
+            // cover fit
+            const side = Math.min(img.width, img.height);
+            const sx = (img.width  - side) / 2;
+            const sy = (img.height - side) / 2;
+            ctx.drawImage(img, sx, sy, side, side, x, y, r * 2, r * 2);
+        } else {
+            // placeholder gradient
+            const grd = ctx.createLinearGradient(x, y, x + r * 2, y + r * 2);
+            grd.addColorStop(0, '#fe2c55');
+            grd.addColorStop(1, '#25f4ee');
+            ctx.fillStyle = grd;
+            ctx.fillRect(x, y, r * 2, r * 2);
+            // person icon
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.beginPath();
+            ctx.arc(x + r, y + r * 0.75, r * 0.38, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + r, y + r * 1.65, r * 0.5, r * 0.4, 0, 0, Math.PI);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    // Wrap text, returning lines[]
+    function wrapText(ctx, text, maxWidth) {
+        const lines = [];
+        // Split by newline first
+        const paragraphs = text.split('\n');
+        paragraphs.forEach(para => {
+            if (para === '') { lines.push(''); return; }
+            let words = [...para]; // character-by-character for CJK support
+            // Actually split by word boundaries for latin, keep CJK chars individually
+            const tokens = para.match(/[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]|[^\s]+|\s+/g) || [''];
+            let line = '';
+            tokens.forEach(tok => {
+                const test = line + tok;
+                if (ctx.measureText(test).width > maxWidth && line !== '') {
+                    lines.push(line.trimEnd());
+                    line = tok.trimStart();
+                } else {
+                    line = test;
+                }
+            });
+            if (line) lines.push(line.trimEnd());
+        });
+        return lines;
+    }
+
+    // Draw emoji-aware text (emojis render via fillText since Canvas supports them natively)
+    function drawText(ctx, text, x, y) {
+        ctx.fillText(text, x, y);
+    }
+
+    window.renderPreview = function () {
+        state.nickname = document.getElementById('inp-nickname').value;
+        state.comment  = document.getElementById('inp-comment').value;
+
+        const canvas = document.getElementById('previewCanvas');
+        const { w: baseW } = getCanvasSize();
+
+        // ── Measure first on offscreen canvas ──
+        const off = document.createElement('canvas');
+        const octx = off.getContext('2d');
+
+        const PAD    = 28;
+        const AVAT_R = 24;      // avatar radius
+        const AVAT_D = AVAT_R * 2;
+        const AVAT_GAP = 14;
+        const bubbleX  = PAD + AVAT_D + AVAT_GAP;
+        const bubbleW  = baseW - bubbleX - PAD;
+        const BPAD     = 16;    // inner bubble padding
+
+        // header line (style label)
+        const headerFont  = `500 12px Inter, sans-serif`;
+        const nickFont    = `700 14px Inter, sans-serif`;
+        const commentFont = `700 ${state.fontSize}px Inter, sans-serif`;
+        const metaFont    = `400 12px Inter, sans-serif`;
+
+        // Comment text wrap
+        octx.font = commentFont;
+        const commentLines = wrapText(octx, state.comment, bubbleW - BPAD * 2);
+
+        const lineH     = state.fontSize * 1.4;
+        const headerH   = state.style !== 'comment' ? 20 : 0;
+        const nickH     = 20;
+        const commentH  = commentLines.length * lineH;
+        const metaH     = 28;
+        const bubbleH   = headerH + nickH + commentH + metaH + BPAD * 2 + 8;
+
+        const totalH = Math.max(AVAT_D + PAD * 2, bubbleH + PAD * 2);
+
+        // Final canvas size
+        const finalW = baseW;
+        const finalH = state.previewSize !== 'auto' ? getCanvasSize().h || totalH : totalH;
+
+        canvas.width  = finalW * SCALE;
+        canvas.height = finalH * SCALE;
+        canvas.style.width  = finalW + 'px';
+        canvas.style.height = finalH + 'px';
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(SCALE, SCALE);
+
+        /* ── Background ── */
+        const isTransparent = state.bgColor === 'transparent';
+        if (!isTransparent) {
+            ctx.fillStyle = state.bgColor;
+            ctx.fillRect(0, 0, finalW, finalH);
+        }
+
+        const centerY = finalH / 2;
+
+        /* ── Avatar ── */
+        const avatY = centerY - AVAT_R;
+        drawAvatar(ctx, PAD, avatY, AVAT_R, state.avatarImg);
+
+        /* ── Bubble ── */
+        const bubbleY = centerY - bubbleH / 2;
+        const isDarkBg = state.bgColor === '#000000' || state.bgColor === '#18181b' || state.bgColor === '#1e293b';
+        const bubbleBg = isDarkBg ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+        const bubbleBorder = isDarkBg ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+        const textColor   = isDarkBg ? '#ffffff' : '#0a0a0a';
+        const subColor    = isDarkBg ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
+        const headerColor = isDarkBg ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
+
+        // Bubble background
+        roundRect(ctx, bubbleX, bubbleY, bubbleW, bubbleH, 16);
+        ctx.fillStyle = bubbleBg;
+        ctx.fill();
+        ctx.strokeStyle = bubbleBorder;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Tail / arrow (pointing left)
+        ctx.beginPath();
+        ctx.moveTo(bubbleX, bubbleY + 20);
+        ctx.lineTo(bubbleX - 8, bubbleY + 14);
+        ctx.lineTo(bubbleX, bubbleY + 28);
+        ctx.fillStyle = bubbleBg;
+        ctx.fill();
+
+        let cy = bubbleY + BPAD;
+
+        // Header label
+        if (state.style === 'reply') {
+            ctx.font = headerFont;
+            ctx.fillStyle = headerColor;
+            ctx.textBaseline = 'middle';
+            const label = `↩ Trả lời bình luận của ${state.nickname}`;
+            ctx.fillText(label, bubbleX + BPAD, cy + 8);
+            cy += headerH + 4;
+        } else if (state.style === 'pinned') {
+            ctx.font = headerFont;
+            ctx.fillStyle = '#fe2c55';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📌 Bình luận được ghim', bubbleX + BPAD, cy + 8);
+            cy += headerH + 4;
+        }
+
+        // Nickname row
+        ctx.textBaseline = 'middle';
+        ctx.font = nickFont;
+        ctx.fillStyle = textColor;
+        const nickW = ctx.measureText(state.nickname).width;
+        ctx.fillText(state.nickname, bubbleX + BPAD, cy + 10);
+
+        // Verified tick (optional)
+        if (state.verified) {
+            ctx.font = `500 12px Inter`;
+            ctx.fillStyle = '#20d5ec';
+            ctx.fillText('✓', bubbleX + BPAD + nickW + 6, cy + 10);
+        }
+        cy += nickH + 4;
+
+        // Comment text
+        ctx.font = commentFont;
+        ctx.fillStyle = textColor;
+        ctx.textBaseline = 'top';
+        commentLines.forEach((line, i) => {
+            drawText(ctx, line, bubbleX + BPAD, cy + i * lineH);
+        });
+        cy += commentH + 8;
+
+        // Meta: time + likes + reply
+        ctx.font = metaFont;
+        ctx.fillStyle = subColor;
+        ctx.textBaseline = 'middle';
+        const metaY = cy + metaH / 2 - 4;
+        ctx.fillText('2 giờ trước', bubbleX + BPAD, metaY);
+
+        // Heart icon (draw manually)
+        const heartX = bubbleX + BPAD + 90;
+        ctx.font = `13px Inter`;
+        ctx.fillStyle = isDarkBg ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)';
+        ctx.fillText(`❤  ${formatLikes(state.likes)}`, heartX, metaY);
+
+        // Reply
+        ctx.fillText('Trả lời', heartX + 80, metaY);
+
+        /* ── TikTok-style like button on the right ── */
+        const likeX = bubbleX + bubbleW - BPAD - 24;
+        const likeY = bubbleY + bubbleH / 2 - 16;
+
+        // Heart circle
+        ctx.beginPath();
+        ctx.arc(likeX, likeY, 14, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fill();
+        ctx.font = '14px serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText('♡', likeX, likeY);
+        ctx.textAlign = 'left';
+
+        // Likes count below heart
+        ctx.font = `600 10px Inter`;
+        ctx.fillStyle = subColor;
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'center';
+        ctx.fillText(formatLikes(state.likes), likeX, likeY + 18);
+        ctx.textAlign = 'left';
+
+        /* ── Watermark ── */
+        ctx.font = `400 10px Inter`;
+        ctx.fillStyle = isDarkBg ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = 'right';
+        ctx.fillText('SoraVer2 — TikTok Comment Maker', finalW - 10, finalH - 6);
+        ctx.textAlign = 'left';
+    };
+
+    function formatLikes(n) {
+        if (n >= 1000) return (n / 1000).toFixed(1).replace('.0','') + 'K';
+        return String(n);
+    }
+
+    /* ══════════════════════════════════
+       DOWNLOAD & EXPORT
+    ══════════════════════════════════ */
+    function renderForSize(targetSize) {
+        const prev = state.previewSize;
+        state.previewSize = targetSize;
+        renderPreview();
+        state.previewSize = prev;
+    }
+
+    window.downloadPNG = function (size = 'auto') {
+        renderForSize(size);
+        setTimeout(() => {
+            const canvas = document.getElementById('previewCanvas');
+            const link = document.createElement('a');
+            const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+            link.download = `tiktok-comment-${ts}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('Đã tải ảnh xuống!', 'success');
+            // restore
+            renderPreview();
+        }, 50);
+    };
+
+    window.copyToClipboard = async function () {
+        try {
+            renderPreview();
+            await new Promise(r => setTimeout(r, 50));
+            const canvas = document.getElementById('previewCanvas');
+            canvas.toBlob(async blob => {
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    showToast('Đã copy ảnh vào clipboard!', 'success');
+                } catch {
+                    showToast('Trình duyệt chưa hỗ trợ copy ảnh. Hãy dùng nút Tải xuống.', 'warning');
+                }
+            });
+        } catch {
+            showToast('Không thể copy ảnh.', 'error');
+        }
+    };
+
+    /* ══════════════════════════════════
+       INIT
+    ══════════════════════════════════ */
+    renderPreview();
+
+})();
+</script>
+</body>
+</html>

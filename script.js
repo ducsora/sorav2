@@ -54,10 +54,76 @@
         if (!input) return;
         input.addEventListener('input', () => {
             const q = input.value.toLowerCase();
-            document.querySelectorAll('.nav-item').forEach(item => {
-                const text = item.querySelector('span')?.textContent?.toLowerCase() || '';
-                item.style.display = text.includes(q) ? '' : 'none';
+            // Search inside both nav-items and nav-group-headers
+            document.querySelectorAll('.nav-item, .nav-group').forEach(el => {
+                if (el.classList.contains('nav-group')) {
+                    const children = el.querySelectorAll('.nav-child');
+                    let anyMatch = false;
+                    children.forEach(child => {
+                        const text = child.querySelector('span')?.textContent?.toLowerCase() || '';
+                        const match = text.includes(q);
+                        child.style.display = match ? '' : 'none';
+                        if (match) anyMatch = true;
+                    });
+                    el.style.display = anyMatch || q === '' ? '' : 'none';
+                    if (anyMatch && q !== '') el.classList.add('open');
+                } else {
+                    const text = el.querySelector('span')?.textContent?.toLowerCase() || '';
+                    el.style.display = text.includes(q) ? '' : 'none';
+                }
             });
+        });
+    }
+
+    /* ——— Accordion Nav Group ——— */
+    window.toggleNavGroup = function(groupId) {
+        const group = document.getElementById(groupId);
+        if (!group) return;
+        const isOpen = group.classList.contains('open');
+        // Close all groups first
+        document.querySelectorAll('.nav-group.open').forEach(g => {
+            if (g.id !== groupId) g.classList.remove('open');
+        });
+        // Toggle current
+        group.classList.toggle('open', !isOpen);
+        // Persist state
+        const state = JSON.parse(localStorage.getItem('sorav2-nav-groups') || '{}');
+        state[groupId] = !isOpen;
+        localStorage.setItem('sorav2-nav-groups', JSON.stringify(state));
+    };
+
+    function initNavGroups() {
+        const currentFile = location.pathname.split('/').pop() || 'index.html';
+
+        // Map: which group each page belongs to
+        const pageToGroup = {
+            'video.html':               'nav-group-video',
+            'shuffler.html':            'nav-group-video',
+            'mashup.html':              'nav-group-video',
+            'whisper-transcriber.html': 'nav-group-video',
+            'gif-maker.html':           'nav-group-video',
+            'tiktok-comment.html':      null, // top-level, no group
+        };
+
+        // Auto-open group if current page is inside it
+        const activeGroup = pageToGroup[currentFile];
+        if (activeGroup) {
+            const group = document.getElementById(activeGroup);
+            if (group) group.classList.add('open');
+        } else {
+            // Restore saved states for other pages
+            const state = JSON.parse(localStorage.getItem('sorav2-nav-groups') || '{}');
+            Object.entries(state).forEach(([id, open]) => {
+                if (open) document.getElementById(id)?.classList.add('open');
+            });
+        }
+
+        // Mark active nav item based on current page
+        document.querySelectorAll('.nav-item').forEach(item => {
+            const href = item.getAttribute('href');
+            if (href && href.split('/').pop() === currentFile) {
+                item.classList.add('active');
+            }
         });
     }
 
@@ -86,5 +152,6 @@
     initTheme();
     initMobileMenu();
     initSidebarSearch();
+    initNavGroups();
 
 })();

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính Lương — SoraVer2</title>
+    <meta name="description" content="Công cụ tính lương tổng hợp: lương CB, KPI, OT, phụ cấp và các khoản giảm trừ chuẩn doanh nghiệp Việt Nam.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root { --sal:#10b981; --sal-g:rgba(16,185,129,.2); --sal-d:rgba(16,185,129,.08); --red:#ef4444; --red-g:rgba(239,68,68,.12); }
+        .sal-ws { padding:1.5rem; max-width:1440px; margin:0 auto; }
+        .ph { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
+        .ph-l { display:flex; align-items:center; gap:1rem; }
+        .ph-icon { width:48px; height:48px; border-radius:12px; background:var(--sal-d); display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:var(--sal); }
+        .ph h1 { font-size:1.5rem; font-weight:700; margin:0; }
+        .ph p { font-size:.84rem; color:var(--text-2); margin:0; }
+        .ph-r { display:flex; gap:.6rem; flex-wrap:wrap; }
+
+        /* Layout */
+        .sal-layout { display:grid; grid-template-columns:420px 1fr; gap:1.5rem; align-items:start; }
+        @media(max-width:1100px){ .sal-layout{ grid-template-columns:1fr; } }
+
+        /* Cards */
+        .sc { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.25rem; margin-bottom:1rem; }
+        .sch { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; }
+        .sch i { color:var(--sal); width:18px; text-align:center; }
+        .sch h3 { font-size:.9rem; font-weight:600; margin:0; }
+
+        /* Form */
+        .fg { margin-bottom:.75rem; }
+        .fg label { display:block; font-size:.77rem; font-weight:600; color:var(--text-2); margin-bottom:.35rem; }
+        .fi { width:100%; padding:.55rem .75rem; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.88rem; font-family:inherit; box-sizing:border-box; transition:border-color .2s; }
+        .fi:focus { outline:none; border-color:var(--sal); box-shadow:0 0 0 3px var(--sal-g); }
+        .fh { font-size:.69rem; color:var(--text-3); margin:.2rem 0 0; display:block; }
+        .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:.625rem; margin-bottom:.75rem; }
+        .ig { position:relative; }
+        .ip { position:absolute; left:.75rem; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:.75rem; pointer-events:none; }
+        .is { position:absolute; right:.75rem; top:50%; transform:translateY(-50%); color:var(--text-3); font-size:.72rem; pointer-events:none; }
+        .ig .fi { padding-left:2.4rem; }
+        .ig.has-s .fi { padding-right:2.8rem; }
+
+        .sdiv { display:flex; align-items:center; gap:.5rem; margin:.5rem 0 .875rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-3); }
+        .sdiv::before,.sdiv::after { content:''; flex:1; height:1px; background:var(--border); }
+
+        /* Buttons */
+        .btn-sal { background:linear-gradient(135deg,#10b981,#059669); color:#fff; padding:.7rem 1.5rem; border-radius:10px; font-weight:700; font-size:.9rem; border:none; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:.5rem; width:100%; justify-content:center; }
+        .btn-sal:hover { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 6px 20px rgba(16,185,129,.4); }
+        .btn-g { background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--text-2); padding:.55rem 1rem; border-radius:8px; font-size:.82rem; font-weight:600; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:.4rem; }
+        .btn-g:hover { background:rgba(255,255,255,.1); color:var(--text); }
+        .btn-row { display:flex; gap:.625rem; margin-top:1rem; }
+        .btn-row .btn-g { flex:1; justify-content:center; }
+
+        /* Result hero */
+        .res-hero { background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(5,150,105,.05)); border:1px solid rgba(16,185,129,.28); border-radius:16px; padding:1.75rem 1.5rem; margin-bottom:1rem; text-align:center; position:relative; overflow:hidden; }
+        .res-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(16,185,129,.15),transparent 70%); pointer-events:none; }
+        .res-hero-label { font-size:.75rem; font-weight:700; color:var(--sal); text-transform:uppercase; letter-spacing:.8px; margin-bottom:.5rem; display:flex; align-items:center; justify-content:center; gap:.4rem; }
+        .res-hero-amt { font-size:2.8rem; font-weight:800; color:var(--text); letter-spacing:-1.5px; line-height:1; }
+        .res-hero-amt .unit { font-size:1rem; font-weight:600; color:var(--text-2); margin-left:.3rem; }
+        .res-hero-sub { font-size:.78rem; color:var(--text-2); margin-top:.6rem; }
+
+        /* Stats chips */
+        .chips { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:1rem; }
+        .chip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:.875rem 1rem; }
+        .chip-label { font-size:.7rem; color:var(--text-3); font-weight:500; margin-bottom:.2rem; }
+        .chip-val { font-size:1.05rem; font-weight:700; }
+        .chip-val.g { color:var(--sal); }
+        .chip-val.r { color:var(--red); }
+        .chip-val.p { color:#8b5cf6; }
+        .chip-val.o { color:#f97316; }
+
+        /* Chart */
+        .chart-area { display:flex; align-items:center; gap:1.5rem; margin-bottom:1rem; }
+        .chart-wrap { position:relative; width:160px; height:160px; flex-shrink:0; }
+        .chart-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
+        .chart-center-lbl { font-size:.65rem; color:var(--text-3); display:block; }
+        .chart-center-val { font-size:.9rem; font-weight:700; color:var(--text); display:block; }
+        .legend { display:flex; flex-direction:column; gap:.475rem; flex:1; }
+        .li { display:flex; align-items:center; gap:.5rem; font-size:.77rem; }
+        .li-dot { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+        .li-label { color:var(--text-2); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .li-val { color:var(--text); font-weight:600; text-align:right; }
+        .li-pct { color:var(--text-3); font-size:.68rem; min-width:32px; text-align:right; }
+
+        /* Breakdown table */
+        .bt { width:100%; border-collapse:collapse; font-size:.83rem; }
+        .bt-head { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-3); padding:.6rem .5rem .35rem; display:flex; align-items:center; gap:.4rem; }
+        .bt tr { border-bottom:1px solid var(--border); }
+        .bt tr:last-child { border-bottom:none; }
+        .bt td { padding:.55rem .5rem; }
+        .bt td:last-child { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+        .bt .r-inc td:last-child { color:var(--sal); }
+        .bt .r-ded td:last-child { color:var(--red); }
+        .bt .r-tot { background:rgba(16,185,129,.05); }
+        .bt .r-tot td { font-weight:700; }
+        .bt .r-tot td:last-child { color:var(--sal); }
+        .bt .r-tot-d { background:var(--red-g); }
+        .bt .r-tot-d td { font-weight:700; }
+        .bt .r-tot-d td:last-child { color:var(--red); }
+        .bt .r-net td { font-weight:800; font-size:.95rem; background:rgba(16,185,129,.08); }
+        .bt .r-net td:last-child { color:var(--sal); font-size:1rem; }
+        .indent td:first-child { padding-left:1.25rem; color:var(--text-3); font-size:.8rem; }
+
+        /* Empty state */
+        .empty { text-align:center; padding:3rem 1rem; color:var(--text-3); }
+        .empty i { font-size:3rem; opacity:.2; display:block; margin-bottom:.75rem; color:var(--sal); }
+        .empty p { font-size:.88rem; }
+
+        /* Month tag */
+        .mtag { display:inline-flex; align-items:center; gap:.35rem; background:var(--sal-g); border:1px solid rgba(16,185,129,.3); color:var(--sal); font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:99px; }
+
+        /* Badge */
+        .badge-g { background:rgba(16,185,129,.15); color:var(--sal); border:1px solid rgba(16,185,129,.25); padding:2px 8px; border-radius:99px; font-size:.7rem; font-weight:700; }
+
+        /* Highlight row */
+        .bt tr.r-cb td:first-child::before { content:''; display:inline-block; width:8px; height:8px; border-radius:2px; background:#8b5cf6; margin-right:6px; vertical-align:middle; }
+        .bt tr.r-kpi-r td:first-child::before { content:''; display:inline-block; width:8px; height:8px; border-radius:2px; background:#facc15; margin-right:6px; vertical-align:middle; }
+        .bt tr.r-ot-r td:first-child::before { content:''; display:inline-block; width:8px; height:8px; border-radius:2px; background:#f97316; margin-right:6px; vertical-align:middle; }
+        .bt tr.r-att-r td:first-child::before { content:''; display:inline-block; width:8px; height:8px; border-radius:2px; background:#10b981; margin-right:6px; vertical-align:middle; }
+        .bt tr.r-res-r td:first-child::before { content:''; display:inline-block; width:8px; height:8px; border-radius:2px; background:#06b6d4; margin-right:6px; vertical-align:middle; }
+
+        @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation:fadeUp .3s ease; }
+
+        /* Preset row */
+        .preset-row { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+        .preset-btn { font-size:.72rem; font-weight:600; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text-2); cursor:pointer; transition:all .15s; }
+        .preset-btn:hover { border-color:var(--sal); color:var(--sal); background:var(--sal-d); }
+
+        /* Tooltip */
+        .tip { position:relative; display:inline-block; }
+        .tip::after { content:attr(data-tip); position:absolute; bottom:100%; left:50%; transform:translateX(-50%); background:#1e1e24; border:1px solid var(--border); color:var(--text-2); font-size:.68rem; padding:4px 8px; border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .2s; z-index:10; margin-bottom:4px; }
+        .tip:hover::after { opacity:1; }
+    </style>
+</head>
+<body data-theme="dark">
+<div class="app-layout">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                <div class="logo-text">
+                    <span class="logo-name">SoraVer2</span>
+                    <span class="logo-tagline">AI Workspace</span>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-search"><i class="fa-solid fa-search"></i><input type="text" placeholder="Tìm công cụ..." id="tool-search"></div>
+        <div class="nav-section">
+            <p class="nav-label">Công cụ chính</p>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item"><div class="nav-icon" style="background:rgba(250,204,21,.15)"><i class="fa-solid fa-house" style="color:#facc15"></i></div><span>Dashboard</span></a>
+                <div class="nav-group" id="nav-group-video">
+                    <div class="nav-group-header" onclick="toggleNavGroup('nav-group-video')">
+                        <div class="nav-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-clapperboard" style="color:#8b5cf6"></i></div>
+                        <span>Video Tools</span>
+                        <span class="nav-group-count">5</span>
+                        <i class="fa-solid fa-chevron-right nav-group-arrow"></i>
+                    </div>
+                    <div class="nav-group-items">
+                        <a href="video.html" class="nav-item nav-child"><div class="nav-icon" style="background:rgba(139,92,246,.15)"><i class="fa-solid fa-film" style="color:#8b5cf6"></i></div><span>Video Dubbing</span><span class="nav-badge">New</span></a>
+                        <a href="shuffler.html" class="nav-item nav-child"><div class="nav-icon" style="background:rgba(16,185,129,.15)"><i class="fa-solid fa-shuffle" style="color:#10b981"></i></div><span>Video Shuffler</span><span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span></a>
+                        <a href="mashup.html" class="nav-item nav-child"><div class="nav-icon" style="background:rgba(249,115,22,.15)"><i class="fa-solid fa-layer-group" style="color:#f97316"></i></div><span>Video Mashup</span><span class="nav-badge" style="background:rgba(249,115,22,.2);color:#f97316">New</span></a>
+                        <a href="whisper-transcriber.html" class="nav-item nav-child"><div class="nav-icon" style="background:rgba(245,158,11,.15)"><i class="fa-solid fa-microphone-lines" style="color:#f59e0b"></i></div><span>Whisper Transcriber</span><span class="nav-badge" style="background:rgba(245,158,11,.2);color:#f59e0b">New</span></a>
+                        <a href="gif-maker.html" class="nav-item nav-child"><div class="nav-icon" style="background:rgba(6,182,212,.15)"><i class="fa-solid fa-film" style="color:#06b6d4"></i></div><span>GIF Maker Pro</span><span class="nav-badge" style="background:rgba(6,182,212,.2);color:#06b6d4">New</span></a>
+                    </div>
+                </div>
+                <a href="ads-automation.html" class="nav-item"><div class="nav-icon" style="background:rgba(24,119,242,.15)"><i class="fa-brands fa-facebook" style="color:#4d9cf5"></i></div><span>Ads Automation</span><span class="nav-badge" style="background:rgba(24,119,242,.2);color:#4d9cf5">Pro</span></a>
+                <a href="salary-calculator.html" class="nav-item"><div class="nav-icon" style="background:rgba(16,185,129,.15)"><i class="fa-solid fa-calculator" style="color:#10b981"></i></div><span>Tính Lương</span><span class="nav-badge" style="background:rgba(16,185,129,.2);color:#10b981">New</span></a>
+            </nav>
+        </div>
+        <div class="sidebar-footer">
+            <div class="theme-toggle" id="theme-toggle"><i class="fa-solid fa-sun"></i><span>Chế độ Sáng</span></div>
+            <div class="sidebar-version">v2.0.0</div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main-content">
+        <header class="mobile-header">
+            <div class="logo"><div class="logo-icon"><i class="fa-solid fa-bolt-lightning"></i></div><span class="logo-name">SoraVer2</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+        </header>
+
+        <div class="workspace sal-ws">
+
+            <!-- Page header -->
+            <div class="ph">
+                <div class="ph-l">
+                    <div class="ph-icon"><i class="fa-solid fa-calculator"></i></div>
+                    <div>
+                        <h1>Tính Lương <span class="mtag"><i class="fa-solid fa-calendar-days"></i><span id="month-display">Tháng 4/2026</span></span></h1>
+                        <p>Tính lương CB, KPI, OT, phụ cấp & các khoản giảm trừ theo chuẩn doanh nghiệp</p>
+                    </div>
+                </div>
+                <div class="ph-r" id="header-actions" style="display:none">
+                    <button class="btn-g" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Xuất CSV</button>
+                    <button class="btn-g" onclick="window.print()"><i class="fa-solid fa-print"></i> In phiếu lương</button>
+                    <button class="btn-g" onclick="resetForm()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                </div>
+            </div>
+
+            <!-- Preset employees -->
+            <div class="preset-row">
+                <span style="font-size:.75rem;color:var(--text-3);align-self:center">Preset:</span>
+                <button class="preset-btn" onclick="loadPreset('demo1')">👤 MKT Nguyễn Văn A</button>
+                <button class="preset-btn" onclick="loadPreset('demo2')">👤 Sales Trần Thị B</button>
+                <button class="preset-btn" onclick="clearPreset()">🗑 Xóa preset</button>
+            </div>
+
+            <!-- Main layout -->
+            <div class="sal-layout">
+                <!-- ====== LEFT: Input form ====== -->
+                <div class="sal-form-col">
+
+                    <!-- Basic info -->
+                    <div class="sc">
+                        <div class="sch"><i class="fa-solid fa-user-tie"></i><h3>Thông tin nhân viên</h3></div>
+                        <div class="fg"><label>Tên nhân viên</label><input class="fi" type="text" id="emp-name" placeholder="Nguyễn Văn A" oninput="updateMonthDisplay()"></div>
+                        <div class="fg2">
+                            <div class="fg"><label>Tháng / Năm</label><input class="fi" type="month" id="month-year" value="2026-04" oninput="updateMonthDisplay()"></div>
+                            <div class="fg"><label>Phòng ban / Chức vụ</label><input class="fi" type="text" id="dept" placeholder="MKT / Executive"></div>
+                        </div>
+                    </div>
+
+                    <!-- Lương cơ bản -->
+                    <div class="sc">
+                        <div class="sch"><i class="fa-solid fa-money-bill-wave"></i><h3>Lương cơ bản</h3></div>
+                        <div class="fg2">
+                            <div class="fg">
+                                <label>Ngày công chuẩn <i class="fa-solid fa-circle-info tip" data-tip="Thường là 26 ngày/tháng" style="color:var(--text-3);font-size:.75rem"></i></label>
+                                <div class="ig"><span class="ip">📅</span><input class="fi" type="number" id="std-days" value="26" min="1" max="31" oninput="calc()"></div>
+                            </div>
+                            <div class="fg">
+                                <label>Ngày công thực tế</label>
+                                <div class="ig"><span class="ip">✅</span><input class="fi" type="number" id="act-days" value="26" min="0" max="31" oninput="calc()"></div>
+                            </div>
+                        </div>
+                        <div class="fg">
+                            <label>Lương cứng (cơ bản) <i class="fa-solid fa-circle-info tip" data-tip="Lương theo hợp đồng / toàn ngày công chuẩn" style="color:var(--text-3);font-size:.75rem"></i></label>
+                            <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="base-sal" value="10200000" step="100000" oninput="calc()"><span class="is">VND</span></div>
+                            <span class="fh" id="daily-hint">≈ 392,308 đ/ngày</span>
+                        </div>
+                    </div>
+
+                    <!-- Các khoản thêm -->
+                    <div class="sc">
+                        <div class="sch"><i class="fa-solid fa-circle-plus"></i><h3>Các khoản thu nhập thêm</h3></div>
+
+                        <div class="sdiv">Phụ cấp & Thưởng</div>
+                        <div class="fg2">
+                            <div class="fg">
+                                <label>Phụ cấp trách nhiệm</label>
+                                <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="resp-al" value="750000" step="50000" oninput="calc()"><span class="is">VND</span></div>
+                            </div>
+                            <div class="fg">
+                                <label>Thưởng chuyên cần</label>
+                                <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="att-bo" value="500000" step="50000" oninput="calc()"><span class="is">VND</span></div>
+                            </div>
+                        </div>
+                        <div class="fg">
+                            <label>Lương OT (tăng ca)</label>
+                            <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="ot-sal" value="0" step="100000" oninput="calc()"><span class="is">VND</span></div>
+                        </div>
+
+                        <div class="sdiv">KPI Doanh thu</div>
+                        <div class="fg">
+                            <label>Doanh thu KPI (Revenue)</label>
+                            <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="kpi-rev" value="0" step="1000000" oninput="calc()"><span class="is">VND</span></div>
+                            <span class="fh" id="kpi-hint">Nhập doanh thu để tính thưởng KPI</span>
+                        </div>
+                        <div class="fg">
+                            <label>Tỷ lệ thưởng KPI (%)</label>
+                            <div class="ig has-s"><input class="fi" type="number" id="kpi-rate" value="1.3" step="0.1" min="0" max="100" oninput="calc()"><span class="is">%</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Giảm trừ -->
+                    <div class="sc">
+                        <div class="sch"><i class="fa-solid fa-circle-minus" style="color:#ef4444"></i><h3>Các khoản giảm trừ</h3></div>
+                        <div class="fg2">
+                            <div class="fg">
+                                <label>Bảo hiểm (BHXH/BHYT)</label>
+                                <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="insurance" value="500000" step="50000" oninput="calc()"><span class="is">VND</span></div>
+                            </div>
+                            <div class="fg">
+                                <label>Phạt đi muộn / vi phạm</label>
+                                <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="late-pen" value="0" step="50000" oninput="calc()"><span class="is">VND</span></div>
+                            </div>
+                        </div>
+                        <div class="fg">
+                            <label>Các khoản khấu trừ khác</label>
+                            <div class="ig has-s"><span class="ip">₫</span><input class="fi" type="number" id="other-ded" value="0" step="50000" oninput="calc()"><span class="is">VND</span></div>
+                            <span class="fh">Tạm ứng, khấu trừ tài sản, v.v.</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-sal" onclick="calc(); document.getElementById('header-actions').style.display='flex'">
+                        <i class="fa-solid fa-calculator"></i> Tính lương ngay
+                    </button>
+                    <div class="btn-row">
+                        <button class="btn-g" onclick="savePreset()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+                        <button class="btn-g" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                        <button class="btn-g" onclick="window.print()"><i class="fa-solid fa-print"></i> In</button>
+                        <button class="btn-g" onclick="resetForm()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                    </div>
+                </div>
+
+                <!-- ====== RIGHT: Results ====== -->
+                <div class="sal-result-col" id="result-col">
+                    <!-- Empty state -->
+                    <div class="empty sc" id="empty-state">
+                        <i class="fa-solid fa-calculator"></i>
+                        <p>Điền thông tin bên trái và nhấn <strong>"Tính lương"</strong> để xem kết quả</p>
+                    </div>
+
+                    <!-- Results (hidden until calculated) -->
+                    <div id="result-panel" style="display:none">
+
+                        <!-- Hero: Thực lĩnh -->
+                        <div class="res-hero fade-in" id="res-hero">
+                            <div class="res-hero-label"><i class="fa-solid fa-wallet"></i> Thực lĩnh tháng này</div>
+                            <div class="res-hero-amt" id="res-net">0<span class="unit">VND</span></div>
+                            <div class="res-hero-sub" id="res-sub">—</div>
+                        </div>
+
+                        <!-- 4 chips -->
+                        <div class="chips">
+                            <div class="chip">
+                                <div class="chip-label">Lương CB thực tế</div>
+                                <div class="chip-val g" id="chip-cb">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Lương KPI</div>
+                                <div class="chip-val p" id="chip-kpi">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Tổng thu nhập</div>
+                                <div class="chip-val g" id="chip-total">—</div>
+                            </div>
+                            <div class="chip">
+                                <div class="chip-label">Tổng giảm trừ</div>
+                                <div class="chip-val r" id="chip-ded">—</div>
+                            </div>
+                        </div>
+
+                        <!-- Chart + Legend -->
+                        <div class="sc fade-in">
+                            <div class="sch"><i class="fa-solid fa-chart-pie"></i><h3>Cơ cấu thu nhập</h3></div>
+                            <div class="chart-area">
+                                <div class="chart-wrap">
+                                    <canvas id="sal-chart"></canvas>
+                                    <div class="chart-center">
+                                        <span class="chart-center-lbl">Tổng thu</span>
+                                        <span class="chart-center-val" id="chart-center-val">—</span>
+                                    </div>
+                                </div>
+                                <div class="legend" id="chart-legend"></div>
+                            </div>
+                        </div>
+
+                        <!-- Breakdown table -->
+                        <div class="sc fade-in">
+                            <div class="sch"><i class="fa-solid fa-table-list"></i><h3>Bảng chi tiết lương</h3><span class="badge-g" id="res-month-badge">Tháng 4/2026</span></div>
+
+                            <div class="bt-head"><i class="fa-solid fa-circle-plus" style="color:var(--sal)"></i> Các khoản thu nhập</div>
+                            <table class="bt" id="bt-income"></table>
+
+                            <div class="bt-head" style="margin-top:.75rem"><i class="fa-solid fa-circle-minus" style="color:#ef4444"></i> Các khoản giảm trừ</div>
+                            <table class="bt" id="bt-deduct"></table>
+
+                            <div class="bt-head" style="margin-top:.75rem; color:var(--sal)"><i class="fa-solid fa-wallet"></i> Kết quả</div>
+                            <table class="bt" id="bt-net"></table>
+                        </div>
+
+                        <!-- Employee info -->
+                        <div class="sc fade-in" id="emp-card" style="display:none">
+                            <div class="sch"><i class="fa-solid fa-id-badge"></i><h3>Thông tin nhân viên</h3></div>
+                            <table class="bt" id="bt-emp"></table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+<script>
+// =====================================================
+//   SALARY CALCULATOR — SoraVer2
+//   Ported & enhanced from AntigravityHR Python Script
+// =====================================================
+
+const WORKING_DAYS_LIMIT = 26;
+let salChart = null;
+let lastResult = null;
+
+// VND formatter
+const fmtVND = n => Math.round(n).toLocaleString('vi-VN') + ' ₫';
+const fmtVNDShort = n => {
+    const abs = Math.abs(n);
+    if (abs >= 1e9) return (n/1e9).toFixed(2) + ' tỷ';
+    if (abs >= 1e6) return (n/1e6).toFixed(1) + ' tr';
+    return Math.round(n).toLocaleString('vi-VN');
+};
+
+// ---- Month display ----
+function updateMonthDisplay() {
+    const mv = document.getElementById('month-year').value || '2026-04';
+    const [y, m] = mv.split('-');
+    const txt = `Tháng ${+m}/${y}`;
+    document.getElementById('month-display').textContent = txt;
+    document.getElementById('res-month-badge').textContent = txt;
+
+    const name = document.getElementById('emp-name').value.trim();
+    if (name) document.getElementById('month-display').textContent = `${name} — ${txt}`;
+}
+
+// ---- Get value ----
+const gv = id => parseFloat(document.getElementById(id).value) || 0;
+
+// ---- Main calculation ----
+function calc() {
+    const stdDays   = gv('std-days') || 26;
+    const actDays   = gv('act-days');
+    const baseSal   = gv('base-sal');
+    const respAl    = gv('resp-al');
+    const attBo     = gv('att-bo');
+    const otSal     = gv('ot-sal');
+    const kpiRev    = gv('kpi-rev');
+    const kpiRate   = gv('kpi-rate');
+    const insurance = gv('insurance');
+    const latePen   = gv('late-pen');
+    const otherDed  = gv('other-ded');
+
+    // 1. Lương CB thực tế
+    const dailySal = baseSal / stdDays;
+    const actualCB = dailySal * actDays;
+
+    // 2. KPI
+    const kpiSal = kpiRev * (kpiRate / 100);
+
+    // 3. Tổng thu nhập
+    const totalIncome = actualCB + respAl + attBo + otSal + kpiSal;
+
+    // 4. Giảm trừ
+    const totalDed = insurance + latePen + otherDed;
+
+    // 5. Thực lĩnh
+    const netSal = totalIncome - totalDed;
+
+    // Update daily hint
+    document.getElementById('daily-hint').textContent =
+        `≈ ${fmtVND(dailySal)}/ngày  ·  ${actDays}/${stdDays} ngày = ${fmtVND(actualCB)}`;
+
+    // Update KPI hint
+    if (kpiRev > 0)
+        document.getElementById('kpi-hint').textContent =
+            `${fmtVNDShort(kpiRev)} × ${kpiRate}% = Thưởng ${fmtVND(kpiSal)}`;
+
+    lastResult = { actualCB, respAl, attBo, otSal, kpiSal, totalIncome, insurance, latePen, otherDed, totalDed, netSal, dailySal, stdDays, actDays, baseSal, kpiRev, kpiRate };
+
+    renderResults(lastResult);
+    updateMonthDisplay();
+}
+
+// ---- Render results ----
+function renderResults(r) {
+    // Show panel
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('result-panel').style.display = 'block';
+    document.getElementById('header-actions').style.display = 'flex';
+
+    // Hero
+    document.getElementById('res-net').innerHTML = `${r.netSal.toLocaleString('vi-VN')}<span class="unit">VND</span>`;
+
+    const mv = document.getElementById('month-year').value || '2026-04';
+    const [y, m] = mv.split('-');
+    const periods = `Lương tháng ${+m}/${y}`;
+    const empName = document.getElementById('emp-name').value.trim();
+    const dept = document.getElementById('dept').value.trim();
+    document.getElementById('res-sub').textContent =
+        [empName, dept, periods].filter(Boolean).join(' · ');
+
+    // Chips
+    document.getElementById('chip-cb').textContent    = fmtVND(r.actualCB);
+    document.getElementById('chip-kpi').textContent   = fmtVND(r.kpiSal);
+    document.getElementById('chip-total').textContent = fmtVND(r.totalIncome);
+    document.getElementById('chip-ded').textContent   = fmtVND(r.totalDed);
+
+    // Chart center
+    document.getElementById('chart-center-val').textContent = fmtVNDShort(r.totalIncome);
+
+    // Chart data
+    const chartData = [
+        { label:'Lương CB thực tế', value:r.actualCB,  color:'#8b5cf6' },
+        { label:'Thưởng chuyên cần',value:r.attBo,     color:'#10b981' },
+        { label:'Phụ cấp trách nhiệm',value:r.respAl,  color:'#06b6d4' },
+        { label:'Lương OT',          value:r.otSal,    color:'#f97316' },
+        { label:'Thưởng KPI',        value:r.kpiSal,   color:'#facc15' },
+    ].filter(d => d.value > 0);
+
+    renderChart(chartData, r.totalIncome);
+
+    // Income table
+    const btIncome = document.getElementById('bt-income');
+    const rows = [
+        { label:'Lương CB thực tế', cls:'r-inc r-cb', val:r.actualCB,
+          sub:`${r.actDays}/${r.stdDays} ngày × ${fmtVND(r.dailySal)}/ngày` },
+        { label:'Phụ cấp trách nhiệm', cls:'r-inc r-res-r', val:r.respAl },
+        { label:'Thưởng chuyên cần',   cls:'r-inc r-att-r', val:r.attBo },
+        { label:'Lương OT (tăng ca)',  cls:'r-inc r-ot-r',  val:r.otSal },
+        { label:'Thưởng KPI',          cls:'r-inc r-kpi-r', val:r.kpiSal,
+          sub:r.kpiRev > 0 ? `${fmtVNDShort(r.kpiRev)} × ${r.kpiRate}%` : '' },
+        { label:'Tổng thu nhập', cls:'r-tot', val:r.totalIncome },
+    ];
+    btIncome.innerHTML = rows.filter(row => row.val > 0 || row.cls === 'r-tot').map(row => `
+        <tr class="${row.cls}">
+            <td>${row.label}${row.sub ? `<br><small style="color:var(--text-3);font-size:.7rem">${row.sub}</small>` : ''}</td>
+            <td>${fmtVND(row.val)}</td>
+        </tr>`).join('');
+
+    // Deductions table
+    const btDeduct = document.getElementById('bt-deduct');
+    const drows = [
+        { label:'Bảo hiểm (BHXH/BHYT)', val:r.insurance },
+        { label:'Phạt đi muộn / vi phạm', val:r.latePen },
+        { label:'Khấu trừ khác', val:r.otherDed },
+        { label:'Tổng giảm trừ', cls:'r-tot-d', val:r.totalDed },
+    ];
+    btDeduct.innerHTML = drows.filter(row => row.val > 0 || row.cls === 'r-tot-d').map(row => `
+        <tr class="${row.cls || 'r-ded'}">
+            <td>${row.label}</td>
+            <td>${fmtVND(row.val)}</td>
+        </tr>`).join('');
+
+    // Net table
+    const btNet = document.getElementById('bt-net');
+    btNet.innerHTML = `
+        <tr><td>Tổng thu nhập</td><td style="color:var(--sal)">${fmtVND(r.totalIncome)}</td></tr>
+        <tr><td>Tổng giảm trừ</td><td style="color:#ef4444">- ${fmtVND(r.totalDed)}</td></tr>
+        <tr class="r-net"><td>💰 Thực lĩnh</td><td>${fmtVND(r.netSal)}</td></tr>
+    `;
+
+    // Employee info card
+    const empName2 = document.getElementById('emp-name').value.trim();
+    const dept2    = document.getElementById('dept').value.trim();
+    if (empName2 || dept2) {
+        document.getElementById('emp-card').style.display = '';
+        document.getElementById('bt-emp').innerHTML = `
+            ${empName2 ? `<tr><td style="color:var(--text-3)">Nhân viên</td><td style="font-weight:600">${empName2}</td></tr>` : ''}
+            ${dept2    ? `<tr><td style="color:var(--text-3)">Phòng ban</td><td>${dept2}</td></tr>` : ''}
+            <tr><td style="color:var(--text-3)">Kỳ lương</td><td>${document.getElementById('month-display').textContent}</td></tr>
+            <tr><td style="color:var(--text-3)">Ngày công</td><td>${r.actDays}/${r.stdDays} ngày</td></tr>
+        `;
+    }
+}
+
+// ---- Donut chart ----
+function renderChart(data, total) {
+    const ctx = document.getElementById('sal-chart').getContext('2d');
+    if (salChart) { salChart.destroy(); salChart = null; }
+
+    if (!data.length || total === 0) return;
+
+    salChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.map(d => d.label),
+            datasets: [{
+                data: data.map(d => d.value),
+                backgroundColor: data.map(d => d.color),
+                borderWidth: 0,
+                hoverOffset: 4,
+            }]
+        },
+        options: {
+            cutout: '68%',
+            plugins: { legend: { display:false }, tooltip: {
+                callbacks: {
+                    label: ctx => ` ${fmtVND(ctx.parsed)} (${((ctx.parsed/total)*100).toFixed(1)}%)`
+                }
+            }},
+            animation: { duration: 500 }
+        }
+    });
+
+    // Legend
+    const leg = document.getElementById('chart-legend');
+    leg.innerHTML = data.map(d => `
+        <div class="li">
+            <div class="li-dot" style="background:${d.color}"></div>
+            <span class="li-label">${d.label}</span>
+            <span class="li-val">${fmtVNDShort(d.value)}</span>
+            <span class="li-pct">${((d.value/total)*100).toFixed(1)}%</span>
+        </div>
+    `).join('');
+}
+
+// ---- Presets ----
+const PRESETS = {
+    demo1: {
+        'emp-name':'Nguyễn Văn A','dept':'Marketing / Senior Executive',
+        'std-days':26,'act-days':26,'base-sal':10200000,
+        'resp-al':750000,'att-bo':500000,'ot-sal':3006399,
+        'kpi-rev':717499082,'kpi-rate':1.3,'insurance':500000,'late-pen':0,'other-ded':0
+    },
+    demo2: {
+        'emp-name':'Trần Thị B','dept':'Sales / Account Manager',
+        'std-days':26,'act-days':24,'base-sal':8000000,
+        'resp-al':0,'att-bo':500000,'ot-sal':0,
+        'kpi-rev':450000000,'kpi-rate':1.0,'insurance':420000,'late-pen':100000,'other-ded':0
+    }
+};
+
+function loadPreset(key) {
+    const p = PRESETS[key];
+    if (!p) return;
+    Object.entries(p).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    });
+    calc();
+}
+
+function clearPreset() {
+    ['emp-name','dept','resp-al','att-bo','ot-sal','kpi-rev','late-pen','other-ded'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 0;
+    });
+    document.getElementById('emp-name').value = '';
+    document.getElementById('dept').value = '';
+    calc();
+}
+
+async function savePreset() {
+    const name = document.getElementById('emp-name').value.trim() || 'Nhân viên';
+    const data = {};
+    ['emp-name','dept','std-days','act-days','base-sal','resp-al','att-bo','ot-sal','kpi-rev','kpi-rate','insurance','late-pen','other-ded'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) data[id] = el.value;
+    });
+    // Save to Firebase or localStorage
+    if (window.FB) {
+        await window.FB.save('salary_presets', name, data);
+        showToast(`Đã lưu "${name}" lên cloud ☁️`, 'success');
+    } else {
+        localStorage.setItem(`sorav2-sal-${name}`, JSON.stringify(data));
+        showToast(`Đã lưu preset "${name}"`, 'success');
+    }
+}
+
+function resetForm() {
+    ['resp-al','att-bo','ot-sal','kpi-rev','late-pen','other-ded'].forEach(id => {
+        document.getElementById(id).value = 0;
+    });
+    document.getElementById('emp-name').value = '';
+    document.getElementById('dept').value = '';
+    document.getElementById('base-sal').value = 0;
+    document.getElementById('act-days').value = 26;
+    document.getElementById('kpi-rate').value = 1.3;
+
+    document.getElementById('empty-state').style.display = '';
+    document.getElementById('result-panel').style.display = 'none';
+    document.getElementById('header-actions').style.display = 'none';
+    if (salChart) { salChart.destroy(); salChart = null; }
+    lastResult = null;
+}
+
+// ---- Export CSV ----
+function exportCSV() {
+    if (!lastResult) { showToast('Hãy tính lương trước', 'warning'); return; }
+    const r = lastResult;
+    const empName = document.getElementById('emp-name').value || 'Nhan_vien';
+    const period  = document.getElementById('month-year').value || '2026-04';
+    const rows = [
+        ['Khoản mục', 'Số tiền (VND)'],
+        ['=== THU NHẬP ===', ''],
+        ['Lương CB thực tế', r.actualCB],
+        ['Phụ cấp trách nhiệm', r.respAl],
+        ['Thưởng chuyên cần', r.attBo],
+        ['Lương OT', r.otSal],
+        ['Thưởng KPI', r.kpiSal],
+        ['Tổng thu nhập', r.totalIncome],
+        ['=== GIẢM TRỪ ===', ''],
+        ['Bảo hiểm', r.insurance],
+        ['Phạt đi muộn', r.latePen],
+        ['Khấu trừ khác', r.otherDed],
+        ['Tổng giảm trừ', r.totalDed],
+        ['=== KẾT QUẢ ===', ''],
+        ['THỰC LĨNH', r.netSal],
+    ];
+    const csv = '\uFEFF' + rows.map(r => r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' }));
+    a.download = `luong_${empName}_${period}.csv`;
+    a.click();
+    showToast('Đã xuất file CSV', 'success');
+}
+
+// ---- Init ----
+updateMonthDisplay();
+// Auto-calc on load with default values
+setTimeout(calc, 100);
+
+// Real-time calc on all inputs
+document.querySelectorAll('.fi').forEach(el => {
+    el.addEventListener('change', calc);
+});
+</script>
+</body>
+</html>
