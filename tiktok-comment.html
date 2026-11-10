@@ -258,7 +258,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #111;
+            background: repeating-conic-gradient(#2a2a2f 0% 25%, #1c1c1f 0% 50%) 0 0 / 20px 20px;
             border-radius: var(--radius);
             padding: 2rem;
             min-height: 240px;
@@ -570,12 +570,12 @@
                     <div>
                         <label class="form-label">Màu nền preview</label>
                         <div class="color-opts" id="bg-color-opts">
-                            <div class="color-opt active" data-bg="#000000" style="background:#000" onclick="setBg(this)" title="Đen"></div>
+                            <div class="color-opt" data-bg="#000000" style="background:#000" onclick="setBg(this)" title="Đen"></div>
                             <div class="color-opt" data-bg="#18181b" style="background:#18181b" onclick="setBg(this)" title="Tối"></div>
                             <div class="color-opt" data-bg="#1e293b" style="background:#1e293b" onclick="setBg(this)" title="Navy"></div>
                             <div class="color-opt" data-bg="#ffffff" style="background:#fff;border-color:var(--border)" onclick="setBg(this)" title="Trắng"></div>
                             <div class="color-opt" data-bg="#f1f5f9" style="background:#f1f5f9;border-color:var(--border)" onclick="setBg(this)" title="Sáng"></div>
-                            <div class="color-opt" data-bg="transparent" style="background: repeating-conic-gradient(#aaa 0% 25%, #fff 0% 50%) 0 0 / 12px 12px" onclick="setBg(this)" title="Trong suốt"></div>
+                            <div class="color-opt active" data-bg="transparent" style="background: repeating-conic-gradient(#aaa 0% 25%, #fff 0% 50%) 0 0 / 12px 12px" onclick="setBg(this)" title="Trong suốt"></div>
                         </div>
                     </div>
 
@@ -651,7 +651,7 @@
         comment: 'Akala ko decoration lang siya hahaha, But it actually smells nice! Super worth it! 😂',
         avatarImg: null,          // HTMLImageElement or null
         style: 'reply',           // reply | comment | pinned
-        bgColor: '#000000',
+        bgColor: 'transparent',
         fontSize: 22,
         previewSize: 'auto',      // auto | wide | narrow
         likes: Math.floor(Math.random() * 9000) + 500,
@@ -742,14 +742,13 @@
     /* ══════════════════════════════════
        CANVAS RENDER ENGINE
     ══════════════════════════════════ */
-    const SCALE = 2; // HiDPI
+    const SCALE = 2; // HiDPI (kept for download compat)
 
     function getCanvasSize() {
         const size = state.previewSize;
         if (size === 'wide')   return { w: 800, h: 450 };
         if (size === 'narrow') return { w: 400, h: 300 };
-        // auto — fit to content
-        return { w: 560, h: null }; // h computed after text wrap
+        return { w: 540, h: null };
     }
 
     // Draw rounded rectangle
@@ -834,50 +833,66 @@
         state.comment  = document.getElementById('inp-comment').value;
 
         const canvas = document.getElementById('previewCanvas');
-        const { w: baseW } = getCanvasSize();
 
-        // ── Measure first on offscreen canvas ──
+        /* ════════════════════════════════════════
+           LAYOUT CONSTANTS  (matching the screenshot)
+           - White bubble with rounded corners
+           - Avatar inside bubble on the left
+           - Small grey header text top-left
+           - Bold large comment text
+           - Clean, no meta/likes bar
+        ════════════════════════════════════════ */
+        const SCALE_R  = 2;          // HiDPI
+        const OUTER_PAD = 24;        // space around the bubble
+        const BPAD_H   = 20;         // bubble inner horizontal padding
+        const BPAD_V   = 18;         // bubble inner vertical padding
+        const AVAT_R   = 17;         // avatar radius: 34px diameter (tỉ lệ chuẩn TikTok)
+        const AVAT_D   = AVAT_R * 2;
+        const AVAT_GAP = 12;         // gap between avatar and text block
+        const TAIL_W   = 14;         // bubble tail width
+        const CORNER_R = 18;         // bubble corner radius
+
+        // Fonts
+        const HEADER_FONT  = `500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        const COMMENT_FONT = `800 ${state.fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+
+        /* ── Canvas width ── */
+        let baseW;
+        if      (state.previewSize === 'wide')   baseW = 750;
+        else if (state.previewSize === 'narrow')  baseW = 420;
+        else                                       baseW = 540;
+
+        // Text block width inside bubble (right of avatar)
+        const textBlockW = baseW - OUTER_PAD * 2 - BPAD_H * 2 - AVAT_D - AVAT_GAP;
+
+        /* ── Measure text on offscreen canvas ── */
         const off = document.createElement('canvas');
         const octx = off.getContext('2d');
+        octx.font = COMMENT_FONT;
+        const commentLines = wrapText(octx, state.comment, textBlockW);
+        const lineH = state.fontSize * 1.35;
+        const commentH = commentLines.length * lineH;
 
-        const PAD    = 28;
-        const AVAT_R = 24;      // avatar radius
-        const AVAT_D = AVAT_R * 2;
-        const AVAT_GAP = 14;
-        const bubbleX  = PAD + AVAT_D + AVAT_GAP;
-        const bubbleW  = baseW - bubbleX - PAD;
-        const BPAD     = 16;    // inner bubble padding
+        // Header label height & gap
+        const hasHeader = (state.style === 'reply' || state.style === 'pinned');
+        const headerH   = hasHeader ? 18 : 0;
+        const textGap   = hasHeader ? 6 : 0;
 
-        // header line (style label)
-        const headerFont  = `500 12px Inter, sans-serif`;
-        const nickFont    = `700 14px Inter, sans-serif`;
-        const commentFont = `700 ${state.fontSize}px Inter, sans-serif`;
-        const metaFont    = `400 12px Inter, sans-serif`;
+        // Total content height
+        const contentH = headerH + textGap + commentH;
+        const bubbleH  = Math.max(AVAT_D + 10, contentH) + BPAD_V * 2;
 
-        // Comment text wrap
-        octx.font = commentFont;
-        const commentLines = wrapText(octx, state.comment, bubbleW - BPAD * 2);
-
-        const lineH     = state.fontSize * 1.4;
-        const headerH   = state.style !== 'comment' ? 20 : 0;
-        const nickH     = 20;
-        const commentH  = commentLines.length * lineH;
-        const metaH     = 28;
-        const bubbleH   = headerH + nickH + commentH + metaH + BPAD * 2 + 8;
-
-        const totalH = Math.max(AVAT_D + PAD * 2, bubbleH + PAD * 2);
-
-        // Final canvas size
+        // Canvas dimensions
         const finalW = baseW;
-        const finalH = state.previewSize !== 'auto' ? getCanvasSize().h || totalH : totalH;
+        const finalH = bubbleH + OUTER_PAD * 2 + 18; // +18 extra bottom for tail tip
 
-        canvas.width  = finalW * SCALE;
-        canvas.height = finalH * SCALE;
+        canvas.width  = finalW * SCALE_R;
+        canvas.height = finalH * SCALE_R;
         canvas.style.width  = finalW + 'px';
         canvas.style.height = finalH + 'px';
 
         const ctx = canvas.getContext('2d');
-        ctx.scale(SCALE, SCALE);
+        ctx.scale(SCALE_R, SCALE_R);
 
         /* ── Background ── */
         const isTransparent = state.bgColor === 'transparent';
@@ -886,125 +901,90 @@
             ctx.fillRect(0, 0, finalW, finalH);
         }
 
-        const centerY = finalH / 2;
+        /* ── Bubble geometry ── */
+        const bX = OUTER_PAD;
+        const bY = OUTER_PAD;
+        const bW = finalW - OUTER_PAD * 2;
 
-        /* ── Avatar ── */
-        const avatY = centerY - AVAT_R;
-        drawAvatar(ctx, PAD, avatY, AVAT_R, state.avatarImg);
+        const isDarkBg = ['#000000','#18181b','#1e293b'].includes(state.bgColor);
 
-        /* ── Bubble ── */
-        const bubbleY = centerY - bubbleH / 2;
-        const isDarkBg = state.bgColor === '#000000' || state.bgColor === '#18181b' || state.bgColor === '#1e293b';
-        const bubbleBg = isDarkBg ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-        const bubbleBorder = isDarkBg ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
-        const textColor   = isDarkBg ? '#ffffff' : '#0a0a0a';
-        const subColor    = isDarkBg ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)';
-        const headerColor = isDarkBg ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
+        const bubbleFill   = '#ffffff';
+        const bubbleShadow = isDarkBg ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.14)';
+        const textColor    = '#000000';          // TikTok bold black
+        const headerColor  = '#606266';          // TikTok subtext grey
 
-        // Bubble background
-        roundRect(ctx, bubbleX, bubbleY, bubbleW, bubbleH, 16);
-        ctx.fillStyle = bubbleBg;
+        /* ══ Draw bubble + tail as ONE unified path ══
+           Góc nhọn tam giác bắt đầu ngay từ mép trái bX
+        ══════════════════════════════════════════ */
+        const r     = CORNER_R;
+        const tailH = 18;   // chiều cao mũi nhọn trỏ xuống
+        const tailW = 28;   // độ vát cạnh đáy
+
+        function bubblePath(ctx) {
+            ctx.beginPath();
+            ctx.moveTo(bX + r, bY);                              // đỉnh trên-trái
+            ctx.lineTo(bX + bW - r, bY);                         // cạnh trên →
+            ctx.quadraticCurveTo(bX + bW, bY, bX + bW, bY + r); // bo góc trên-phải
+            ctx.lineTo(bX + bW, bY + bubbleH - r);               // cạnh phải ↓
+            ctx.quadraticCurveTo(bX + bW, bY + bubbleH,          // bo góc dưới-phải
+                                 bX + bW - r, bY + bubbleH);
+            ctx.lineTo(bX + tailW, bY + bubbleH);                // cạnh đáy đến gốc tam giác
+            ctx.lineTo(bX, bY + bubbleH + tailH);                // mũi nhọn tam giác chỉ xuống (x = bX)
+            ctx.lineTo(bX, bY + r);                              // cạnh trái dựng thẳng đứng ↑
+            ctx.quadraticCurveTo(bX, bY, bX + r, bY);           // bo góc trên-trái
+            ctx.closePath();
+        }
+
+        /* ── Drop shadow ── */
+        ctx.save();
+        ctx.shadowColor   = bubbleShadow;
+        ctx.shadowBlur    = 18;
+        ctx.shadowOffsetY = 4;
+        bubblePath(ctx);
+        ctx.fillStyle = bubbleFill;
         ctx.fill();
-        ctx.strokeStyle = bubbleBorder;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.restore();
 
-        // Tail / arrow (pointing left)
-        ctx.beginPath();
-        ctx.moveTo(bubbleX, bubbleY + 20);
-        ctx.lineTo(bubbleX - 8, bubbleY + 14);
-        ctx.lineTo(bubbleX, bubbleY + 28);
-        ctx.fillStyle = bubbleBg;
-        ctx.fill();
+        /* ── Tọa độ nội dung Text & Avatar căn chuẩn theo nhau ── */
+        const textX = bX + BPAD_H + AVAT_D + AVAT_GAP;
+        const textY = bY + BPAD_V;
 
-        let cy = bubbleY + BPAD;
+        // Avatar căn thẳng hàng với dòng text đầu tiên (tâm avatar ngang giữa dòng 1 & đầu dòng 2)
+        const avatX = bX + BPAD_H;
+        const avatY = textY + 2;
+        drawAvatar(ctx, avatX, avatY, AVAT_R, state.avatarImg);
 
-        // Header label
+        let curY = textY;
+
+        // Header label (Trả lời bình luận / Replying to...)
         if (state.style === 'reply') {
-            ctx.font = headerFont;
-            ctx.fillStyle = headerColor;
-            ctx.textBaseline = 'middle';
-            const label = `↩ Trả lời bình luận của ${state.nickname}`;
-            ctx.fillText(label, bubbleX + BPAD, cy + 8);
-            cy += headerH + 4;
+            ctx.font          = HEADER_FONT;
+            ctx.fillStyle     = headerColor;
+            ctx.textBaseline  = 'top';
+            const label = `Replying to ${state.nickname}'s comment`;
+            ctx.fillText(label, textX, curY);
+            curY += headerH + textGap;
         } else if (state.style === 'pinned') {
-            ctx.font = headerFont;
-            ctx.fillStyle = '#fe2c55';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('📌 Bình luận được ghim', bubbleX + BPAD, cy + 8);
-            cy += headerH + 4;
+            ctx.font          = HEADER_FONT;
+            ctx.fillStyle     = '#fe2c55';
+            ctx.textBaseline  = 'top';
+            ctx.fillText('📌 Pinned comment', textX, curY);
+            curY += headerH + textGap;
+        } else {
+            ctx.font          = HEADER_FONT;
+            ctx.fillStyle     = headerColor;
+            ctx.textBaseline  = 'top';
+            ctx.fillText(state.nickname, textX, curY);
+            curY += headerH + textGap;
         }
 
-        // Nickname row
-        ctx.textBaseline = 'middle';
-        ctx.font = nickFont;
-        ctx.fillStyle = textColor;
-        const nickW = ctx.measureText(state.nickname).width;
-        ctx.fillText(state.nickname, bubbleX + BPAD, cy + 10);
-
-        // Verified tick (optional)
-        if (state.verified) {
-            ctx.font = `500 12px Inter`;
-            ctx.fillStyle = '#20d5ec';
-            ctx.fillText('✓', bubbleX + BPAD + nickW + 6, cy + 10);
-        }
-        cy += nickH + 4;
-
-        // Comment text
-        ctx.font = commentFont;
-        ctx.fillStyle = textColor;
+        // Comment text (bold, to, đen nét)
+        ctx.font         = COMMENT_FONT;
+        ctx.fillStyle    = textColor;
         ctx.textBaseline = 'top';
         commentLines.forEach((line, i) => {
-            drawText(ctx, line, bubbleX + BPAD, cy + i * lineH);
+            ctx.fillText(line, textX, curY + i * lineH);
         });
-        cy += commentH + 8;
-
-        // Meta: time + likes + reply
-        ctx.font = metaFont;
-        ctx.fillStyle = subColor;
-        ctx.textBaseline = 'middle';
-        const metaY = cy + metaH / 2 - 4;
-        ctx.fillText('2 giờ trước', bubbleX + BPAD, metaY);
-
-        // Heart icon (draw manually)
-        const heartX = bubbleX + BPAD + 90;
-        ctx.font = `13px Inter`;
-        ctx.fillStyle = isDarkBg ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)';
-        ctx.fillText(`❤  ${formatLikes(state.likes)}`, heartX, metaY);
-
-        // Reply
-        ctx.fillText('Trả lời', heartX + 80, metaY);
-
-        /* ── TikTok-style like button on the right ── */
-        const likeX = bubbleX + bubbleW - BPAD - 24;
-        const likeY = bubbleY + bubbleH / 2 - 16;
-
-        // Heart circle
-        ctx.beginPath();
-        ctx.arc(likeX, likeY, 14, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.fill();
-        ctx.font = '14px serif';
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'center';
-        ctx.fillText('♡', likeX, likeY);
-        ctx.textAlign = 'left';
-
-        // Likes count below heart
-        ctx.font = `600 10px Inter`;
-        ctx.fillStyle = subColor;
-        ctx.textBaseline = 'top';
-        ctx.textAlign = 'center';
-        ctx.fillText(formatLikes(state.likes), likeX, likeY + 18);
-        ctx.textAlign = 'left';
-
-        /* ── Watermark ── */
-        ctx.font = `400 10px Inter`;
-        ctx.fillStyle = isDarkBg ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
-        ctx.textBaseline = 'bottom';
-        ctx.textAlign = 'right';
-        ctx.fillText('SoraVer2 — TikTok Comment Maker', finalW - 10, finalH - 6);
-        ctx.textAlign = 'left';
     };
 
     function formatLikes(n) {
@@ -1015,15 +995,10 @@
     /* ══════════════════════════════════
        DOWNLOAD & EXPORT
     ══════════════════════════════════ */
-    function renderForSize(targetSize) {
-        const prev = state.previewSize;
-        state.previewSize = targetSize;
-        renderPreview();
-        state.previewSize = prev;
-    }
-
     window.downloadPNG = function (size = 'auto') {
-        renderForSize(size);
+        const prev = state.previewSize;
+        state.previewSize = size;
+        renderPreview();
         setTimeout(() => {
             const canvas = document.getElementById('previewCanvas');
             const link = document.createElement('a');
@@ -1032,9 +1007,9 @@
             link.href = canvas.toDataURL('image/png');
             link.click();
             showToast('Đã tải ảnh xuống!', 'success');
-            // restore
+            state.previewSize = prev;
             renderPreview();
-        }, 50);
+        }, 60);
     };
 
     window.copyToClipboard = async function () {
